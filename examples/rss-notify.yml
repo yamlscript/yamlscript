@@ -1,0 +1,12 @@
+- use: fetch-rss
+  args:
+    - https://actionsflow.github.io/test-page/hn-rss.xml
+# open <https://requestbin.com/r/enyvb91j5zjv9/23eNPamD4DK4YK1rfEB1FAQOKIj> see
+- loop: ${{last.result.items}}
+  use: fetch
+  args:
+    - https://enyvb91j5zjv9.x.pipedream.net/
+    - method: POST
+      headers:
+        Content-Type: application/json
+      body: ${{JSON.stringify(ctx.item)}}
