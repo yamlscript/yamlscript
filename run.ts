@@ -9,7 +9,7 @@ export async function run(options: RunOptions) {
     await runSingle({
       relativePath: file,
       tasks: tasks,
-      buildDenoDeploy: options.buildDenoDeploy,
+      isBuild: options.isBuild,
       dist: options.dist,
     });
   }

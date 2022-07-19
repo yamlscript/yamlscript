@@ -9,8 +9,10 @@ export async function runSingle(options: RunSingleOptions) {
   log.debug("run single options", JSON.stringify(options, null, 2));
 
   const { tasks } = options;
-
+  // for precompiled code to import modules
   let importCode = "";
+  // for runtime code to import modules
+  let runtimeImportCode = "";
   // one by one
   let functionBody = "";
 
@@ -25,12 +27,11 @@ export async function runSingle(options: RunSingleOptions) {
       use = useTemplateFn(ctx);
     }
 
-    let inlineInfo = `use {${use}}`;
+    let inlineInfo = ``;
     let from: string | undefined;
     if (rawFrom && rawFrom.trim() !== "") {
       const fromTemplateFn = compile(rawFrom, ctxKeys);
       from = fromTemplateFn(ctx);
-      inlineInfo += ` from {${from}}`;
     }
     // add compile code
     if (from) {
@@ -42,47 +43,56 @@ export async function runSingle(options: RunSingleOptions) {
         importPath = `{${use}}`;
       }
       importCode += `import ${importPath} from "${from}";\n`;
+      runtimeImportCode += `const ${importPath} = import("${from}");\n`;
+      inlineInfo += `use ${green(importPath)} from {${from}}`;
     } else if (get(buildin, use)) {
       importCode += `import { ${use} } from "${GLOBAL_PACKAGE_URL}";\n`;
+      runtimeImportCode += `const { ${use} } = import("./global/mod.ts");\n`;
+      inlineInfo += `use { ${green(use)} } from "${GLOBAL_PACKAGE_URL}"`;
     } else if (
-      typeof (globalThis as Record<string, unknown>)[use] === "function"
+      get(globalThis, use) &&
+      typeof get(globalThis, use) === "function"
     ) {
-      console.log("here");
-
+      inlineInfo += `use ${green(use)}`;
       // const result = await (get(globalThis, use) as Function)(argsObject);
       // console.log("result2", result);
+    } else {
+      // not found use
+      log.error(`not found function ${use}`);
     }
-    log.debug(inlineInfo);
     // check rawArgs is array, or object, or other pure type
     const argsTemplateFn = compile(JSON.stringify(rawArgs), ctxKeys);
     const argsString = argsTemplateFn(ctx);
     const args = JSON.parse(argsString);
-    log.debug("args", JSON.stringify(args, null, 2));
+
     if (Array.isArray(args)) {
       // array, then put to args
-      functionBody += `await ${use}(${args
-        .map((item) => JSON.stringify(item))
-        .join(",")});\n`;
+      const argsFlatten = args.map((item) => JSON.stringify(item)).join(",");
+      const argsPrint = args
+        .map((item) => JSON.stringify(item, null, 2))
+        .join(" ");
+
+      inlineInfo += ` with args: ${argsPrint}`;
+
+      functionBody += `await ${use}(${argsFlatten});\n`;
     } else {
       // as the first one args
       functionBody += `await ${use}(${JSON.stringify(args)});\n`;
+      inlineInfo += ` with args: ${JSON.stringify(args, null, 2)}`;
     }
-
-    // check result if internal
-    // if (get(buildin, use)) {
-    //   const result = await (get(buildin, useString) as Function)(argsObject);
-    //   console.log("result", result);
-    // } else if (
-    //   typeof (globalThis as Record<string, unknown>)[useString] === "function"
-    // ) {
-    //   const result = await (get(globalThis, useString) as Function)(argsObject);
-    //   console.log("result2", result);
-    // }
+    log.debug(inlineInfo);
   }
+
+  const runtimeCode = `${runtimeImportCode}\n${functionBody}`;
+
   const compiledModuleCode =
     importCode + `export default async function main(){\n${functionBody}\n}`;
   console.log("compiledModuleCode", compiledModuleCode);
-  if (options.buildDenoDeploy) {
+  if (options.isBuild) {
     await createDistFile(compiledModuleCode, options);
+  } else {
+    // run
+    const runtimeFn = new Function(runtimeCode);
+    runtimeFn().catch(log.error);
   }
 }

@@ -1,7 +1,7 @@
 export interface RunOptions {
   files: string[];
-  buildDenoDeploy: boolean;
   dist: string;
+  isBuild: boolean;
 }
 
 export interface Task {
@@ -13,6 +13,6 @@ export interface Task {
 export interface RunSingleOptions {
   relativePath: string;
   tasks: Task[];
-  buildDenoDeploy: boolean;
+  isBuild: boolean;
   dist: string;
 }
