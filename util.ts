@@ -1,8 +1,6 @@
  import {Task,RunSingleOptions} from './interface.ts';
- import {log as logFn,resolve,ensureDir,dirname} from './deps.ts';
+ import {resolve,ensureDir,dirname} from './deps.ts';
  import config from "./config.json" assert { type: "json" };
-
-export const log = logFn;
 export const get = (obj: unknown, path: string, defaultValue = undefined) => {
   const travel = (regexp: RegExp) =>
     String.prototype.split
@@ -45,6 +43,6 @@ export const createDistFile = async (directory:string,content: string,options:Ru
   await Deno.writeTextFile(filePath, content);
 }
 
-export const getBuildInPath = ():string=>{
-  return config.packageUrlPrefix;
+export const getGlobalPackageUrl = ():string=>{
+  return config.globalPackageUrl;
 }

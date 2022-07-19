@@ -11,7 +11,7 @@ export {
 import * as log from "https://deno.land/std@0.148.0/log/mod.ts";
 export { log };
 export {
-  bold,
+  dim,
   gray,
   green,
   red,

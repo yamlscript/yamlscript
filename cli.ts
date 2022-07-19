@@ -1,6 +1,8 @@
 import { Command, EnumType } from "./deps.ts";
 import { run } from "./run.ts";
+import log from "./log.ts";
 import { RunOptions } from "./interface.ts";
+import { LevelName } from "./internal-interface.ts";
 import config from "./config.json" assert { type: "json" };
 if (import.meta.main) {
   await new Command()
@@ -19,7 +21,17 @@ if (import.meta.main) {
     .option("--dist <dist>", "dist directory.")
     .arguments("[file:string]")
     .action(async (options, ...args) => {
-      console.log("cli options", options, args);
+      let logLevel: LevelName = "info";
+      if (options.debug) {
+        logLevel = "debug";
+      } else if (options.verbose) {
+        logLevel = "debug";
+      } else {
+        logLevel = options.logLevel;
+      }
+      log.setLevel(logLevel);
+      log.debug("cli options:", options);
+      log.debug("cli args:", args);
       if (args && args.length > 0) {
         const runOptions: RunOptions = {
           files: args as string[],

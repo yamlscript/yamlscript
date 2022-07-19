@@ -3,5 +3,5 @@
   "bin":"yaas",
   "version":"0.0.1",
   "description":"Yaas is a simple, fast, and powerful workflow tool",
-  "packageUrlPrefix":""
+  "globalPackageUrl":"https://raw.githubusercontent.com/theowenyoung/yaas/main/global/mod.ts"
 }

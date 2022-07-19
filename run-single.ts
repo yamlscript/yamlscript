@@ -1,10 +1,11 @@
 import { RunSingleOptions } from "./interface.ts";
 import { compile } from "./template.ts";
 import * as buildin from "./global/mod.ts";
-import { get, log, ctxKeys, createDistFile } from "./util.ts";
+import { get, ctxKeys, createDistFile, getGlobalPackageUrl } from "./util.ts";
+import log from "./log.ts";
 import { gray, green } from "./deps.ts";
 export async function runSingle(options: RunSingleOptions) {
-  console.log("run single options", options);
+  log.debug("run single options", JSON.stringify(options, null, 2));
 
   const { tasks } = options;
 
@@ -22,10 +23,12 @@ export async function runSingle(options: RunSingleOptions) {
     log.debug("use", use);
     // add compile code
     if (get(buildin, use)) {
-      compiledCode += `import { ${use} } from "./buildin/mod.ts";\n`;
+      compiledCode += `import { ${use} } from "${getGlobalPackageUrl()}";\n`;
     } else if (
       typeof (globalThis as Record<string, unknown>)[use] === "function"
     ) {
+      console.log("here");
+
       // const result = await (get(globalThis, use) as Function)(argsObject);
       // console.log("result2", result);
     }
