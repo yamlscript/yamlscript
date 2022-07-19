@@ -3,7 +3,7 @@
 # open <https://requestbin.com/r/enyvb91j5zjv9/23eNPamD4DK4YK1rfEB1FAQOKIj> see
 - use: console.log
   args: "yes"
-- use: fetc
+- use: fetch
   args:
     - https://enyvb91j5zjv9.x.pipedream.net/
     - method: PPP

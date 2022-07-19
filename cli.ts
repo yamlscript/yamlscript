@@ -44,16 +44,17 @@ if (import.meta.main) {
       log.debug("cli options:", options);
       log.debug("cli args:", args);
       if (args && args.length > 0) {
+        const dist = options.dist ?? "./dist";
         const runOptions: RunOptions = {
           files: args as string[],
           isBuild: true,
-          dist: options.dist ?? "dist",
+          dist,
         };
         await run(runOptions);
+        log.info(`build to ${dist} success`);
       } else {
         console.log("no args");
       }
-      console.log("clone command called");
     });
 
   await new Command()

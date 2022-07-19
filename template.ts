@@ -1,7 +1,6 @@
 
 
 import {TemplateSpecs} from './internal-interface.ts';
-import {escapeJSON} from "./util.ts";
 /**
  * 
  * @param str 
