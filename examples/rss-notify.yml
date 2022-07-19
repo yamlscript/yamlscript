@@ -15,6 +15,10 @@
 - from: https://deno.land/std@0.148.0/path/mod.ts
   use: extname
   args: "test.js"
+- use: setVars
+  args:
+    test3: ${result} 
+    test4: teset
 - use: console.log
   args: "${result}"
 - use: fetch
