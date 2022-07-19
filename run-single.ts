@@ -58,8 +58,6 @@ export async function runSingle(options: RunSingleOptions) {
       typeof get(globalThis, use) === "function"
     ) {
       inlineInfo += `use ${green(use)}`;
-      // const result = await (get(globalThis, use) as Function)(argsObject);
-      // console.log("result2", result);
     } else {
       // not found use
       log.fatal(

@@ -1,4 +1,4 @@
-import { fetchRSS } from "https://raw.githubusercontent.com/theowenyoung/yaas/main/global/mod.ts";
+import { fetchRSS } from "https://raw.githubusercontent.com/theowenyoung/yaas/main/globals/mod.ts";
 export default async function main(){
 await fetchRSS("https://actionsflow.github.io/test-page/hn-rss.xml");
 await console.log("yes");
