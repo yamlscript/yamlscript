@@ -5,6 +5,7 @@ export interface RunOptions {
 }
 
 export interface Task {
+  from: string;
   use: string;
   args: unknown[];
 }

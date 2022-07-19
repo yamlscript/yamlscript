@@ -1,6 +1,6 @@
- import {Task,RunSingleOptions} from './interface.ts';
- import {resolve,ensureDir,dirname,basename} from './deps.ts';
- import config from "./config.json" assert { type: "json" };
+import {Task,RunSingleOptions} from './interface.ts';
+import {resolve,ensureDir,dirname,basename} from './deps.ts';
+
 export const get = (obj: unknown, path: string, defaultValue = undefined) => {
   const travel = (regexp: RegExp) =>
     String.prototype.split
@@ -32,6 +32,7 @@ export const escapeJSON = (str: string) => {
  class TaskStructure implements Task {
   use = "";
   args: unknown[] = [];
+  from = "";
 }
 export const ctxKeys = Object.keys(new TaskStructure());
 export const changeExt = (path: string, ext: string) => {
@@ -53,8 +54,4 @@ export const createDistFile = async (content: string,options:RunSingleOptions) =
   await Deno.writeTextFile(runFilePath, runFileContent);
 
 
-}
-
-export const getGlobalPackageUrl = ():string=>{
-  return config.globalPackageUrl;
 }

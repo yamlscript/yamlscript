@@ -1,7 +1,8 @@
 import { RunSingleOptions } from "./interface.ts";
 import { compile } from "./template.ts";
 import * as buildin from "./global/mod.ts";
-import { get, ctxKeys, createDistFile, getGlobalPackageUrl } from "./util.ts";
+import { get, ctxKeys, createDistFile } from "./util.ts";
+import { GLOBAL_PACKAGE_URL, DEFAULT_USE_NAME } from "./constant.ts";
 import log from "./log.ts";
 import { gray, green } from "./deps.ts";
 export async function runSingle(options: RunSingleOptions) {
@@ -14,16 +15,35 @@ export async function runSingle(options: RunSingleOptions) {
   let functionBody = "";
 
   for (const task of tasks) {
-    const { use: rawUse, args: rawArgs } = task;
+    const { from: rawFrom, use: rawUse, args: rawArgs } = task;
     const ctx = {
       title: "test",
     };
-    const useTemplateFn = compile(rawUse, ctxKeys);
-    const use = useTemplateFn(ctx);
-    log.debug("use", use);
+    let use = DEFAULT_USE_NAME;
+    if (rawUse && rawUse.trim() !== "") {
+      const useTemplateFn = compile(rawUse, ctxKeys);
+      use = useTemplateFn(ctx);
+    }
+
+    let inlineInfo = `use {${use}}`;
+    let from: string | undefined;
+    if (rawFrom && rawFrom.trim() !== "") {
+      const fromTemplateFn = compile(rawFrom, ctxKeys);
+      from = fromTemplateFn(ctx);
+      inlineInfo += ` from {${from}}`;
+    }
     // add compile code
-    if (get(buildin, use)) {
-      importCode += `import { ${use} } from "${getGlobalPackageUrl()}";\n`;
+    if (from) {
+      let importPath = "";
+      if (DEFAULT_USE_NAME === use) {
+        // default
+        importPath = DEFAULT_USE_NAME;
+      } else {
+        importPath = `{${use}}`;
+      }
+      importCode += `import ${importPath} from "${from}";\n`;
+    } else if (get(buildin, use)) {
+      importCode += `import { ${use} } from "${GLOBAL_PACKAGE_URL}";\n`;
     } else if (
       typeof (globalThis as Record<string, unknown>)[use] === "function"
     ) {
@@ -32,6 +52,7 @@ export async function runSingle(options: RunSingleOptions) {
       // const result = await (get(globalThis, use) as Function)(argsObject);
       // console.log("result2", result);
     }
+    log.debug(inlineInfo);
     // check rawArgs is array, or object, or other pure type
     const argsTemplateFn = compile(JSON.stringify(rawArgs), ctxKeys);
     const argsString = argsTemplateFn(ctx);
