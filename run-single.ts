@@ -1,7 +1,7 @@
 import { GlobalContext, RunSingleOptions } from "./interface.ts";
 import { compile, convertValueToLiteral } from "./template.ts";
 import * as globals from "./globals/mod.ts";
-import { createDistFile, get } from "./util.ts";
+import { createDistFile, get, isObject } from "./util.ts";
 import {
   COMPILED_CONTEXT_KEYS,
   DEFAULT_USE_NAME,
@@ -94,12 +94,29 @@ export async function runSingle(options: RunSingleOptions) {
       functionBody +=
         `${contextConfig.lastTaskResultName} = await ${use}(${argsFlatten});\n`;
     } else {
-      // as the first one args
-      functionBody +=
-        `${contextConfig.lastTaskResultName} = await ${use}(${(convertValueToLiteral(
-          rawArgs,
-          { public: options.compiledContext },
-        ))});\n`;
+      // if it's setVars
+      if (use === "setVars") {
+        if (isObject(rawArgs) && !Array.isArray(rawArgs)) {
+          const keys = Object.keys(rawArgs);
+          for (const key of keys) {
+            functionBody += `const ${key}=${
+              convertValueToLiteral(rawArgs[key], {
+                public: options.compiledContext,
+              })
+            };\n`;
+          }
+        } else {
+          throw new Error("invalid args, setVars args must be object");
+        }
+      } else {
+        // as the first one args
+        functionBody +=
+          `${contextConfig.lastTaskResultName} = await ${use}(${(convertValueToLiteral(
+            rawArgs,
+            { public: options.compiledContext },
+          ))});\n`;
+      }
+
       // inlineInfo += ` with args: ${JSON.stringify(rawArgs, null, 2)}`;
     }
     log.debug(inlineInfo);
