@@ -1,7 +1,7 @@
 import { Command, EnumType } from "./deps.ts";
 import { run } from "./run.ts";
 import log from "./log.ts";
-import { RunOptions } from "./interface.ts";
+import { RunOptions ,CompiledContext} from "./interface.ts";
 import { LevelName } from "./internal-interface.ts";
 import pkg from "./pkg.json" assert { type: "json" };
 
@@ -17,6 +17,9 @@ const setLogLevel = (options: Record<string, LevelName>) => {
   log.setLevel(logLevel);
 };
 if (import.meta.main) {
+  const compiledContext:CompiledContext = {
+    env: {},
+  };
   const runCommand = new Command()
     .description("run files")
     .arguments("[file:string]")
@@ -28,6 +31,7 @@ if (import.meta.main) {
         const runOptions: RunOptions = {
           files: args as string[],
           isBuild: false,
+          compiledContext,
           dist: "dist", // will not be used in run
         };
         await run(runOptions);
@@ -48,6 +52,7 @@ if (import.meta.main) {
         const runOptions: RunOptions = {
           files: args as string[],
           isBuild: true,
+          compiledContext,
           dist,
         };
         await run(runOptions);

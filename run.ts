@@ -11,6 +11,7 @@ export async function run(options: RunOptions) {
       tasks: tasks,
       isBuild: options.isBuild,
       dist: options.dist,
+      compiledContext:options.compiledContext
     });
   }
 }

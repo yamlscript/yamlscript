@@ -51,4 +51,8 @@ yaas -a
 yaas -d /path/to/dir
 ```
 
-##
+## In favor of Unix?
+
+```yaml
+- use: :mkdir -p /tmp/yaas-test
+```

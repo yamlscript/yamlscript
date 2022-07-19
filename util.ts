@@ -16,6 +16,19 @@ export const get = (obj: unknown, path: string, defaultValue = undefined) => {
   const result = travel(/[,[\]]+?/) || travel(/[,[\].]+?/);
   return result === undefined || result === obj ? defaultValue : result;
 };
+export const formatArg = (arg:unknown)=>{
+  if(typeof arg==='string'){
+    if (arg.startsWith('`') && arg.endsWith('`')) {
+      return arg
+    }else{
+      return JSON.stringify(arg);
+
+    }
+  }else{
+    return JSON.stringify(arg)
+  }
+}
+
 export const escapeJSON = (str: string) => {
   return str
   .replace(/[\\]/g, '\\\\')
@@ -28,13 +41,7 @@ export const escapeJSON = (str: string) => {
   .replace(/[\t]/g, '\\t');
 }
 
- // for getCtxKeys to avoid forgotten keys;
- class TaskStructure implements Task {
-  use = "";
-  args: unknown[] = [];
-  from = "";
-}
-export const ctxKeys = Object.keys(new TaskStructure());
+
 export const changeExt = (path: string, ext: string) => {
   return path.replace(/\.[^.]+$/, ext);
 }

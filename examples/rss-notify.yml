@@ -2,11 +2,21 @@
   args: https://actionsflow.github.io/test-page/hn-rss.xml
 # open <https://requestbin.com/r/enyvb91j5zjv9/23eNPamD4DK4YK1rfEB1FAQOKIj> see
 - use: console.log
-  args: ${{result}}
+  args: 
+    - test${result}
+    - test
+    - test: test
+      name: test2
+      value: "`${result}${result}`"
+- from: https://deno.land/std@0.148.0/path/mod.ts
+  use: extname
+  args: "test.js"
+- use: console.log
+  args: "`${result}`"
 - use: fetch
   args:
     - https://enyvb91j5zjv9.x.pipedream.net/
     - method: PPP
       headers:
         Content-Type: application/json
-      body: ${{JSON.stringify({test:1})}}
+      body: "`${JSON.stringify({test:1})}`"

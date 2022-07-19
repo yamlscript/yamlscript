@@ -1,11 +1,12 @@
 import { RunSingleOptions, GlobalContext } from "./interface.ts";
 import { compile } from "./template.ts";
 import * as globals from "./globals/mod.ts";
-import { get, ctxKeys, createDistFile } from "./util.ts";
+import { get, formatArg,createDistFile } from "./util.ts";
 import {
   GLOBAL_PACKAGE_URL,
   DEFAULT_USE_NAME,
   RUNTIME_FUNCTION_OPTIONS_NAME,
+  COMPILED_CONTEXT_KEYS
 } from "./constant.ts";
 import log from "./log.ts";
 import { green } from "./deps.ts";
@@ -19,25 +20,22 @@ export async function runSingle(options: RunSingleOptions) {
   let importCode = "";
   // for runtime code to import modules
   let runtimeImportCode = "";
+  let functionBody = `let ${contextConfig.lastTaskResultName}=null,${contextConfig.rootName}=null,${contextConfig.envName}=null;\n`;
   // one by one
-  let functionBody = `let ${contextConfig.lastTaskResultName},${contextConfig.rootName},${contextConfig.envName};\n`;
-  const ctx: Record<string, unknown> = {
-    env: {},
-  };
   for (const task of tasks) {
     const { from: rawFrom, use: rawUse, args: rawArgs } = task;
 
     let use = DEFAULT_USE_NAME;
     if (rawUse && rawUse.trim() !== "") {
-      const useTemplateFn = compile(rawUse, ctxKeys);
-      use = useTemplateFn(ctx);
+      const useTemplateFn = compile(rawUse, COMPILED_CONTEXT_KEYS);
+      use = useTemplateFn(options.compiledContext as unknown as  Record<string, unknown>);
     }
 
     let inlineInfo = ``;
     let from: string | undefined;
     if (rawFrom && rawFrom.trim() !== "") {
-      const fromTemplateFn = compile(rawFrom, ctxKeys);
-      from = fromTemplateFn(ctx);
+      const fromTemplateFn = compile(rawFrom, COMPILED_CONTEXT_KEYS);
+      from = fromTemplateFn(options.compiledContext as unknown as  Record<string, unknown>)
     }
     // add compile code
     if (from) {
@@ -54,7 +52,7 @@ export async function runSingle(options: RunSingleOptions) {
     } else if (get(globals, use)) {
       importCode += `import { ${use} } from "${GLOBAL_PACKAGE_URL}";\n`;
       runtimeImportCode += `const { ${use} } = ${RUNTIME_FUNCTION_OPTIONS_NAME}.globals;\n`;
-      inlineInfo += `use { ${green(use)} } from "${GLOBAL_PACKAGE_URL}"`;
+      inlineInfo += `use { ${green(use)} } from "globals/mod.ts"`;
     } else if (
       get(globalThis, use) &&
       typeof get(globalThis, use) === "function"
@@ -69,29 +67,29 @@ export async function runSingle(options: RunSingleOptions) {
       );
     }
     // check rawArgs is array, or object, or other pure type
-    const argsTemplateFn = compile(JSON.stringify(rawArgs), ctxKeys);
-    const argsString = argsTemplateFn(ctx);
-    const args = JSON.parse(argsString);
+    // const argsTemplateFn = compile(JSON.stringify(rawArgs), ctxKeys);
+    // const argsString = argsTemplateFn(ctx);
+    // const args = JSON.parse(argsString);
 
-    if (Array.isArray(args)) {
+    if (Array.isArray(rawArgs)) {
       // array, then put to args
-      const argsFlatten = args.map((item) => JSON.stringify(item)).join(",");
-      const argsPrint = args
-        .map((item) => JSON.stringify(item, null, 2))
-        .join(" ");
+      const argsFlatten = rawArgs.map((arg) => formatArg(arg)).join(",");
+      // const argsPrint = rawArgs
+      //   .map((item) => JSON.stringify(item, null, 2))
+      //   .join(" ");
 
-      inlineInfo += ` with args: ${argsPrint}`;
+      // inlineInfo += ` with args: ${argsPrint}`;
 
       functionBody += `${contextConfig.lastTaskResultName} = await ${use}(${argsFlatten});\n`;
     } else {
       // as the first one args
-      functionBody += `${contextConfig.lastTaskResultName} = await ${use}(${JSON.stringify(args)});\n`;
-      inlineInfo += ` with args: ${JSON.stringify(args, null, 2)}`;
+      functionBody += `${contextConfig.lastTaskResultName} = await ${use}(${formatArg(rawArgs)});\n`;
+      // inlineInfo += ` with args: ${JSON.stringify(rawArgs, null, 2)}`;
     }
     log.debug(inlineInfo);
 
 
-    
+
   }
 
   const runtimeCode = `${runtimeImportCode}\n${functionBody}`;
