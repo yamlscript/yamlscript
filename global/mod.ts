@@ -1,0 +1,1 @@
+export {fetchRSS} from './fetch-rss.ts';
