@@ -1,13 +1,17 @@
 import { RunSingleOptions } from "./interface.ts";
 import { compile } from "./template.ts";
-import * as buildin from "./global/mod.ts";
+import * as globals from "./globals/mod.ts";
 import { get, ctxKeys, createDistFile } from "./util.ts";
-import { GLOBAL_PACKAGE_URL, DEFAULT_USE_NAME } from "./constant.ts";
+import {
+  GLOBAL_PACKAGE_URL,
+  DEFAULT_USE_NAME,
+  RUNTIME_FUNCTION_OPTIONS_NAME,
+} from "./constant.ts";
 import log from "./log.ts";
-import { gray, green } from "./deps.ts";
+import { green } from "./deps.ts";
 export async function runSingle(options: RunSingleOptions) {
   log.debug("run single options", JSON.stringify(options, null, 2));
-
+  log.info(`start run ${options.relativePath}`);
   const { tasks } = options;
   // for precompiled code to import modules
   let importCode = "";
@@ -45,9 +49,9 @@ export async function runSingle(options: RunSingleOptions) {
       importCode += `import ${importPath} from "${from}";\n`;
       runtimeImportCode += `const ${importPath} = import("${from}");\n`;
       inlineInfo += `use ${green(importPath)} from {${from}}`;
-    } else if (get(buildin, use)) {
+    } else if (get(globals, use)) {
       importCode += `import { ${use} } from "${GLOBAL_PACKAGE_URL}";\n`;
-      runtimeImportCode += `const { ${use} } = import("./global/mod.ts");\n`;
+      runtimeImportCode += `const { ${use} } = ${RUNTIME_FUNCTION_OPTIONS_NAME}.globals;\n`;
       inlineInfo += `use { ${green(use)} } from "${GLOBAL_PACKAGE_URL}"`;
     } else if (
       get(globalThis, use) &&
@@ -58,7 +62,11 @@ export async function runSingle(options: RunSingleOptions) {
       // console.log("result2", result);
     } else {
       // not found use
-      log.error(`not found function ${use}`);
+      log.fatal(
+        `can't found function ${green(use)}, did you forget \`${green(
+          "from"
+        )}\` param?`
+      );
     }
     // check rawArgs is array, or object, or other pure type
     const argsTemplateFn = compile(JSON.stringify(rawArgs), ctxKeys);
@@ -87,12 +95,23 @@ export async function runSingle(options: RunSingleOptions) {
 
   const compiledModuleCode =
     importCode + `export default async function main(){\n${functionBody}\n}`;
-  console.log("compiledModuleCode", compiledModuleCode);
   if (options.isBuild) {
     await createDistFile(compiledModuleCode, options);
   } else {
     // run
-    const runtimeFn = new Function(runtimeCode);
-    runtimeFn().catch(log.error);
+    const AsyncFunction = Object.getPrototypeOf(
+      async function () {}
+    ).constructor;
+
+    const runtimeFn = new AsyncFunction(
+      RUNTIME_FUNCTION_OPTIONS_NAME,
+      runtimeCode
+    );
+    runtimeFn({
+      globals: globals,
+    }).catch((e: Error) => {
+      log.debug("runtimeCode", runtimeCode);
+      log.fatal(e.message);
+    });
   }
 }

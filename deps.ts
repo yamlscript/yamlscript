@@ -33,4 +33,3 @@ export {
 } from "https://deno.land/x/cliffy@v0.24.2/command/mod.ts";
 export { UpgradeCommand } from "https://deno.land/x/cliffy@v0.24.2/command/upgrade/upgrade_command.ts";
 export { DenoLandProvider } from "https://deno.land/x/cliffy@v0.24.2/command/upgrade/provider/deno_land.ts";
-export { default as Template } from "https://esm.sh/handlebars@4.7.7";

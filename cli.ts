@@ -61,13 +61,13 @@ if (import.meta.main) {
     .version(config.version)
     .description(config.description)
     .type("log-level", new EnumType(["debug", "info", "warn", "error"]))
-    .option("-d, --debug", "Enable debug output.")
-    .option("-v, --verbose", "Enable verbose output.")
-    .option("-l, --log-level <level:log-level>", "Set log level.", {
+    .globalOption("-d, --debug", "Enable debug output.")
+    .globalOption("-v, --verbose", "Enable verbose output.")
+    .globalOption("-l, --log-level <level:log-level>", "Set log level.", {
       default: "info" as const,
     })
-    .option("-a, --all", "All.")
-    .option("-d, --directory", "directory.")
+    .globalOption("-a, --all", "All.")
+    .globalOption("-d, --directory", "directory.")
     .command("run", runCommand)
     .command("build", buildCommand)
     .parse(Deno.args);

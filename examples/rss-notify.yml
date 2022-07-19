@@ -3,10 +3,10 @@
 # open <https://requestbin.com/r/enyvb91j5zjv9/23eNPamD4DK4YK1rfEB1FAQOKIj> see
 - use: console.log
   args: "yes"
-- use: fetch
+- use: fetc
   args:
     - https://enyvb91j5zjv9.x.pipedream.net/
-    - method: POST
+    - method: PPP
       headers:
         Content-Type: application/json
       body: ${{JSON.stringify({test:1})}}
