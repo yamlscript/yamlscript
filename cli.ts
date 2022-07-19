@@ -19,6 +19,7 @@ const setLogLevel = (options: Record<string, LevelName>) => {
 if (import.meta.main) {
   const compiledContext:CompiledContext = {
     env: {},
+    os:{}
   };
   const runCommand = new Command()
     .description("run files")
@@ -36,7 +37,7 @@ if (import.meta.main) {
         };
         await run(runOptions);
       } else {
-        console.log("no args");
+        log.debug("no args");
       }
     });
   const buildCommand = new Command()

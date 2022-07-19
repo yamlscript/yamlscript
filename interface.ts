@@ -7,9 +7,13 @@ export interface Task {
 }
 export interface CompiledContext {
   env: Record<string, string>;
+  os: Record<string, string>;
 }
 export interface GlobalContext {
   env: Record<string, string>;
+}
+export interface Context {
+  public: CompiledContext;
 }
 export interface RunOptions {
   files: string[];

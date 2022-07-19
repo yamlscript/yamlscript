@@ -14,7 +14,7 @@ Let's say we have `a.yml` with:
   args:
       - https://actionsflow.github.io/test-page/hn-rss.xml
 # open <https://requestbin.com/r/enyvb91j5zjv9/23eNPamD4DK4YK1rfEB1FAQOKIj> see
-- loop: ${{last.result.items}}
+- loop: ${{result.items}}
   use: fetch
   args:
       - https://enyvb91j5zjv9.x.pipedream.net/

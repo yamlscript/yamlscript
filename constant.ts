@@ -5,6 +5,7 @@ import { CompiledContext } from './interface.ts'
  // for getCtxKeys to avoid forgotten keys;
  class CompiledContextClass implements CompiledContext {
   env={}
+  os={}
 }
 export const COMPILED_CONTEXT_KEYS = Object.keys(new CompiledContextClass());
 export const DEFAULT_USE_NAME=`__${pkg.bin}_default_use`;

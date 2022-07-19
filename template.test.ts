@@ -1,5 +1,5 @@
 import { assertEquals ,assertThrows} from "./deps.ts";
-import { template,precompile,isIncludeTemplate } from "./template.ts";
+import { template,precompile,isIncludeTemplate,convertValueToLiteral } from "./template.ts";
 // Simple name and function, compact form, but not configurable
 Deno.test("template #1",  () => {
   const result =  template("Test ${name}", {
@@ -106,7 +106,29 @@ Deno.test("isIncludeTemplate #10",()=>{
   assertEquals(result,true);
 })
 
-Deno.test("isIncludeTemplate #10",()=>{
+Deno.test("isIncludeTemplate #11",()=>{
   const result = isIncludeTemplate("Test ${test} \\${name}");
   assertEquals(result,true);
+})
+
+Deno.test("convertValueToLiteral #12",()=>{
+  const result = convertValueToLiteral({
+    content:"Deno",
+    name:"${name}222",
+    os:"${ctx.os.name}",
+    obj: {
+      name: "test${ctx.os.name}22"
+    }
+  },{
+     public:{
+      env:{},
+      os:{
+        "name":"macos"
+      },
+      
+    }
+  });
+  assertEquals(typeof result,'string');
+  
+  assertEquals(result,'{"content":"Deno","name":`${name}222`,"os":"macos",  "obj": {"name":"testmacos22"  }}');
 })
