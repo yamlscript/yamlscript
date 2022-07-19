@@ -3,7 +3,7 @@ import { run } from "./run.ts";
 import log from "./log.ts";
 import { RunOptions } from "./interface.ts";
 import { LevelName } from "./internal-interface.ts";
-import config from "./config.json" assert { type: "json" };
+import pkg from "./pkg.json" assert { type: "json" };
 
 const setLogLevel = (options: Record<string, LevelName>) => {
   let logLevel: LevelName = "info";
@@ -58,9 +58,9 @@ if (import.meta.main) {
     });
 
   await new Command()
-    .name(config.bin)
-    .version(config.version)
-    .description(config.description)
+    .name(pkg.bin)
+    .version(pkg.version)
+    .description(pkg.description)
     .type("log-level", new EnumType(["debug", "info", "warn", "error"]))
     .globalOption("-d, --debug", "Enable debug output.")
     .globalOption("-v, --verbose", "Enable verbose output.")

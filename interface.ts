@@ -9,6 +9,9 @@ export interface Task {
   use: string;
   args: unknown[];
 }
+export interface GlobalContext {
+  env: Record<string, string>;
+}
 
 export interface RunSingleOptions {
   relativePath: string;

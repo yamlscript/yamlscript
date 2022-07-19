@@ -1,4 +1,4 @@
-import { RunSingleOptions } from "./interface.ts";
+import { RunSingleOptions, GlobalContext } from "./interface.ts";
 import { compile } from "./template.ts";
 import * as globals from "./globals/mod.ts";
 import { get, ctxKeys, createDistFile } from "./util.ts";
@@ -9,6 +9,8 @@ import {
 } from "./constant.ts";
 import log from "./log.ts";
 import { green } from "./deps.ts";
+import config from "./config.json" assert { type: "json" };
+const contextConfig = config.context;
 export async function runSingle(options: RunSingleOptions) {
   log.debug("run single options", JSON.stringify(options, null, 2));
   log.info(`start run ${options.relativePath}`);
@@ -18,13 +20,13 @@ export async function runSingle(options: RunSingleOptions) {
   // for runtime code to import modules
   let runtimeImportCode = "";
   // one by one
-  let functionBody = "";
-
+  let functionBody = `let ${contextConfig.lastTaskResultName},${contextConfig.rootName},${contextConfig.envName};\n`;
+  const ctx: Record<string, unknown> = {
+    env: {},
+  };
   for (const task of tasks) {
     const { from: rawFrom, use: rawUse, args: rawArgs } = task;
-    const ctx = {
-      title: "test",
-    };
+
     let use = DEFAULT_USE_NAME;
     if (rawUse && rawUse.trim() !== "") {
       const useTemplateFn = compile(rawUse, ctxKeys);
@@ -80,13 +82,16 @@ export async function runSingle(options: RunSingleOptions) {
 
       inlineInfo += ` with args: ${argsPrint}`;
 
-      functionBody += `await ${use}(${argsFlatten});\n`;
+      functionBody += `${contextConfig.lastTaskResultName} = await ${use}(${argsFlatten});\n`;
     } else {
       // as the first one args
-      functionBody += `await ${use}(${JSON.stringify(args)});\n`;
+      functionBody += `${contextConfig.lastTaskResultName} = await ${use}(${JSON.stringify(args)});\n`;
       inlineInfo += ` with args: ${JSON.stringify(args, null, 2)}`;
     }
     log.debug(inlineInfo);
+
+
+    
   }
 
   const runtimeCode = `${runtimeImportCode}\n${functionBody}`;

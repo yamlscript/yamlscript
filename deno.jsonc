@@ -1,0 +1,7 @@
+{
+  "tasks": {
+    "test": "deno test -A && deno check --config=www/deno.json www/main.ts www/dev.ts && deno check init.ts",
+    "fixture": "deno run -A --watch=static/,routes/ tests/fixture/dev.ts",
+    "www": "deno run -A --watch=static/,routes/ www/dev.ts"
+  }
+}
