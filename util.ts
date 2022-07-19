@@ -1,5 +1,5 @@
  import {Task,RunSingleOptions} from './interface.ts';
- import {resolve,ensureDir,dirname} from './deps.ts';
+ import {resolve,ensureDir,dirname,basename} from './deps.ts';
  import config from "./config.json" assert { type: "json" };
 export const get = (obj: unknown, path: string, defaultValue = undefined) => {
   const travel = (regexp: RegExp) =>
@@ -37,10 +37,22 @@ export const ctxKeys = Object.keys(new TaskStructure());
 export const changeExt = (path: string, ext: string) => {
   return path.replace(/\.[^.]+$/, ext);
 }
-export const createDistFile = async (directory:string,content: string,options:RunSingleOptions) => {
-  const filePath =resolve(options.dist,directory,changeExt(options.relativePath,'.js'));
-  await ensureDir(dirname(filePath))
-  await Deno.writeTextFile(filePath, content);
+export const createDistFile = async (content: string,options:RunSingleOptions) => {
+
+  const moduleFilerelativePath = changeExt(options.relativePath,".module.js");
+  const runFilerelativePath = changeExt(options.relativePath,".js");
+
+  const moduleFileName = basename(moduleFilerelativePath);
+  const moduleFilePath =resolve(options.dist,moduleFilerelativePath);
+  await ensureDir(dirname(moduleFilePath))
+  await Deno.writeTextFile(moduleFilePath, content);
+
+  // then create run file
+  const runFileContent = `import main from "./${moduleFileName}";\nmain().catch(console.error);`
+  const runFilePath = resolve(options.dist,runFilerelativePath);
+  await Deno.writeTextFile(runFilePath, runFileContent);
+
+
 }
 
 export const getGlobalPackageUrl = ():string=>{

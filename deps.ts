@@ -22,6 +22,7 @@ export {
   normalize,
   resolve,
   dirname,
+  basename,
 } from "https://deno.land/std@0.148.0/path/mod.ts";
 
 export { ensureDir } from "https://deno.land/std@0.148.0/fs/mod.ts";

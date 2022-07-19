@@ -9,9 +9,9 @@ export async function runSingle(options: RunSingleOptions) {
 
   const { tasks } = options;
 
-  let compiledCode = "";
-
+  let importCode = "";
   // one by one
+  let functionBody = "";
 
   for (const task of tasks) {
     const { use: rawUse, args: rawArgs } = task;
@@ -23,7 +23,7 @@ export async function runSingle(options: RunSingleOptions) {
     log.debug("use", use);
     // add compile code
     if (get(buildin, use)) {
-      compiledCode += `import { ${use} } from "${getGlobalPackageUrl()}";\n`;
+      importCode += `import { ${use} } from "${getGlobalPackageUrl()}";\n`;
     } else if (
       typeof (globalThis as Record<string, unknown>)[use] === "function"
     ) {
@@ -39,12 +39,12 @@ export async function runSingle(options: RunSingleOptions) {
     log.debug("args", JSON.stringify(args, null, 2));
     if (Array.isArray(args)) {
       // array, then put to args
-      compiledCode += `await ${use}(${args
+      functionBody += `await ${use}(${args
         .map((item) => JSON.stringify(item))
         .join(",")});\n`;
     } else {
       // as the first one args
-      compiledCode += `await ${use}(${JSON.stringify(args)});\n`;
+      functionBody += `await ${use}(${JSON.stringify(args)});\n`;
     }
 
     // check result if internal
@@ -58,8 +58,10 @@ export async function runSingle(options: RunSingleOptions) {
     //   console.log("result2", result);
     // }
   }
-  console.log("compiledCode", compiledCode);
+  const compiledModuleCode =
+    importCode + `export default async function main(){\n${functionBody}\n}`;
+  console.log("compiledModuleCode", compiledModuleCode);
   if (options.buildDenoDeploy) {
-    await createDistFile("deno-deploy", compiledCode, options);
+    await createDistFile(compiledModuleCode, options);
   }
 }
