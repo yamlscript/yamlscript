@@ -2,7 +2,7 @@ export interface Task {
   from?: string;
   use?: string;
   args?: unknown[];
-  loop?: string;
+  loop?: string | number | unknown[];
 }
 export interface CompiledContext {
   env: Record<string, string>;
