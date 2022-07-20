@@ -1,4 +1,10 @@
-import { PublicContext, Task, TasksOptions } from "./interface.ts";
+import {
+  PublicContext,
+  Task,
+  TasksOptions,
+  UseProperties,
+  UseType,
+} from "./interface.ts";
 /**
  * internal files
  */
@@ -20,24 +26,10 @@ export interface FileCode {
   runtimeImportCode: string;
   mainFunctionBody: string;
 }
-export enum UseType {
-  RuntimeFunction,
-  GlobalsFunction,
-  ThirdPartyFunction,
-  UserFunction,
-  AsyncRuntimeFunction,
-  AsyncGlobalsFunction,
-  AsyncThirdPartyFunction,
-  AsyncUserFunction,
-  SetVars,
-  Command,
-  Default,
-}
 
 export interface LiteralCode {
   use?: string;
   from?: string;
-  useType?: UseType;
   importCode?: string;
   runtimeImportCode?: string;
   mainFunctionBody?: string;
@@ -45,12 +37,12 @@ export interface LiteralCode {
   subTasks?: LiteralCode[];
   infoLog?: string;
   debugLog?: string;
+  tasksOptions?: TasksOptions;
 }
 
 export interface StrictLiteralCode extends LiteralCode {
   use: string;
   from: string;
-  useType: UseType;
   importCode: string;
   runtimeImportCode: string;
   mainFunctionBody: string;
@@ -58,6 +50,7 @@ export interface StrictLiteralCode extends LiteralCode {
   subTasks: LiteralCode[];
   infoLog: string;
   debugLog: string;
+  tasksOptions: StrictTasksOptions;
 }
 export interface TasksCode {
   moduleFileCode: string;
@@ -69,9 +62,12 @@ export interface BuiltCode {
   runFilePath: string;
   moduleFilePath: string;
 }
+
 export interface StrictTasksOptions extends TasksOptions {
   public: PublicContext;
   indent: number;
+  varsMap: Record<string, boolean>;
+  usesMap: Record<string, UseProperties>;
 }
 export interface StrictTask extends Task {
   args: unknown[];

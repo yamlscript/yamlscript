@@ -24,9 +24,27 @@ export interface EntryOptions {
   isBuild: boolean;
   public?: PublicContext;
 }
+export enum UseType {
+  RuntimeFunction,
+  GlobalsFunction,
+  ThirdPartyFunction,
+  UserFunction,
+  AsyncRuntimeFunction,
+  AsyncGlobalsFunction,
+  AsyncThirdPartyFunction,
+  AsyncUserFunction,
+  SetVars,
+  Command,
+  Default,
+}
+export interface UseProperties {
+  type: UseType;
+}
 export interface TasksOptions {
   public?: PublicContext;
   indent?: number;
+  uniqueVars?: Record<string, boolean>;
+  usesMap?: Record<string, UseProperties>;
 }
 
 export interface RunTasksOptions extends TasksOptions {

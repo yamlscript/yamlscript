@@ -1,8 +1,3 @@
-.Phony: run
-run:
-	@echo "Running..."
-	deno run --allow-read --allow-write --allow-net cli.ts run examples/rss-notify.yml
-	@echo "Done."
 
 .Phony: build
 build:
@@ -33,3 +28,21 @@ t:
 .Phony: tt
 tt:
 	make test
+# for quick run some tests
+.Phony: r
+r:
+	@echo "Running..."
+	deno run --allow-read --allow-write --allow-net cli.ts run examples/full.ysh.yml
+	@echo "Done."
+# for quick run some tests
+.Phony: b
+b:
+	@echo "Running..."
+	deno run --allow-read --allow-write --allow-net cli.ts build examples/full.ysh.yml
+	@echo "Done."
+# for quick run some tests
+.Phony: d
+d:
+	@echo "Running..."
+	deno run --allow-read --allow-write --allow-net dist/examples/full.js
+	@echo "Done."

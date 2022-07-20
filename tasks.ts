@@ -1,10 +1,9 @@
 import {
-  BuildContext,
   BuildTasksOptions,
-  PublicContext,
   RunTasksOptions,
   Task,
   TasksOptions,
+  UseType,
 } from "./interface.ts";
 import {
   BuiltCode,
@@ -15,7 +14,6 @@ import {
   StrictTask,
   StrictTasksOptions,
   TasksCode,
-  UseType,
 } from "./_interface.ts";
 
 import {
@@ -230,7 +228,7 @@ function transformUseCall(
     // check if use is command
     if (isCommand(use)) {
       mainFunctionBody += transformCommandCall(task, options).mainFunctionBody;
-    } else {
+    } else if (use) {
       // consider as function
       // array, then put args to literal args
       // constructor.name
@@ -251,16 +249,28 @@ function transformUseCall(
 
 /**
  * parse from and use
+ * should check import path duplicate
  * @param raw
  */
 function transformImport(
   task: StrictTask,
-  options: StrictTasksOptions,
+  originalOptions: StrictTasksOptions,
 ): LiteralCode {
   const { from: rawFrom, use: rawUse } = task;
+  const options = {
+    ...originalOptions,
+  };
+  const varsMap = {
+    ...options.varsMap,
+  };
+  const usesMap = {
+    ...options.usesMap,
+  };
+  options.varsMap = varsMap;
+  options.usesMap = usesMap;
   let importCode = "";
   let runtimeImportCode = "";
-  let use = DEFAULT_USE_NAME;
+  let use = "";
   if (rawUse && rawUse.trim() !== "") {
     const useTemplateFn = compile(rawUse, COMPILED_CONTEXT_KEYS);
     use = useTemplateFn(options.public);
@@ -268,11 +278,13 @@ function transformImport(
 
   if (use === "setVars") {
     // no more import
-    return { use: use, useType: UseType.SetVars };
+    usesMap[use] = { type: UseType.SetVars };
+    return { use: use, tasksOptions: options };
   } else if (isCommand(use)) {
     // no more import
     // cmd
-    return { use: use, useType: UseType.Command };
+    usesMap[use] = { type: UseType.Command };
+    return { use: use, tasksOptions: options };
   }
 
   let debugLog = ``;
@@ -284,43 +296,58 @@ function transformImport(
   // add compile code
   if (from) {
     let importPath = "";
-    if (DEFAULT_USE_NAME === use) {
+    let importVar = "";
+    if (!use) {
       // default
       // use if empty, we will give it a default random name
       importPath = DEFAULT_USE_NAME + "_" + task.taskIndex;
       use = importPath;
+      importVar = importPath;
     } else {
-      importPath = getImportPathValue(use);
+      const importPathValue = getImportPathValue(use);
+      importPath = importPathValue[0];
+      importVar = importPathValue[1];
     }
     importCode += `import ${importPath} from "${from}";\n`;
     runtimeImportCode += `const ${importPath} = await import("${from}");\n`;
-
-    // try to get the function type
-    // TODO: get the function type
+    setVarsMap(varsMap, importVar);
+    // TODO: check function type
+    // async or other
+    usesMap[use] = { type: UseType.Default };
 
     debugLog += `use ${green(importPath)} from {${from}}`;
-  } else if (get(globals, use)) {
+  } else if (use && get(globals, use)) {
     //
-    const importPath = getImportPathValue(use);
-
+    const importPathValue = getImportPathValue(use);
+    const importPath = importPathValue[0];
+    const importVar = importPathValue[1];
+    setVarsMap(varsMap, importVar);
+    // TODO check useType
+    usesMap[use] = { type: UseType.Default };
     importCode += `import ${importPath} from "${GLOBAL_PACKAGE_URL}";\n`;
     runtimeImportCode +=
       `const ${importPath} = ${RUNTIME_FUNCTION_OPTIONS_NAME}.globals;\n`;
     debugLog += `use { ${green(use)} } from "globals/mod.ts"`;
   } else if (
-    get(globalThis, use) &&
+    use && get(globalThis, use) &&
     typeof get(globalThis, use) === "function"
   ) {
+    // global runtime use
+    // do not need to import
     debugLog += `use ${green(use)}`;
   } else {
-    // not found use
-    log.fatal(
-      `can't found function ${green(use)}, did you forget \`${
-        green(
-          "from",
-        )
-      }\` param?`,
-    );
+    if (use) {
+      // not found use
+      log.fatal(
+        `can't found function ${green(use)}, did you forget \`${
+          green(
+            "from",
+          )
+        }\` param?`,
+      );
+    } else {
+      // ignore, no use.
+    }
   }
   return {
     use: use,
@@ -330,10 +357,15 @@ function transformImport(
     debugLog,
   };
 }
-
+function setVarsMap(varsMap: Record<string, boolean>, importVar: string) {
+  if (varsMap[importVar]) {
+    throw new Error(`duplicate  var name ${importVar}`);
+  } else {
+    varsMap[importVar] = true;
+  }
+}
 function formatLiteralCode(result: LiteralCode): StrictLiteralCode {
   return {
-    useType: result.useType ?? UseType.Default,
     use: result.use ?? "",
     from: result.from ?? "",
     mainFunctionBody: result.mainFunctionBody ?? "",
@@ -343,6 +375,9 @@ function formatLiteralCode(result: LiteralCode): StrictLiteralCode {
     runtimeImportCode: result.runtimeImportCode ?? "",
     functions: result.functions ?? [],
     subTasks: result.subTasks ?? [],
+    tasksOptions: result.tasksOptions
+      ? getDefaultTasksOptions(result.tasksOptions)
+      : getDefaultTasksOptions({}),
   };
 }
 
@@ -353,6 +388,8 @@ function getDefaultTasksOptions(
     ...tasksOptions,
     public: tasksOptions.public ?? getDefaultPublicContext(),
     indent: tasksOptions.indent ?? 0,
+    varsMap: tasksOptions.uniqueVars ?? {},
+    usesMap: tasksOptions.usesMap ?? {},
   };
 }
 function getDefaultTaskOptions(
@@ -386,14 +423,16 @@ function withIndent(code: string, indent: number): string {
   );
 }
 
-function getImportPathValue(use: string): string {
+function getImportPathValue(use: string): string[] {
   let importPath = `{ ${use} }`;
+  let importVar = use;
   const useDotIndex = use.indexOf(".");
   // test if use include ., like rss.entries, _.get
   if (useDotIndex > 0) {
+    importVar = use.slice(0, useDotIndex);
     importPath = `{ ${use.slice(0, useDotIndex)} }`;
   }
-  return importPath;
+  return [importPath, importVar];
 }
 
 function transformCommandCall(
