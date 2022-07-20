@@ -1,9 +1,8 @@
-
-
 export interface Task {
-  from: string;
-  use: string;
-  args: unknown[];
+  from?: string;
+  use?: string;
+  args?: unknown[];
+  loop?: string;
 }
 export interface CompiledContext {
   env: Record<string, string>;
@@ -15,16 +14,22 @@ export interface GlobalContext {
 export interface Context {
   public: CompiledContext;
 }
-export interface RunOptions {
+export interface EntryOptions {
   files: string[];
   dist: string;
   isBuild: boolean;
-  compiledContext:CompiledContext;
-}
-export interface RunSingleOptions {
-  relativePath: string;
-  tasks: Task[];
-  isBuild: boolean;
-  dist: string;
   compiledContext: CompiledContext;
+}
+export interface TasksOptions {
+  compiledContext: CompiledContext;
+  indent?: number;
+}
+
+export interface RunTasksOptions extends TasksOptions {
+  relativePath: string;
+}
+
+export interface BuildTasksOptions extends TasksOptions {
+  dist?: string;
+  relativePath: string;
 }

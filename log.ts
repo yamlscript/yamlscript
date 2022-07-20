@@ -1,6 +1,5 @@
 import { dim, green, red, yellow } from "./deps.ts";
-import { Level, LevelName} from './internal-interface.ts'
-
+import { Level, LevelName } from "./_interface.ts";
 
 export class Timing {
   #t = performance.now();

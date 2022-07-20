@@ -1,15 +1,15 @@
-# YAAS
+# Ysh
 
-YAML as a shell!
+YAML shell!
 
 > Work in progress.
 
 ## Usage
 
-Let's say we have `a.yml` with:
+Let's say we have `a.ysh.yml` with:
 
 ```yaml
-#!/usr/bin/env yaas
+#!/usr/bin/env ysh
 - use: fetch-rss
   args:
       - https://actionsflow.github.io/test-page/hn-rss.xml
@@ -27,13 +27,13 @@ Let's say we have `a.yml` with:
 Run it:
 
 ```bash
-yaas a.yml
+ysh a.ysh.yml
 ```
 
 Or, you can directly run it:
 
 ```bash
-chmod +x a.yml
+chmod +x a.yash.yml
 ./a.yml
 ```
 
@@ -42,17 +42,112 @@ chmod +x a.yml
 this will run all the shells in the current directory:
 
 ```bash
-yaas -a
+ysh -a
 ```
 
 ## run all yaml in some directory
 
 ```bash
-yaas -d /path/to/dir
+ysh -d /path/to/dir
 ```
 
 ## In favor of Unix?
 
 ```yaml
-- use: :mkdir -p /tmp/yaas-test
+- cmd: mkdir -p /tmp/ysh-test
 ```
+
+## Keywords
+
+### `from`
+
+### `use`
+
+for builds:
+
+```yaml
+- use: fetchRSS
+```
+
+for third-party modules:
+
+```yaml
+- from: https://deno.land/std@0.148.0/path/mod.ts
+  use: extname
+  args: "test.js"
+```
+
+for cmd:
+
+```yaml
+- use: :mkdir
+  args:
+    - -p
+    - /tmp/ysh-test
+```
+
+### `args`
+
+### `loop`
+
+### `if`
+
+### `id`
+
+```yaml
+- id: test
+```
+
+```yaml
+# this will define a function, will not be called 
+- id: _test
+```
+
+
+### assert
+
+Simple:
+
+
+```yaml
+- use: asserts.assert
+  args:
+      - "{{result.foo}}"
+      - "bar"
+```
+
+```yaml
+```
+
+
+And:
+
+```yaml
+assert:
+  - ${result}==true
+  - ${result}==fals
+```
+
+Or:
+
+```yaml
+assertOr:
+  - ${result}==true
+  - ${result}==fals
+```
+```
+
+
+### `fn`
+
+
+```yaml
+- id: _onFetch
+  from: ./rss-notify.ysh.yml
+- use: addEventListener
+  args:
+    - fetch
+    - _onFetch
+```
+
+### `tasks`

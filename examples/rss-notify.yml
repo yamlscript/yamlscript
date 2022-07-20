@@ -1,30 +1,18 @@
 - use: setVars
   args:
-    test: test
+    allItems: 
+      - 1
+      - 9
     test2: teset
-- use: fetchRSS
-  args: https://actionsflow.github.io/test-page/hn-rss.xml
-# open <https://requestbin.com/r/enyvb91j5zjv9/23eNPamD4DK4YK1rfEB1FAQOKIj> see
-- use: console.log
-  args: 
-    - test${result}
-    - test
-    - test: test
-      name: test2
-      value: "${result}"
-- from: https://deno.land/std@0.148.0/path/mod.ts
-  use: extname
-  args: "test.js"
-- use: setVars
+- id: _test
+  loop:
+    - 1
+    - ${test2}
+  use: console.log
   args:
-    test3: ${result} 
-    test4: teset
-- use: console.log
-  args: "${result}"
-- use: fetch
-  args:
-    - https://enyvb91j5zjv9.x.pipedream.net/
-    - method: PPP
-      headers:
-        Content-Type: application/json
-      body: ${JSON.stringify({test:1})}
+    - ${item}
+    - ${index}
+    - ${item}
+    - ${index}
+  
+

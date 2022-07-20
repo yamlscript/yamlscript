@@ -1,8 +1,8 @@
 import { Command, EnumType } from "./deps.ts";
-import { run } from "./run.ts";
+import { run } from "./entry.ts";
 import log from "./log.ts";
-import { RunOptions ,CompiledContext} from "./interface.ts";
-import { LevelName } from "./internal-interface.ts";
+import { CompiledContext, EntryOptions } from "./interface.ts";
+import { LevelName } from "./_interface.ts";
 import pkg from "./pkg.json" assert { type: "json" };
 
 const setLogLevel = (options: Record<string, LevelName>) => {
@@ -17,9 +17,9 @@ const setLogLevel = (options: Record<string, LevelName>) => {
   log.setLevel(logLevel);
 };
 if (import.meta.main) {
-  const compiledContext:CompiledContext = {
+  const compiledContext: CompiledContext = {
     env: {},
-    os:{}
+    os: {},
   };
   const runCommand = new Command()
     .description("run files")
@@ -29,7 +29,7 @@ if (import.meta.main) {
       log.debug("cli options:", options);
       log.debug("cli args:", args);
       if (args && args.length > 0) {
-        const runOptions: RunOptions = {
+        const runOptions: EntryOptions = {
           files: args as string[],
           isBuild: false,
           compiledContext,
@@ -50,7 +50,7 @@ if (import.meta.main) {
       log.debug("cli args:", args);
       if (args && args.length > 0) {
         const dist = options.dist ?? "./dist";
-        const runOptions: RunOptions = {
+        const runOptions: EntryOptions = {
           files: args as string[],
           isBuild: true,
           compiledContext,
