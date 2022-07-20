@@ -1,0 +1,11 @@
+- use: :rm
+  args: -r ./.ysh/__fixtures__
+- use: :deno
+  args:
+    - test
+    - tasks.test.ts
+- use: :cp
+  args:
+    - -r
+    - ./.ysh/__fixtures__
+    - ./__fixtures__

@@ -1,2 +1,15 @@
 export * as rss from "./rss.ts";
-export const setVars = true; // the function is defined in run-single.ts
+export { _ } from "../deps.ts";
+export {
+  assert,
+  assertAlmostEquals,
+  assertArrayIncludes,
+  assertEquals,
+  assertExists,
+  assertMatch,
+  assertNotEquals,
+  assertNotMatch,
+  assertObjectMatch,
+  assertRejects,
+  assertThrows,
+} from "../deps.ts";

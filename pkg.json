@@ -1,6 +1,6 @@
 {
-  "brand":"ysh",
-  "bin":"ysh",
-  "version":"0.0.1",
-  "description":"ysh is a simple, fast, and powerful workflow tool"
+  "brand": "ysh",
+  "bin": "ysh",
+  "version": "0.0.1",
+  "description": "ysh is a simple, fast, and powerful workflow tool"
 }

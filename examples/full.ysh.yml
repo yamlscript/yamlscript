@@ -1,0 +1,27 @@
+- use: setVars
+  args:
+    allItems:
+      - 1
+      - 9
+      - ${build.env.1}
+    test2: teset
+- name: get max value
+  use: Math.max
+  args:
+    - 1
+    - 5
+    - 3
+- name: print some thing
+  use: console.log
+  args:
+    - The max value is ${result}
+- name: call lodash method get
+  use: _.get
+  args:
+    - foo:
+        key: bar
+    - foo.key
+- use: assertEquals
+  args:
+    - $result
+    - bar

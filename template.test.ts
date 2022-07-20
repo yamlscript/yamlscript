@@ -122,12 +122,12 @@ Deno.test("convertValueToLiteral #12", () => {
   const result = convertValueToLiteral({
     content: "Deno",
     name: "${name}222",
-    os: "${ctx.os.name}",
+    os: "${build.os.name}",
     obj: {
-      name: "test${ctx.os.name}22",
+      name: "test${build.os.name}22",
     },
   }, {
-    public: {
+    build: {
       env: {},
       os: {
         "name": "macos",

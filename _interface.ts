@@ -1,4 +1,4 @@
-import { CompiledContext, TasksOptions } from "./interface.ts";
+import { PublicContext, Task, TasksOptions } from "./interface.ts";
 /**
  * internal files
  */
@@ -20,9 +20,24 @@ export interface FileCode {
   runtimeImportCode: string;
   mainFunctionBody: string;
 }
+export enum UseType {
+  RuntimeFunction,
+  GlobalsFunction,
+  ThirdPartyFunction,
+  UserFunction,
+  AsyncRuntimeFunction,
+  AsyncGlobalsFunction,
+  AsyncThirdPartyFunction,
+  AsyncUserFunction,
+  SetVars,
+  Command,
+  Default,
+}
 
 export interface LiteralCode {
   use?: string;
+  from?: string;
+  useType?: UseType;
   importCode?: string;
   runtimeImportCode?: string;
   mainFunctionBody?: string;
@@ -31,8 +46,11 @@ export interface LiteralCode {
   infoLog?: string;
   debugLog?: string;
 }
+
 export interface StrictLiteralCode extends LiteralCode {
   use: string;
+  from: string;
+  useType: UseType;
   importCode: string;
   runtimeImportCode: string;
   mainFunctionBody: string;
@@ -52,6 +70,13 @@ export interface BuiltCode {
   moduleFilePath: string;
 }
 export interface StrictTasksOptions extends TasksOptions {
-  compiledContext: CompiledContext;
+  public: PublicContext;
   indent: number;
+}
+export interface StrictTask extends Task {
+  args: unknown[];
+  taskIndex: number;
+}
+export interface GetDefaultTaskOptionsOptions {
+  taskIndex: number;
 }

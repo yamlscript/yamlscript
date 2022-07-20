@@ -1,5 +1,5 @@
 import { TemplateSpecs } from "./_interface.ts";
-import { Context } from "./interface.ts";
+import { PublicContext } from "./interface.ts";
 import { INTERNAL_CONTEXT_NAME, TEMPLATE_REGEX } from "./constant.ts";
 import { isObject } from "./util.ts";
 import log from "./log.ts";
@@ -17,7 +17,42 @@ export function isIncludeTemplate(str: string) {
   }
   return false;
 }
-
+/**
+ * is template is a variable, like `$identifier`
+ * $0 is not, cause 0 is not a verifieriable variable name
+ * \$ is also not, must start with $
+ * @param str
+ * @returns
+ */
+export function isVariable(str: string) {
+  if (str.length > 1) {
+    return str[0] === "$" && /[a-zA-Z_$]/.test(str[1]) &&
+      /[0-9a-zA-Z_$]+/.test(str.slice(1));
+  } else {
+    return false;
+  }
+}
+// <https://stackoverflow.com/a/69292370/13135979>
+export function isCommand(str: string | undefined) {
+  if (str && str.length > 1) {
+    return str[0] === ":" &&
+      /[^#%0-9\0-\f "$&'();<>\`|\x7f-\xff]/.test(
+        str[1],
+      );
+  } else {
+    return false;
+  }
+}
+export function getCommandProgram(str: string | undefined): string {
+  if (str === undefined) {
+    throw new Error("invalid cmd program");
+  }
+  if (str.startsWith(":")) {
+    return str.slice(1);
+  } else {
+    return str;
+  }
+}
 /**
  * @param str
  * @param keys buildin keywords
@@ -104,24 +139,24 @@ export function template(
   }
 }
 
-export function compileWithKnownKeys(
-  str: string,
-  keys: string[],
-): (locals: Record<string, unknown>) => string {
-  if (typeof str !== "string") {
-    throw new Error("The argument must be a string type");
-  }
+// export function compileWithKnownKeys(
+//   str: string,
+//   keys: string[],
+// ): (locals: Record<string, unknown>) => string {
+//   if (typeof str !== "string") {
+//     throw new Error("The argument must be a string type");
+//   }
 
-  const declare = getRootKeysDeclare(keys);
+//   const declare = getRootKeysDeclare(keys);
 
-  return function (locals: Record<string, unknown>) {
-    let fnString = declare + ";return `";
-    fnString += str.replace(TEMPLATE_REGEX, variableToEs6TemplateString) + "`;";
+//   return function (locals: Record<string, unknown>) {
+//     let fnString = declare + ";return `";
+//     fnString += str.replace(TEMPLATE_REGEX, variableToEs6TemplateString) + "`;";
 
-    const fn = new Function(INTERNAL_CONTEXT_NAME, fnString);
-    return fn(locals);
-  };
-}
+//     const fn = new Function(INTERNAL_CONTEXT_NAME, fnString);
+//     return fn(locals);
+//   };
+// }
 
 function variableToEs6TemplateStringOnlyForKnownKeys(
   matched: string,
@@ -218,7 +253,7 @@ function surroundDoubleQuotes(str: string): string {
 
 export function convertValueToLiteral(
   value: unknown,
-  ctx: Context,
+  publicCtx: PublicContext,
 ): string {
   if (isObject(value)) {
     // split with \n
@@ -248,9 +283,7 @@ export function convertValueToLiteral(
         if (keys.length === 1) {
           const key = keys[0];
           const value = obj[key];
-          const parsed = templateWithKnownKeys(value, {
-            ctx: ctx.public,
-          });
+          const parsed = templateWithKnownKeys(value, publicCtx);
 
           return `"${key}":${parsed}${isEndWithComma ? "," : ""}`;
         } else {
@@ -265,9 +298,7 @@ export function convertValueToLiteral(
             trimLine[trimLine.length - 1] === '"'
           ) {
             // it's a string
-            const parsed = templateWithKnownKeys(trimLine, {
-              ctx: ctx.public,
-            });
+            const parsed = templateWithKnownKeys(trimLine, publicCtx);
             return parsed;
           } else {
             return line;
@@ -281,11 +312,25 @@ export function convertValueToLiteral(
       }
     }).join("");
   } else if (typeof value === "string") {
-    const parsed = templateWithKnownKeys(value, {
-      ctx: ctx.public,
-    });
-    return parsed;
+    // check if variable
+    if (isVariable(value)) {
+      // it's a variable
+      // should return literal directly
+      return variableValueToVariable(value);
+    } else {
+      // as template
+      const parsed = templateWithKnownKeys(value, publicCtx);
+      return parsed;
+    }
   } else {
     return JSON.stringify(value);
+  }
+}
+
+function variableValueToVariable(str: string): string {
+  if (str.startsWith("$")) {
+    return str.slice(1);
+  } else {
+    return str;
   }
 }

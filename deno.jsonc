@@ -1,5 +1,17 @@
 {
   "tasks": {
-    "test": "deno test -A"
+    "test": "deno test --allow-read --allow-write --allow-net",
+    "test:compile": "deno test -A tasks.test.ts"
+  },
+  "fmt": {
+    "files": {
+      "exclude": [
+        "node_modules/",
+        ".ysh/",
+        ".vscode/",
+        "dist/",
+        "examples/__fixtures__/"
+      ]
+    }
   }
 }

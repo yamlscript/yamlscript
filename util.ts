@@ -1,5 +1,5 @@
-import { BuildTasksOptions } from "./interface.ts";
-import { basename, dirname, ensureDir, resolve } from "./deps.ts";
+import { BuildContext, BuildTasksOptions, PublicContext } from "./interface.ts";
+import { basename, dirname, ensureDir, parse, resolve } from "./deps.ts";
 import { BuiltCode } from "./_interface.ts";
 export const get = (obj: unknown, path: string, defaultValue = undefined) => {
   const travel = (regexp: RegExp) =>
@@ -18,13 +18,16 @@ export const get = (obj: unknown, path: string, defaultValue = undefined) => {
 };
 
 export const changeExt = (path: string, ext: string) => {
-  return path.replace(/\.[^.]+$/, ext);
+  let filename = path.replace(/\.[^.]+$/, "");
+  // remove .ysh if exist
+  filename = filename.replace(/\.ysh$/, "");
+  return `${filename}${ext}`;
 };
 export const createDistFile = async (
   content: string,
   options: BuildTasksOptions,
 ): Promise<BuiltCode> => {
-  const moduleFilerelativePath = changeExt(options.relativePath, ".module.js");
+  const moduleFilerelativePath = changeExt(options.relativePath, ".mod.js");
   const runFilerelativePath = changeExt(options.relativePath, ".js");
   const dist = options.dist || "dist";
   const moduleFileName = basename(moduleFilerelativePath);
@@ -52,4 +55,19 @@ export function isObject(obj: unknown): boolean {
 
 export function isClass(v: unknown): boolean {
   return typeof v === "function" && /^\s*class\s+/.test(v.toString());
+}
+export async function parseYamlFile(file: string): Promise<unknown> {
+  const content = await Deno.readTextFile(file);
+  return parse(content);
+}
+
+export function getDefaultPublicContext() {
+  const defaultBuildContext: BuildContext = {
+    env: {},
+    os: {},
+  };
+  const defaultPublicContext: PublicContext = {
+    build: defaultBuildContext,
+  };
+  return defaultPublicContext;
 }

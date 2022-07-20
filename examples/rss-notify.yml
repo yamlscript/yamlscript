@@ -1,18 +1,4 @@
-- use: setVars
+- use: :echo
   args:
-    allItems: 
-      - 1
-      - 9
-    test2: teset
-- id: _test
-  loop:
-    - 1
-    - ${test2}
-  use: console.log
-  args:
-    - ${item}
-    - ${index}
-    - ${item}
-    - ${index}
-  
-
+    - hello haha
+    - love

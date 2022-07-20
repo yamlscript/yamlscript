@@ -1,0 +1,8 @@
+- use: Math.max
+  args:
+    - 1
+    - 5
+    - 3
+- use: console.log
+  args:
+    - The max value is ${result}

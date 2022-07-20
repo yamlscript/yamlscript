@@ -1,15 +1,13 @@
 import { Command, EnumType } from "./deps.ts";
 import { run } from "./entry.ts";
 import log from "./log.ts";
-import { CompiledContext, EntryOptions } from "./interface.ts";
+import { BuildContext, EntryOptions } from "./interface.ts";
 import { LevelName } from "./_interface.ts";
 import pkg from "./pkg.json" assert { type: "json" };
 
 const setLogLevel = (options: Record<string, LevelName>) => {
   let logLevel: LevelName = "info";
-  if (options.debug) {
-    logLevel = "debug";
-  } else if (options.verbose) {
+  if (options.verbose) {
     logLevel = "debug";
   } else {
     logLevel = options.logLevel;
@@ -17,7 +15,7 @@ const setLogLevel = (options: Record<string, LevelName>) => {
   log.setLevel(logLevel);
 };
 if (import.meta.main) {
-  const compiledContext: CompiledContext = {
+  const buildContext: BuildContext = {
     env: {},
     os: {},
   };
@@ -32,7 +30,7 @@ if (import.meta.main) {
         const runOptions: EntryOptions = {
           files: args as string[],
           isBuild: false,
-          compiledContext,
+          buildContext,
           dist: "dist", // will not be used in run
         };
         await run(runOptions);
@@ -53,7 +51,7 @@ if (import.meta.main) {
         const runOptions: EntryOptions = {
           files: args as string[],
           isBuild: true,
-          compiledContext,
+          buildContext,
           dist,
         };
         await run(runOptions);
@@ -68,7 +66,6 @@ if (import.meta.main) {
     .version(pkg.version)
     .description(pkg.description)
     .type("log-level", new EnumType(["debug", "info", "warn", "error"]))
-    .globalOption("-d, --debug", "Enable debug output.")
     .globalOption("-v, --verbose", "Enable verbose output.")
     .globalOption("-l, --log-level <level:log-level>", "Set log level.", {
       default: "info" as const,

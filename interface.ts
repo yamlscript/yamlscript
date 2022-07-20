@@ -1,27 +1,31 @@
 export interface Task {
   from?: string;
   use?: string;
-  args?: unknown[];
+  args?: unknown | unknown[];
   loop?: string | number | unknown[];
 }
-export interface CompiledContext {
+export interface BuildContext {
   env: Record<string, string>;
   os: Record<string, string>;
 }
 export interface GlobalContext {
   env: Record<string, string>;
 }
+export interface PublicContext {
+  build: BuildContext;
+  [key: string]: unknown;
+}
 export interface Context {
-  public: CompiledContext;
+  public: PublicContext;
 }
 export interface EntryOptions {
   files: string[];
   dist: string;
   isBuild: boolean;
-  compiledContext: CompiledContext;
+  public?: PublicContext;
 }
 export interface TasksOptions {
-  compiledContext: CompiledContext;
+  public?: PublicContext;
   indent?: number;
 }
 

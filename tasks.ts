@@ -1,6 +1,7 @@
 import {
+  BuildContext,
   BuildTasksOptions,
-  GlobalContext,
+  PublicContext,
   RunTasksOptions,
   Task,
   TasksOptions,
@@ -8,15 +9,28 @@ import {
 import {
   BuiltCode,
   FileCode,
+  GetDefaultTaskOptionsOptions,
   LiteralCode,
   StrictLiteralCode,
+  StrictTask,
   StrictTasksOptions,
   TasksCode,
+  UseType,
 } from "./_interface.ts";
 
-import { compile, convertValueToLiteral } from "./template.ts";
+import {
+  compile,
+  convertValueToLiteral,
+  getCommandProgram,
+  isCommand,
+} from "./template.ts";
 import * as globals from "./globals/mod.ts";
-import { createDistFile, get, isObject } from "./util.ts";
+import {
+  createDistFile,
+  get,
+  getDefaultPublicContext,
+  isObject,
+} from "./util.ts";
 import {
   COMPILED_CONTEXT_KEYS,
   DEFAULT_USE_NAME,
@@ -30,7 +44,6 @@ import {
 import log from "./log.ts";
 import { green } from "./deps.ts";
 import config from "./config.json" assert { type: "json" };
-import main from "./dist/examples/rss-notify.module.js";
 const contextConfig = config.context;
 export function compileTasks(
   tasks: Task[],
@@ -40,30 +53,34 @@ export function compileTasks(
   const options = getDefaultTasksOptions(originalOptions);
   // for precompiled code to import modules
   const fileCode = initFileCode();
-
+  const mainIndent = options.indent + 2;
   // one by one
-  for (const task of tasks) {
+  for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
+    const originalTask = tasks[taskIndex];
+    const task = getDefaultTaskOptions(originalTask, {
+      taskIndex,
+    });
     const { loop: rawLoop } = task;
 
     // first transform top level from and use code
-    const importResult = transformUse(task, options);
+    const importResult = transformImport(task, options);
     concatFileCode(fileCode, importResult);
     // change use to final value
     task.use = importResult.use as string;
-
+    task.from = importResult.from as string;
     // transform main function body
 
     // check if loop
     if (rawLoop) {
       const loopResult = transformLoop(task, {
         ...options,
-        indent: options.indent + 2,
+        indent: mainIndent,
       });
       concatFileCode(fileCode, loopResult);
     } else {
       const useCallResult = transformUseCall(task, {
         ...options,
-        indent: options.indent + 2,
+        indent: mainIndent,
       });
       concatFileCode(fileCode, useCallResult);
     }
@@ -105,7 +122,7 @@ function getTasksCode(fileCode: FileCode): TasksCode {
     `${fileCode.runtimeImportCode}\n${fileCode.mainFunctionBody}`;
 
   const compiledModuleCode = fileCode.importCode +
-    `export default async function main(){\n${fileCode.mainFunctionBody}\n}`;
+    `export default async function main(){\n${fileCode.mainFunctionBody}}`;
   return {
     moduleFileCode: compiledModuleCode,
     runtimeCode,
@@ -133,31 +150,39 @@ function initFileCode(): FileCode {
   };
 }
 
-function transformLoop(task: Task, options: StrictTasksOptions): LiteralCode {
+function transformLoop(
+  task: StrictTask,
+  options: StrictTasksOptions,
+): LiteralCode {
   const { loop: rawLoop } = task;
   let mainFunctionBody = "";
-  let isLoopValid = false;
+  const mainIndent = options.indent;
+  console.log("mainIndent loop", mainIndent);
   // start build function body
   if (rawLoop && typeof rawLoop === "string" && rawLoop.trim()) {
     // consider as direct literal code
-    mainFunctionBody += `for(let i=0;i<${
-      convertValueToLiteral(rawLoop, { public: options.compiledContext })
-    };i++){`;
-    isLoopValid = true;
+    const arrayLiberal = convertValueToLiteral(rawLoop, options.public);
+    mainFunctionBody +=
+      `for(let index = 0; index < ${arrayLiberal}.length; index++){
+  const item = ${arrayLiberal}[index];\n`;
+    // transform use call
+    const useCallResult = transformUseCall(task, {
+      ...options,
+      indent: options.indent,
+    });
+    mainFunctionBody += useCallResult.mainFunctionBody;
+    mainFunctionBody += `}\n`;
   } else if (rawLoop && Array.isArray(rawLoop)) {
     // loop array
     // compiled loop
     for (let i = 0; i < rawLoop.length; i++) {
       mainFunctionBody += `{
-  const item = ${
-        convertValueToLiteral(rawLoop[i], { public: options.compiledContext })
-      };
+  const item = ${convertValueToLiteral(rawLoop[i], options.public)};
   const index = ${i};\n`;
       // transform useCall
-      mainFunctionBody = withIndent(mainFunctionBody, options.indent + 2);
       const useCallResult = transformUseCall(task, {
         ...options,
-        indent: options.indent + 2,
+        indent: options.indent,
       });
       mainFunctionBody += useCallResult.mainFunctionBody;
 
@@ -167,33 +192,31 @@ function transformLoop(task: Task, options: StrictTasksOptions): LiteralCode {
     throw new Error("invalid loop params");
   }
 
-  // start build function body
-  if (isLoopValid) {
-    mainFunctionBody += `}`;
-  }
+  mainFunctionBody = withIndent(mainFunctionBody, mainIndent);
   return {
     mainFunctionBody,
   };
 }
 
 function transformUseCall(
-  task: Task,
+  task: StrictTask,
   options: StrictTasksOptions,
 ): LiteralCode {
   let mainFunctionBody = "";
-  const { args: rawArgs, use } = task;
+  const { args, use } = task;
   const { indent } = options;
   // check if it's setVars
   // if it's setVars
   if (use === "setVars") {
-    if (rawArgs && isObject(rawArgs)) {
-      if (isObject(rawArgs) && !Array.isArray(rawArgs)) {
-        const keys = Object.keys(rawArgs);
+    if (args && args.length === 1 && isObject(args[0])) {
+      if (!Array.isArray(args[0])) {
+        const keys = Object.keys(args[0] as Record<string, unknown>);
         for (const key of keys) {
           mainFunctionBody += `const ${key}=${
-            convertValueToLiteral(rawArgs[key], {
-              public: options.compiledContext,
-            })
+            convertValueToLiteral(
+              (args[0] as Record<string, unknown>)[key],
+              options.public,
+            )
           };\n`;
         }
       } else {
@@ -204,22 +227,20 @@ function transformUseCall(
       throw new Error("invalid args, setVars args must be object");
     }
   } else {
-    if (Array.isArray(rawArgs)) {
+    // check if use is command
+    if (isCommand(use)) {
+      mainFunctionBody += transformCommandCall(task, options).mainFunctionBody;
+    } else {
+      // consider as function
       // array, then put args to literal args
-      const argsFlatten = rawArgs.map((
+      // constructor.name
+      const argsFlatten = args.map((
         arg,
-      ) => (convertValueToLiteral(arg, { public: options.compiledContext })))
+      ) => (convertValueToLiteral(arg, options.public)))
         .join(",");
 
       mainFunctionBody +=
         `${contextConfig.lastTaskResultName} = await ${use}(${argsFlatten});\n`;
-    } else {
-      // as the first one args
-      mainFunctionBody +=
-        `${contextConfig.lastTaskResultName} = await ${use}(${(convertValueToLiteral(
-          rawArgs,
-          { public: options.compiledContext },
-        ))});\n`;
     }
   }
   mainFunctionBody = withIndent(mainFunctionBody, indent);
@@ -232,47 +253,59 @@ function transformUseCall(
  * parse from and use
  * @param raw
  */
-function transformUse(task: Task, options: StrictTasksOptions): LiteralCode {
+function transformImport(
+  task: StrictTask,
+  options: StrictTasksOptions,
+): LiteralCode {
   const { from: rawFrom, use: rawUse } = task;
   let importCode = "";
   let runtimeImportCode = "";
   let use = DEFAULT_USE_NAME;
   if (rawUse && rawUse.trim() !== "") {
     const useTemplateFn = compile(rawUse, COMPILED_CONTEXT_KEYS);
-    use = useTemplateFn(
-      options.compiledContext as unknown as Record<string, unknown>,
-    );
+    use = useTemplateFn(options.public);
   }
 
   if (use === "setVars") {
     // no more import
-    return { use: use };
+    return { use: use, useType: UseType.SetVars };
+  } else if (isCommand(use)) {
+    // no more import
+    // cmd
+    return { use: use, useType: UseType.Command };
   }
 
   let debugLog = ``;
   let from: string | undefined;
   if (rawFrom && rawFrom.trim() !== "") {
     const fromTemplateFn = compile(rawFrom, COMPILED_CONTEXT_KEYS);
-    from = fromTemplateFn(
-      options.compiledContext as unknown as Record<string, unknown>,
-    );
+    from = fromTemplateFn(options.public);
   }
   // add compile code
   if (from) {
     let importPath = "";
     if (DEFAULT_USE_NAME === use) {
       // default
-      importPath = DEFAULT_USE_NAME;
+      // use if empty, we will give it a default random name
+      importPath = DEFAULT_USE_NAME + "_" + task.taskIndex;
+      use = importPath;
     } else {
-      importPath = `{${use}}`;
+      importPath = getImportPathValue(use);
     }
     importCode += `import ${importPath} from "${from}";\n`;
     runtimeImportCode += `const ${importPath} = await import("${from}");\n`;
+
+    // try to get the function type
+    // TODO: get the function type
+
     debugLog += `use ${green(importPath)} from {${from}}`;
   } else if (get(globals, use)) {
-    importCode += `import { ${use} } from "${GLOBAL_PACKAGE_URL}";\n`;
+    //
+    const importPath = getImportPathValue(use);
+
+    importCode += `import ${importPath} from "${GLOBAL_PACKAGE_URL}";\n`;
     runtimeImportCode +=
-      `const { ${use} } = ${RUNTIME_FUNCTION_OPTIONS_NAME}.globals;\n`;
+      `const ${importPath} = ${RUNTIME_FUNCTION_OPTIONS_NAME}.globals;\n`;
     debugLog += `use { ${green(use)} } from "globals/mod.ts"`;
   } else if (
     get(globalThis, use) &&
@@ -291,6 +324,7 @@ function transformUse(task: Task, options: StrictTasksOptions): LiteralCode {
   }
   return {
     use: use,
+    from,
     importCode,
     runtimeImportCode,
     debugLog,
@@ -299,7 +333,9 @@ function transformUse(task: Task, options: StrictTasksOptions): LiteralCode {
 
 function formatLiteralCode(result: LiteralCode): StrictLiteralCode {
   return {
+    useType: result.useType ?? UseType.Default,
     use: result.use ?? "",
+    from: result.from ?? "",
     mainFunctionBody: result.mainFunctionBody ?? "",
     debugLog: result.debugLog ?? "",
     infoLog: result.infoLog ?? "",
@@ -315,12 +351,85 @@ function getDefaultTasksOptions(
 ): StrictTasksOptions {
   return {
     ...tasksOptions,
+    public: tasksOptions.public ?? getDefaultPublicContext(),
     indent: tasksOptions.indent ?? 0,
+  };
+}
+function getDefaultTaskOptions(
+  task: Task,
+  options: GetDefaultTaskOptionsOptions,
+): StrictTask {
+  const { args: rawArgs } = task;
+  let argsArray: unknown[] = [];
+  if (rawArgs && !Array.isArray(rawArgs)) {
+    argsArray = [rawArgs];
+  } else if (Array.isArray(rawArgs)) {
+    argsArray = rawArgs;
+  }
+  return {
+    ...task,
+    args: argsArray,
+    taskIndex: options.taskIndex,
   };
 }
 
 function withIndent(code: string, indent: number): string {
-  return code.split("\n").map((line) => `${" ".repeat(indent)}${line}`).join(
+  return code.split("\n").map((line) => {
+    // if line is only \n
+    if (line.trim() === "") {
+      return line;
+    } else {
+      return `${" ".repeat(indent)}${line}`;
+    }
+  }).join(
     "\n",
   );
+}
+
+function getImportPathValue(use: string): string {
+  let importPath = `{ ${use} }`;
+  const useDotIndex = use.indexOf(".");
+  // test if use include ., like rss.entries, _.get
+  if (useDotIndex > 0) {
+    importPath = `{ ${use.slice(0, useDotIndex)} }`;
+  }
+  return importPath;
+}
+
+function transformCommandCall(
+  task: StrictTask,
+  options: StrictTasksOptions,
+): LiteralCode {
+  let cmdArrayString = `"${getCommandProgram(task.use)}"`;
+  const { args } = task;
+
+  if (args.length > 0) {
+    cmdArrayString += ",";
+    cmdArrayString += args.map((
+      arg,
+    ) => (convertValueToLiteral(arg, options.public)))
+      .join(",");
+  }
+
+  const mainFunctionBody = `const p = Deno.run({
+  cmd: [${cmdArrayString}],
+  stdout: "piped",
+  stderr: "piped",
+});
+
+const { code } = await p.status();
+
+// Reading the outputs closes their pipes
+const rawOutput = await p.output();
+const rawError = await p.stderrOutput();
+
+if (code === 0) {
+  await Deno.stdout.write(rawOutput);
+} else {
+  const errorString = new TextDecoder().decode(rawError);
+  console.log(errorString);
+}
+Deno.exit(code);
+`;
+  return { mainFunctionBody };
 }
