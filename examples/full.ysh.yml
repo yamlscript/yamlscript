@@ -11,10 +11,10 @@
     - 1
     - 5
     - 3
-- name: print some thing
-  use: console.log
+- use: assertEquals
   args:
-    - The max value is ${result}
+    - $result
+    - 5
 - name: call lodash method get
   use: _.get
   args:
@@ -25,3 +25,4 @@
   args:
     - $result
     - bar
+- use:
