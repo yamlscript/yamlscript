@@ -9,32 +9,20 @@ YAML shell!
 Let's say we have `a.ysh.yml` with:
 
 ```yaml
-#!/usr/bin/env ysh
-- use: rss.entries
+- use: Math.max
   args:
-    - https://actionsflow.github.io/test-page/hn-rss.xml
-# open <https://requestbin.com/r/enyvb91j5zjv9/23eNPamD4DK4YK1rfEB1FAQOKIj> see
-- loop: $result
-  use: fetch
+    - 1
+    - 5
+    - 3
+- use: console.log
   args:
-    - https://enyvb91j5zjv9.x.pipedream.net/
-    - method: POST
-      headers:
-        Content-Type: application/json
-      body: ${{JSON.stringify(item)}}
+    - The max value is ${result}
 ```
 
 Run it:
 
 ```bash
 ysh a.ysh.yml
-```
-
-Or, you can directly run it:
-
-```bash
-chmod +x a.ysh.yml
-./a.yml
 ```
 
 ## run all shells
