@@ -19,7 +19,6 @@ export async function run(originalOptions: EntryOptions) {
     } else {
       await runTasks(tasks, {
         indent: 0,
-        relativePath: file,
         public: options.public,
       });
     }

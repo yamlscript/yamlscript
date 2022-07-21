@@ -1,10 +1,10 @@
-import { rss } from "https://raw.githubusercontent.com/theowenyoung/ysh/main/globals/mod.ts";
+import { rss } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
 const nowIsGreaterThanZero=true;
-import { assertEquals } from "https://raw.githubusercontent.com/theowenyoung/ysh/main/globals/mod.ts";
+import { assertEquals } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
 export default async function main(){
   let result=null, ctx=null, env=null;
   {
-    const item = "I'm so excited to explain 'YS' with 'YS'!";
+    const item = "I'm so excited to explain 'yamlscript' with 'yamlscript'!";
     const index = 0;
     result = await console.log(`${index}. ${item}`);
   }
@@ -14,7 +14,7 @@ export default async function main(){
     result = await console.log(`${index}. ${item}`);
   }
   {
-    const item = "YS is written in yaml format and can be compiled into javscript that runs in deno.";
+    const item = "yamlscript is written in yaml format and can be compiled into javscript that runs in deno.";
     const index = 2;
     result = await console.log(`${index}. ${item}`);
   }

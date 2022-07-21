@@ -1,5 +1,5 @@
 {
-  "globalPackageUrl": "https://raw.githubusercontent.com/theowenyoung/ysh/main/globals/mod.ts",
+  "globalPackageUrl": "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts",
   "context": {
     "rootName": "ctx",
     "envName": "env",

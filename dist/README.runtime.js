@@ -1,11 +1,11 @@
 async function main() {
-const { rss } = __ysh_runtime_options.globals;
+const { rss } = __yamlscript_runtime_options.globals;
 const nowIsGreaterThanZero=true;
-const { assertEquals } = __ysh_runtime_options.globals;
+const { assertEquals } = __yamlscript_runtime_options.globals;
 
   let result=null, ctx=null, env=null;
   {
-    const item = "I'm so excited to explain 'YS' with 'YS'!";
+    const item = "I'm so excited to explain 'yamlscript' with 'yamlscript'!";
     const index = 0;
     result = await console.log(`${index}. ${item}`);
   }
@@ -15,7 +15,7 @@ const { assertEquals } = __ysh_runtime_options.globals;
     result = await console.log(`${index}. ${item}`);
   }
   {
-    const item = "YS is written in yaml format and can be compiled into javscript that runs in deno.";
+    const item = "yamlscript is written in yaml format and can be compiled into javscript that runs in deno.";
     const index = 2;
     result = await console.log(`${index}. ${item}`);
   }

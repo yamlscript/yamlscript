@@ -1,5 +1,5 @@
 - use: :rm
-  args: -r ./.ys/__fixtures__
+  args: -r ./.yamlscript/__fixtures__
 - use: :deno
   args:
     - test
@@ -7,5 +7,5 @@
 - use: :cp
   args:
     - -r
-    - ./.ys/__fixtures__
+    - ./.yamlscript/__fixtures__
     - ./examples/__fixtures__

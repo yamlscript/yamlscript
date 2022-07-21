@@ -1,6 +1,7 @@
 import { BuildContext, BuildTasksOptions, PublicContext } from "./interface.ts";
-import { basename, dirname, ensureDir, parse, resolve } from "./deps.ts";
+import { dirname, ensureDir, parse, resolve } from "./deps.ts";
 import { BuiltCode, TasksCode } from "./_interface.ts";
+import pkg from "./pkg.json" assert { type: "json" };
 export const get = (obj: unknown, path: string, defaultValue = undefined) => {
   const travel = (regexp: RegExp) =>
     String.prototype.split
@@ -19,8 +20,9 @@ export const get = (obj: unknown, path: string, defaultValue = undefined) => {
 
 export const changeExt = (path: string, ext: string) => {
   let filename = path.replace(/\.[^.]+$/, "");
-  // remove .ysh if exist
-  filename = filename.replace(/\.ysh$/, "");
+  // remove .ys if exist
+  const suffixRegex = new RegExp(`\.${pkg.bin}$`);
+  filename = filename.replace(suffixRegex, "");
   return `${filename}${ext}`;
 };
 export const createDistFile = async (
@@ -30,7 +32,6 @@ export const createDistFile = async (
   const moduleFilerelativePath = changeExt(options.relativePath, ".mod.js");
   const runFilerelativePath = changeExt(options.relativePath, ".js");
   const dist = options.dist || "dist";
-  const moduleFileName = basename(moduleFilerelativePath);
   const moduleFilePath = resolve(dist, moduleFilerelativePath);
   await ensureDir(dirname(moduleFilePath));
   await Deno.writeTextFile(moduleFilePath, codeResult.moduleFileCode);

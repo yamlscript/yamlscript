@@ -1,12 +1,10 @@
 import { buildTasks, runTasks } from "./tasks.ts";
-import { BuildContext, Task } from "./interface.ts";
+import { Task } from "./interface.ts";
 import { assertEquals } from "./deps.ts";
 import { parseYamlFile } from "./util.ts";
-const buildContext: BuildContext = {
-  env: {},
-  os: {},
-};
-const cacheDist = ".ys/__fixtures__";
+import pkg from "./pkg.json" assert { type: "json" };
+
+const cacheDist = "." + pkg.full + "/__fixtures__";
 Deno.test("compileTasks tasks #1", async () => {
   const result = await buildTasks([
     {
