@@ -34,7 +34,7 @@
   if: false
 - name: Once deno installed in your local enviroment, you can install yamlscript now.
   use: :deno
-  args: install -n ys -A https://deno.land/x/denoflow/cli.ts
+  args: install -A https://deno.land/x/yamlscript/ys.ts
   if: false
 - name: Now you can run this file
   use: :ys
