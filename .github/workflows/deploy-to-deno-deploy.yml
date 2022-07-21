@@ -1,0 +1,28 @@
+name: Deploy to Deno Deploy
+
+on:
+  workflow_dispatch:
+  # push:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write # This is required to allow the GitHub Action to authenticate with Deno Deploy.
+      contents: read
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+      - name: Use Deno Version ${{ matrix.deno-version }}
+        uses: denoland/setup-deno@v1
+      - name: Test Deno Module
+        run: make test
+      - name: Build
+        uses: deno run -A ys.ts build serve.ys.yml
+      - name: Deploy to Deno Deploy
+        uses: denoland/deployctl@v1
+        with:
+          project: yamlscript # the name of the project on Deno Deploy
+          entrypoint: main.ts # the entrypoint to deploy
