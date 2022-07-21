@@ -1,5 +1,5 @@
 - use: :rm
-  args: -r ./.ysh/__fixtures__
+  args: -r ./.ys/__fixtures__
 - use: :deno
   args:
     - test
@@ -7,5 +7,5 @@
 - use: :cp
   args:
     - -r
-    - ./.ysh/__fixtures__
-    - ./__fixtures__
+    - ./.ys/__fixtures__
+    - ./examples/__fixtures__
