@@ -35,6 +35,7 @@ import {
   COMPILED_CONTEXT_KEYS,
   DEFAULT_USE_NAME,
   GLOBAL_PACKAGE_URL,
+  GLOBAL_RUNTIME_CMD_PACKAGE_URL,
   LOOP_ITEM_INDEX,
   LOOP_ITEM_NAME,
   LOOP_LENGTH_NAME,
@@ -148,7 +149,12 @@ function transformImport(
     return { use: use, tasksOptions: options };
   } else if (isCommand(use)) {
     usesMap[use] = { type: UseType.Command };
-    return { use: use, tasksOptions: options };
+    importCode =
+      `import { __yamlscript_run_cmd } from "${GLOBAL_RUNTIME_CMD_PACKAGE_URL}";\n`;
+    runtimeImportCode =
+      `const { __yamlscript_run_cmd } = await import("${GLOBAL_RUNTIME_CMD_PACKAGE_URL}");\n`;
+    setVarsMap(varsMap, "__yamlscript_run_cmd");
+    return { use: use, tasksOptions: options, importCode, runtimeImportCode };
   } else if (isVariable(use)) {
     // if it's variable, then it's a runtime function, just use it
     // but we don't know if it's a async or not, we can assume it's async, // TODO  or maybe we can add a sync option to specify it's sync
@@ -517,26 +523,7 @@ function transformCommandCall(
       .join(",");
   }
 
-  const mainFunctionBody = `const p = Deno.run({
-  cmd: [${cmdArrayString}],
-  stdout: "piped",
-  stderr: "piped",
-});
-
-const { code } = await p.status();
-
-// Reading the outputs closes their pipes
-const rawOutput = await p.output();
-const rawError = await p.stderrOutput();
-
-if (code === 0) {
-  await Deno.stdout.write(rawOutput);
-} else {
-  const errorString = new TextDecoder().decode(rawError);
-  console.log(errorString);
-}
-Deno.exit(code);
-`;
+  const mainFunctionBody = `__yamlscript_run_cmd(${cmdArrayString});\n`;
   return { mainFunctionBody };
 }
 export function buildTasks(

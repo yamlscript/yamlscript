@@ -1,5 +1,5 @@
 {
-  "globalPackageUrl": "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts",
+  "globalPackageUrlPrefix": "https://raw.githubusercontent.com/yamlscript/yamlscript/main",
   "context": {
     "rootName": "ctx",
     "envName": "env",

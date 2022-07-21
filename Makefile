@@ -2,7 +2,7 @@
 .Phony: build
 build:
 	@echo "Building..."
-	deno run --allow-read --allow-write --allow-net cli.ts build examples/rss-notify.yml -v
+	deno run --allow-read --allow-write --allow-net ys.ts build examples/rss-notify.yml -v
 	@echo "Done."
 
 .Phony: check-fmt
@@ -32,13 +32,13 @@ tt:
 .Phony: r
 r:
 	@echo "Running..."
-	deno run --allow-read --allow-write --allow-net cli.ts run README.ys.yml
+	deno run --allow-read --allow-write --allow-net ys.ts run README.ys.yml
 	@echo "Done."
 # for quick run some tests
 .Phony: b
 b:
 	@echo "Running..."
-	deno run --allow-read --allow-write --allow-net cli.ts build --runtime README.ys.yml
+	deno run --allow-read --allow-write --allow-net ys.ts build --runtime README.ys.yml
 	@echo "Done."
 # for quick run some tests
 .Phony: d
