@@ -1,0 +1,43 @@
+- if: true
+  use: setVars
+  args:
+    var1: true
+- use: assertEquals
+  args:
+    - $var1
+    - true
+
+- if: false
+  use: setVars
+  args:
+    var2: true
+- use: assertEquals
+  args:
+    - ${typeof var2}
+    - undefined
+
+- use: setVars
+  args:
+    - condition: true
+- if: condition
+  use: setGlobalVars
+  args:
+    setLiteralVars: true
+- use: assertEquals
+  args:
+    - $setLiteralVars
+    - true
+
+- use: setVars
+  args:
+    - str: "hello"
+
+- if: str === "hello"
+  use: setGlobalVars
+  args:
+    setStr: true
+
+- use: assertEquals
+  args:
+    - $setStr
+    - true

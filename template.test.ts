@@ -1,6 +1,7 @@
 import { assertEquals, assertThrows } from "./deps.ts";
 import {
   convertValueToLiteral,
+  getConditionResult,
   isIncludeTemplate,
   precompile,
   template,
@@ -139,5 +140,61 @@ Deno.test("convertValueToLiteral #12", () => {
   assertEquals(
     result,
     '{"content":"Deno","name":`${name}222`,"os":"macos",  "obj": {"name":"testmacos22"  }}',
+  );
+});
+Deno.test("getConditionResult #13", () => {
+  const result = getConditionResult("build.os.name === 'macos'", {
+    build: {
+      env: {},
+      os: {
+        "name": "macos",
+      },
+    },
+  });
+  assertEquals(
+    result,
+    true,
+  );
+});
+Deno.test("getConditionResult #14", () => {
+  const result = getConditionResult("build.os.name === 'linux'", {
+    build: {
+      env: {},
+      os: {
+        "name": "macos",
+      },
+    },
+  });
+  assertEquals(
+    result,
+    false,
+  );
+});
+Deno.test("getConditionResult #15", () => {
+  const result = getConditionResult("env.name === 'linux'", {
+    build: {
+      env: {},
+      os: {
+        "name": "macos",
+      },
+    },
+  });
+  assertEquals(
+    result,
+    "env.name === 'linux'",
+  );
+});
+Deno.test("getConditionResult #16", () => {
+  const result = getConditionResult("${test===2}", {
+    build: {
+      env: {},
+      os: {
+        "name": "macos",
+      },
+    },
+  });
+  assertEquals(
+    result,
+    "`${test===2}`",
   );
 });

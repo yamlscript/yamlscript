@@ -1,6 +1,6 @@
 import { BuildContext, BuildTasksOptions, PublicContext } from "./interface.ts";
 import { basename, dirname, ensureDir, parse, resolve } from "./deps.ts";
-import { BuiltCode } from "./_interface.ts";
+import { BuiltCode, TasksCode } from "./_interface.ts";
 export const get = (obj: unknown, path: string, defaultValue = undefined) => {
   const travel = (regexp: RegExp) =>
     String.prototype.split
@@ -24,7 +24,7 @@ export const changeExt = (path: string, ext: string) => {
   return `${filename}${ext}`;
 };
 export const createDistFile = async (
-  content: string,
+  codeResult: TasksCode,
   options: BuildTasksOptions,
 ): Promise<BuiltCode> => {
   const moduleFilerelativePath = changeExt(options.relativePath, ".mod.js");
@@ -33,18 +33,29 @@ export const createDistFile = async (
   const moduleFileName = basename(moduleFilerelativePath);
   const moduleFilePath = resolve(dist, moduleFilerelativePath);
   await ensureDir(dirname(moduleFilePath));
-  await Deno.writeTextFile(moduleFilePath, content);
+  await Deno.writeTextFile(moduleFilePath, codeResult.moduleFileCode);
 
   // then create run file
-  const runFileContent =
-    `import main from "./${moduleFileName}";\nmain().catch(console.error);`;
   const runFilePath = resolve(dist, runFilerelativePath);
-  await Deno.writeTextFile(runFilePath, runFileContent);
+  await Deno.writeTextFile(runFilePath, codeResult.runFileCode);
+
+  let runtimeFilePath: string | undefined;
+
+  // check if need to create runtime file
+  if (options.shouldBuildRuntime) {
+    const runtimeFilerelativePath = changeExt(
+      options.relativePath,
+      ".runtime.js",
+    );
+    runtimeFilePath = resolve(dist, runtimeFilerelativePath);
+    await ensureDir(dirname(runtimeFilePath));
+    await Deno.writeTextFile(runtimeFilePath, codeResult.runtimeFileCode);
+  }
   return {
-    moduleFileCode: content,
-    runFileCode: runFileContent,
+    ...codeResult,
     moduleFilePath: moduleFilePath,
     runFilePath: runFilePath,
+    runtimeFilePath: runtimeFilePath,
   };
 };
 export function isObject(obj: unknown): boolean {

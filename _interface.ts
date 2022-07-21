@@ -1,9 +1,9 @@
 import {
+  EntryOptions,
   PublicContext,
   Task,
   TasksOptions,
   UseProperties,
-  UseType,
 } from "./interface.ts";
 /**
  * internal files
@@ -37,7 +37,8 @@ export interface LiteralCode {
   subTasks?: LiteralCode[];
   infoLog?: string;
   debugLog?: string;
-  tasksOptions?: TasksOptions;
+  tasksOptions?: StrictTasksOptions;
+  isNeedCloseBlock?: boolean;
 }
 
 export interface StrictLiteralCode extends LiteralCode {
@@ -54,13 +55,18 @@ export interface StrictLiteralCode extends LiteralCode {
 }
 export interface TasksCode {
   moduleFileCode: string;
-  runtimeCode: string;
+  runFileCode: string;
+  runtimeFunctionBodyCode: string;
+  runtimeFileCode: string;
 }
 export interface BuiltCode {
   moduleFileCode: string;
   runFileCode: string;
   runFilePath: string;
   moduleFilePath: string;
+  runtimeFileCode: string;
+  runtimeFilePath?: string;
+  runtimeFunctionBodyCode: string;
 }
 
 export interface StrictTasksOptions extends TasksOptions {
@@ -75,4 +81,11 @@ export interface StrictTask extends Task {
 }
 export interface GetDefaultTaskOptionsOptions {
   taskIndex: number;
+}
+export interface StrictEntryOptions extends EntryOptions {
+  files: string[];
+  dist: string;
+  isBuild: boolean;
+  shouldBuildRuntime: boolean;
+  public: PublicContext;
 }

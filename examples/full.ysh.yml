@@ -14,7 +14,7 @@
 - use: assertEquals
   args:
     - $result
-    - 3
+    - 5
 - name: call lodash method get
   use: _.get
   args:

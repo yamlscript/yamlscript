@@ -32,13 +32,13 @@ tt:
 .Phony: r
 r:
 	@echo "Running..."
-	deno run --allow-read --allow-write --allow-net cli.ts run examples/full.ysh.yml
+	deno run --allow-read --allow-write --allow-net cli.ts run README.ys.yml
 	@echo "Done."
 # for quick run some tests
 .Phony: b
 b:
 	@echo "Running..."
-	deno run --allow-read --allow-write --allow-net cli.ts build examples/full.ysh.yml
+	deno run --allow-read --allow-write --allow-net cli.ts build --runtime README.ys.yml
 	@echo "Done."
 # for quick run some tests
 .Phony: d

@@ -3,6 +3,7 @@ export interface Task {
   use?: string;
   args?: unknown | unknown[];
   loop?: string | number | unknown[];
+  if?: boolean | string;
 }
 export interface BuildContext {
   env: Record<string, string>;
@@ -19,9 +20,10 @@ export interface Context {
   public: PublicContext;
 }
 export interface EntryOptions {
-  files: string[];
-  dist: string;
-  isBuild: boolean;
+  files?: string[];
+  dist?: string;
+  isBuild?: boolean;
+  shouldBuildRuntime?: boolean;
   public?: PublicContext;
 }
 export enum UseType {
@@ -48,10 +50,10 @@ export interface TasksOptions {
 }
 
 export interface RunTasksOptions extends TasksOptions {
-  relativePath: string;
 }
 
 export interface BuildTasksOptions extends TasksOptions {
   dist?: string;
   relativePath: string;
+  shouldBuildRuntime?: boolean;
 }

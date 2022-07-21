@@ -1,4 +1,4 @@
-import { buildTasks } from "./tasks.ts";
+import { buildTasks, runTasks } from "./tasks.ts";
 import { BuildContext, Task } from "./interface.ts";
 import { assertEquals } from "./deps.ts";
 import { parseYamlFile } from "./util.ts";
@@ -78,5 +78,31 @@ Deno.test("compileTasks full tasks #4", async () => {
     relativePath: "./full.ysh.yml",
   });
   // const expected = await Deno.readTextFile("./__fixtures__/tast3.mod.js");
+  // assertEquals(result.moduleFileCode, expected);
+});
+Deno.test("test if condition #5", async () => {
+  const tasks = await parseYamlFile(
+    "./examples/if.ys.yml",
+  ) as Task[];
+  await runTasks(tasks);
+});
+
+Deno.test("compileTasks tasks #6", async () => {
+  const result = await buildTasks([
+    {
+      use: ":echo",
+      args: [
+        "hello",
+        "world",
+      ],
+    },
+  ], {
+    dist: cacheDist,
+    relativePath: "./tast6.yml",
+  });
+  // TODO
+  // const expected = await Deno.readTextFile(
+  //   "./examples/__fixtures__/tast6.mod.js",
+  // );
   // assertEquals(result.moduleFileCode, expected);
 });

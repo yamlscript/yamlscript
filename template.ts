@@ -68,9 +68,15 @@ export function compile(
 
   const declare = getRootKeysDeclare(keys);
 
-  return function (locals: Record<string, unknown>) {
-    let fnString = declare + ";return `";
-    fnString += str.replace(TEMPLATE_REGEX, variableToEs6TemplateString) + "`;";
+  return function (locals: Record<string, unknown>): string {
+    // check if include template first
+    let fnString = declare;
+
+    fnString += ";return `";
+
+    fnString += str.replace(TEMPLATE_REGEX, variableToEs6TemplateString);
+
+    fnString += "`;";
 
     const fn = new Function(INTERNAL_CONTEXT_NAME, fnString);
     return fn(locals);
@@ -131,7 +137,7 @@ function getRootKeysDeclare(keys: string[]): string {
 export function template(
   str: string | TemplateSpecs,
   locals: Record<string, unknown>,
-): string {
+): unknown {
   if (typeof str === "string") {
     return compile(str, Object.keys(locals))(locals);
   } else {
@@ -324,6 +330,49 @@ export function convertValueToLiteral(
     }
   } else {
     return JSON.stringify(value);
+  }
+}
+
+/**
+ * check if condition result
+ * @param str
+ * @param publicCtx
+ */
+export function getConditionResult(
+  value: string,
+  publicCtx: PublicContext,
+): unknown {
+  // check if variable
+  let conditionLiteral = "";
+  if (isVariable(value)) {
+    // it's a variable
+    // should return literal directly
+    conditionLiteral = variableValueToVariable(value);
+  } else if (isIncludeTemplate(value)) {
+    // as template
+    const parsed = templateWithKnownKeys(value, publicCtx);
+    return parsed;
+  } else {
+    // consider as literal
+    conditionLiteral = value;
+  }
+  // calculate the condition result
+  if (conditionLiteral) {
+    try {
+      const result = template(`\${${conditionLiteral}}`, publicCtx);
+      if (result === "true") {
+        return true;
+      } else if (result === "false") {
+        return false;
+      } else {
+        return result;
+      }
+    } catch (_e) {
+      // can't parse the condition literal when compile time, treat it as literal
+      return conditionLiteral;
+    }
+  } else {
+    return false;
   }
 }
 

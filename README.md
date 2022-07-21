@@ -1,12 +1,12 @@
-# Ysh
+# YAML Script
 
-YAML shell!
+YAML script!
 
 > Work in progress.
 
 ## Usage
 
-Let's say we have `a.ysh.yml` with:
+Let's say we have `a.ys.yml` with:
 
 ```yaml
 - use: Math.max
@@ -22,7 +22,7 @@ Let's say we have `a.ysh.yml` with:
 Run it:
 
 ```bash
-ysh a.ysh.yml
+ysh a.ys.yml
 ```
 
 ## run all shells
@@ -86,7 +86,7 @@ for cmd:
 - use: :mkdir
   args:
     - -p
-    - /tmp/ysh-test
+    - /tmp/ys-test
 ```
 
 ### `args`
@@ -148,3 +148,39 @@ assertOr:
 ```
 
 ### `tasks`
+
+### cache key
+
+```yaml
+- id: rssItems
+  use: rss.entries
+- id: _onEntry
+  tasks:
+    - use: continue
+      if: "isInCache(_0.id)"
+    - use: fetch
+      args: 
+        - https://xxxxxx.com
+        - {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: ${JSON.stringify({
+            id: item.id
+          })}
+        }
+- loop: ${$0.result}
+  use: _onEntry
+  args:
+    - $item
+- loop: ${$0.result}
+  use: setUnique
+  args: $result.id
+```
+
+### fn
+
+```yaml
+- use:
+```

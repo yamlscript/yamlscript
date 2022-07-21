@@ -1,10 +1,9 @@
 import { Command, EnumType } from "./deps.ts";
 import { run } from "./entry.ts";
 import log from "./log.ts";
-import { BuildContext, EntryOptions } from "./interface.ts";
+import { BuildContext, EntryOptions, PublicContext } from "./interface.ts";
 import { LevelName } from "./_interface.ts";
 import pkg from "./pkg.json" assert { type: "json" };
-
 const setLogLevel = (options: Record<string, LevelName>) => {
   let logLevel: LevelName = "info";
   if (options.verbose) {
@@ -19,6 +18,9 @@ if (import.meta.main) {
     env: {},
     os: {},
   };
+  const publicContext: PublicContext = {
+    build: buildContext,
+  };
   const runCommand = new Command()
     .description("run files")
     .arguments("[file:string]")
@@ -29,9 +31,8 @@ if (import.meta.main) {
       if (args && args.length > 0) {
         const runOptions: EntryOptions = {
           files: args as string[],
+          public: publicContext,
           isBuild: false,
-          buildContext,
-          dist: "dist", // will not be used in run
         };
         await run(runOptions);
       } else {
@@ -42,6 +43,7 @@ if (import.meta.main) {
     .arguments("[file:string]")
     .description("build yaml file to js file")
     .option("--dist <dist>", "dist directory.")
+    .option("--runtime", "also build runtime mode.")
     .action(async (options, ...args) => {
       setLogLevel(options as unknown as Record<string, LevelName>);
       log.debug("cli options:", options);
@@ -51,7 +53,8 @@ if (import.meta.main) {
         const runOptions: EntryOptions = {
           files: args as string[],
           isBuild: true,
-          buildContext,
+          shouldBuildRuntime: options.runtime,
+          public: publicContext,
           dist,
         };
         await run(runOptions);

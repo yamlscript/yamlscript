@@ -1,7 +1,9 @@
 import { EntryOptions, Task } from "./interface.ts";
+import { StrictEntryOptions } from "./_interface.ts";
 import { buildTasks, runTasks } from "./tasks.ts";
-import { parseYamlFile } from "./util.ts";
-export async function run(options: EntryOptions) {
+import { getDefaultPublicContext, parseYamlFile } from "./util.ts";
+export async function run(originalOptions: EntryOptions) {
+  const options = getDefaultEntryOptions(originalOptions);
   const { files } = options;
   for (const file of files) {
     // parse file
@@ -12,6 +14,7 @@ export async function run(options: EntryOptions) {
         dist: options.dist,
         public: options.public,
         indent: 0,
+        shouldBuildRuntime: options.shouldBuildRuntime,
       });
     } else {
       await runTasks(tasks, {
@@ -21,4 +24,16 @@ export async function run(options: EntryOptions) {
       });
     }
   }
+}
+function getDefaultEntryOptions(options: EntryOptions): StrictEntryOptions {
+  const { files, isBuild, shouldBuildRuntime, dist, public: publicContext } =
+    options;
+  const defaultEntryOptions: StrictEntryOptions = {
+    files: files ?? [],
+    isBuild: isBuild ?? false,
+    shouldBuildRuntime: shouldBuildRuntime ?? false,
+    dist: dist ?? "dist",
+    public: publicContext ?? getDefaultPublicContext(),
+  };
+  return defaultEntryOptions;
 }
