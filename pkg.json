@@ -1,6 +1,7 @@
 {
-  "brand": "ysh",
-  "bin": "ysh",
+  "brand": "yamlscript",
+  "full": "yamlscript",
+  "bin": "ys",
   "version": "0.0.1",
-  "description": "ysh is a simple, fast, and powerful workflow tool"
+  "description": "yamlscript is written in yaml format and can be compiled into javscript that runs in deno."
 }

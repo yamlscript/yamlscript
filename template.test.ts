@@ -81,14 +81,14 @@ Deno.test("precompile #7", () => {
   const result = precompile("Test ${name}", ["name"]);
   assertEquals(
     result,
-    "{\"main\":function(__ysh_context){var name=__ysh_context['name'];;return `Test ${name}`}}",
+    "{\"main\":function(__yamlscript_context){var name=__yamlscript_context['name'];;return `Test ${name}`}}",
   );
 });
 
 Deno.test("precomiple #8", () => {
   const specs = {
-    "main": function (__ysh_context: Record<string, unknown>) {
-      const name = __ysh_context["name"];
+    "main": function (__yamlscript_context: Record<string, unknown>) {
+      const name = __yamlscript_context["name"];
       return `Test ${name}`;
     },
   };
@@ -100,7 +100,7 @@ Deno.test("precompile #9", () => {
   const result = precompile("Test ${name}xxx${title}", ["name", "title"]);
   assertEquals(
     result,
-    "{\"main\":function(__ysh_context){var name=__ysh_context['name'];var title=__ysh_context['title'];;return `Test ${name}xxx${title}`}}",
+    "{\"main\":function(__yamlscript_context){var name=__yamlscript_context['name'];var title=__yamlscript_context['title'];;return `Test ${name}xxx${title}`}}",
   );
 });
 

@@ -111,11 +111,11 @@ function variableToEs6TemplateString(matched: string): string {
     return matched.slice(1);
   }
   return `\${${exp}}`;
-  // return '${__ysh_escapeJSON(' + exp+")}";
+  // return '${__yamlscript_escapeJSON(' + exp+")}";
 }
 
 function getRootKeysDeclare(keys: string[]): string {
-  //   let declare = `;var __ysh_escapeJSON = function(str){
+  //   let declare = `;var __yamlscript_escapeJSON = function(str){
   // const result= str
   // .replace(/[\\\\]/g, '\\\\\\\\')
   // .replace(/[\\"]/g, '\\\\\\"')
@@ -206,7 +206,7 @@ function variableToEs6TemplateStringOnlyForKnownKeys(
     }
   }
   return result;
-  // return '${__ysh_escapeJSON(' + exp+")}";
+  // return '${__yamlscript_escapeJSON(' + exp+")}";
 }
 export const templateWithKnownKeys = (
   str: string,

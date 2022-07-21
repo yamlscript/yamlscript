@@ -1,2 +1,2 @@
-__fixtures__/
-.ysh/
+examples/__fixtures__/
+.yamlscript/

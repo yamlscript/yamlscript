@@ -6,7 +6,7 @@ const buildContext: BuildContext = {
   env: {},
   os: {},
 };
-const cacheDist = ".ysh/__fixtures__";
+const cacheDist = ".ys/__fixtures__";
 Deno.test("compileTasks tasks #1", async () => {
   const result = await buildTasks([
     {
@@ -54,7 +54,7 @@ Deno.test("compileTasks tasks #3", async () => {
     {
       from: "https://deno.land/std@0.148.0/path/mod.ts",
       use: "extname",
-      args: "test.ysh.yml",
+      args: "test.ys.yml",
     },
     {
       use: "console.log",
@@ -71,11 +71,11 @@ Deno.test("compileTasks tasks #3", async () => {
 });
 Deno.test("compileTasks full tasks #4", async () => {
   const tasks = await parseYamlFile(
-    "./examples/full.ysh.yml",
+    "./examples/full.ys.yml",
   ) as Task[];
   const result = await buildTasks(tasks, {
     dist: cacheDist,
-    relativePath: "./full.ysh.yml",
+    relativePath: "./full.ys.yml",
   });
   // const expected = await Deno.readTextFile("./__fixtures__/tast3.mod.js");
   // assertEquals(result.moduleFileCode, expected);
