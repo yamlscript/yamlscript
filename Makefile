@@ -46,3 +46,9 @@ d:
 	@echo "Running..."
 	deno run --allow-read --allow-write --allow-net dist/examples/full.js
 	@echo "Done."
+
+.Phony: readme
+readme:
+	@echo "Generating README.md..."
+	deno run -A ys.ts run scripts/make_readme.ys.yml
+	@echo "Done."

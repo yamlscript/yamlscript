@@ -1,14 +1,20 @@
-- id: yamlContent
-  use: Deno.readTextFile
+- id: readmeYamlContent
+  use: readTextFile
   args: ./README.ys.yml
 - id: readmeTemplate
-  use: Deno.readTextFile
+  use: readTextFile
   args: ./README.template.md
+- id: yamlMakeReadmeScript
+  use: readTextFile
+  args: ./scripts/make_readme.ys.yml
 - id: readmeContent
   from: https://esm.sh/mustache@4.2.0
-  use: .render
+  use: default.render
   args:
     - $readmeTemplate
-    - readmeYamlContent: $yamlContent
-- use: console.log
-  args: $readmeContent
+    - readmeYamlContent: $readmeYamlContent
+      yamlMakeReadmeScript: $yamlMakeReadmeScript
+- use: writeTextFile
+  args:
+    - README.md
+    - $readmeContent

@@ -1,186 +1,85 @@
-# YAML Script
-
-YAML script!
-
-> Work in progress.
-
-## Usage
-
-Let's say we have `a.ys.yml` with:
+# yamlscript
 
 ```yaml
-- use: Math.max
-  args:
-    - 1
-    - 5
-    - 3
-- use: console.log
-  args:
-    - The max value is ${result}
-```
+- name: YAML Script Introduction
+  loop:
+    - I'm so excited to explain 'yamlscript' with 'yamlscript'!
+    - What is it?
+    - yamlscript is written in yaml format and can be compiled into javscript that runs in deno.
+    - What can it do?
+    - We can use it to manage our dotfiles, workflows like send feed entries to chat room, or we can even choose to deploy it to a serverless server such as deno deploy.
+  use: console.log
+  args: ${index}. ${item}
 
-Run it:
-
-```bash
-ysh a.ys.yml
-```
-
-## run all shells
-
-this will run all the shells in the current directory:
-
-```bash
-ysh -a
-```
-
-## run all yaml in some directory
-
-```bash
-ysh -d /path/to/dir
-```
-
-## In favor of Unix?
-
-```yaml
-- use: :mkdir
-  args: -p /tmp/ysh-test
-```
-
-## Keywords
-
-### `from`
-
-### `use`
-
-for built-in:
-
-```yaml
-- use: rss.entries
-```
-
-lodash also is built in:
-
-```yaml
-- use: _.get
-  args:
-    - foo:
-        key: bar
-    - foo.key
-- use: assertEqual
-  args:
-    - $result
-    - bar
-```
-
-for third-party modules:
-
-```yaml
-- from: https://deno.land/std@0.148.0/path/mod.ts
-  use: extname
-  args: "test.js"
-```
-
-for cmd:
-
-```yaml
-- use: :mkdir
-  args:
-    - -p
-    - /tmp/ys-test
-```
-
-### `args`
-
-### `loop`
-
-### `if`
-
-### `id`
-
-```yaml
-- id: test
-```
-
-```yaml
-# this will define a function, will not be called
-- id: _test
-```
-
-### assert
-
-Simple:
-
-```yaml
-- use: asserts.assert
-  args:
-    - "{{result.foo}}"
-    - "bar"
-```
-
-```yaml
-```
-
-And:
-
-```yaml
-assert:
-  - ${result}==true
-  - ${result}==fals
-```
-
-Or:
-
-```yaml
-assertOr:
-  - ${result}==true
-  - ${result}==fals
-```
-
-### `fn`
-
-```yaml
-- id: _onFetch
-  from: ./rss-notify.ysh.yml
-- use: addEventListener
-  args:
-    - fetch
-    - _onFetch
-```
-
-### `tasks`
-
-### cache key
-
-```yaml
-- id: rssItems
+- name: As you see, we use `loop` to define a loop, it can be an literal array, like above, and you can access the item by using \${item}, the index by using \${index}, just like javascript template strings. You will use `use` to call a function, it can be any global function from deno. We also have some yamlscript built-in functions, for example, we have `rss.entries` function, which can help you to get the fedd entries. (you can see all built-in function here https://github.com/yamlscript/yamlscript/blob/main/globals/mod.ts )
   use: rss.entries
-- id: _onEntry
-  tasks:
-    - use: continue
-      if: "isInCache(_0.id)"
-    - use: fetch
-      args: 
-        - https://xxxxxx.com
-        - {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: ${JSON.stringify({
-            id: item.id
-          })}
-        }
-- loop: ${$0.result}
-  use: _onEntry
+  args: https://actionsflow.github.io/test-page/hn-rss.xml
+
+- name: '`result` variable will be the last task returned result, please note\: `$result` is a variable, but `\${result}` is a string. `rss.entries` function will return an array, so we can loop the array like the following. You can visit https://requestbin.com/r/enyvb91j5zjv9/23eNPamD4DK4YK1rfEB1FAQOKIj to check the request'
+  loop: $result
+  use: fetch
   args:
-    - $item
-- loop: ${$0.result}
-  use: setUnique
-  args: $result.id
+    - https://enyvb91j5zjv9.x.pipedream.net/
+    - method: POST
+      headers:
+        Content-Type: application/json
+      body: |
+        {
+          "title": "${item.title.value}",
+          "link":  "${item.links[0].href}"
+        }
+
+- name: How to run this yaml file? Cause yamlscript depended Deno, so we should install https://deno.land/#installation first, as you see, we can run a command line tool that begins with a colon `:`, then yamlscript will consider it as a cmd call. You also noticed that I use `if` with `false` to prevent this task.
+  use: :brew install deno
+  if: false
+- name: Once deno installed in your local enviroment, you can install yamlscript now.
+  use: :deno install -A https://deno.land/x/yamlscript/ys.ts
+  if: false
+- name: Now you can run this file
+  use: :ys
+  args:
+    - run
+    - https://raw.githubusercontent.com/yamlscript/yamlscript/main/README.ys.yml
+  if: false
+- name: You can also see the compiled javascript code , the built file will placed in `dist` folder, you can submit this folder to git, if you want to run the code with serverless service like deno deploy.
+  use: :ys build https://raw.githubusercontent.com/yamlscript/yamlscript/main/README.ys.yml
+  if: false
+
+- name: You have seen we use `if` before, actually, we can use any condition here, you should't add $, or \${} in if condition.
+  if: Date.now() > 0
+  use: setGlobalVars
+  args:
+    nowIsGreaterThanZero: true
+- name: We can use assertEquals to test our code, once it failed, it'll throw an error. `assertEquals` is a built-in function, you can use it directly.
+  use: assertEquals
+  args:
+    - $nowIsGreaterThanZero
+    - true
+
 ```
 
-### fn
+This README.md file is generated by the following yamlscript.
 
 ```yaml
-- use:
+- id: readmeYamlContent
+  use: readTextFile
+  args: ./README.ys.yml
+- id: readmeTemplate
+  use: readTextFile
+  args: ./README.template.md
+- id: yamlMakeReadmeScript
+  use: readTextFile
+  args: ./scripts/make_readme.ys.yml
+- id: readmeContent
+  from: https://esm.sh/mustache@4.2.0
+  use: default.render
+  args:
+    - $readmeTemplate
+    - readmeYamlContent: $readmeYamlContent
+      yamlMakeReadmeScript: $yamlMakeReadmeScript
+- use: writeTextFile
+  args:
+    - README.md
+    - $readmeContent
+
 ```

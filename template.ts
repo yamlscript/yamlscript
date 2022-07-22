@@ -153,7 +153,7 @@ export function template(
 
 function variableToEs6TemplateStringOnlyForKnownKeys(
   matched: string,
-  locals: Record<string, unknown>,
+  locals?: Record<string, unknown>,
 ): string {
   const matches = matched.match(/\{(.*)\}/);
   let exp = "";
@@ -201,9 +201,9 @@ function variableToEs6TemplateStringOnlyForKnownKeys(
  */
 export function getExpressResult(
   exp: string,
-  locals: Record<string, unknown>,
+  locals?: Record<string, unknown>,
 ): string {
-  const knownKeys = Object.keys(locals);
+  const knownKeys = Object.keys(locals || {});
   const declare = getRootKeysDeclare(knownKeys);
   const fnString = `${declare}return \`\${${exp}}\``;
   try {
@@ -224,7 +224,7 @@ export function getExpressResult(
 }
 export const templateWithKnownKeys = (
   str: string,
-  locals: Record<string, unknown>,
+  locals?: Record<string, unknown>,
 ): string => {
   if (typeof str !== "string") {
     throw new Error("The argument must be a string type");
@@ -281,7 +281,7 @@ function escapeApostrophe(str: string) {
 
 export function convertValueToLiteral(
   value: unknown,
-  publicCtx: PublicContext,
+  publicCtx?: Record<string, unknown>,
 ): string {
   if (isObject(value) || Array.isArray(value)) {
     // split with \n
@@ -301,7 +301,6 @@ export function convertValueToLiteral(
       }
 
       const tryObject = `{${trimLineWithoutComma}}`;
-
       try {
         const obj = JSON.parse(tryObject);
         // it's a object, then change the value to literal
@@ -309,7 +308,8 @@ export function convertValueToLiteral(
         if (keys.length === 1) {
           const key = keys[0];
           const value = obj[key];
-          const parsed = templateWithKnownKeys(value, publicCtx);
+          const parsed = convertStringToLiteral(value, publicCtx || {});
+          console.log("parsed", parsed);
 
           return `"${key}":${parsed}${isEndWithComma ? "," : ""}`;
         } else {
@@ -342,7 +342,7 @@ export function convertValueToLiteral(
     }).join("");
   } else if (typeof value === "string") {
     // check if variable
-    return convertStringToLiteral(value, publicCtx);
+    return convertStringToLiteral(value, publicCtx || {});
   } else {
     return JSON.stringify(value);
   }
@@ -350,7 +350,7 @@ export function convertValueToLiteral(
 
 function convertStringToLiteral(
   value: string,
-  publicCtx: PublicContext,
+  publicCtx?: Record<string, unknown>,
 ): string {
   if (!value) {
     return value;
@@ -361,7 +361,7 @@ function convertStringToLiteral(
     return variableValueToVariable(value);
   } else {
     // as template
-    const parsed = templateWithKnownKeys(value, publicCtx);
+    const parsed = templateWithKnownKeys(value, publicCtx || {});
     return parsed;
   }
 }

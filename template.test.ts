@@ -140,7 +140,7 @@ Deno.test("convertValueToLiteral #12", () => {
 
   assertEquals(
     result,
-    '{"content":"Deno","name":`${name}222`,"os":"macos","obj": {"name":"testmacos22"}}',
+    '{"content":`Deno`,"name":`${name}222`,"os":`macos`,"obj": {"name":`testmacos22`}}',
   );
 });
 Deno.test("getConditionResult #13", () => {
@@ -216,7 +216,7 @@ Deno.test("convertValueToLiteral #17", () => {
 
   assertEquals(
     result,
-    '[`${typeof var2}`,"undefined"]',
+    "[`${typeof var2}`,`undefined`]",
   );
 });
 
@@ -242,4 +242,10 @@ Deno.test("yaml test #20", () => {
   assertEquals(result, {
     name: "test \\${item}",
   });
+});
+Deno.test("convertValueToLiteral #21", () => {
+  const result = convertValueToLiteral({
+    content: "$var",
+  });
+  assertEquals(result, '{"content":var}');
 });

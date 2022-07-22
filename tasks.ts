@@ -63,10 +63,10 @@ export function compileTasks(
     const task = getDefaultTaskOptions(originalTask, {
       taskIndex,
     });
-    const { loop: rawLoop, if: rawIf, name: rawName } = task;
+    const { loop: rawLoop, if: rawIf, name: rawName, id: rawId } = task;
     // transfor name
 
-    task.name = convertValueToLiteral(rawName, options.public);
+    task.name = convertValueToLiteral(rawName || rawId || "", options.public);
     // check compiled if condition
     if (rawIf !== undefined && !rawIf) {
       // dont generate any code
@@ -206,11 +206,17 @@ function transformImport(
     let importPath = "";
     let runtimeImportPath = "";
     let importVar = "";
-    if (!use) {
+    if (!use || use === "default" || use.startsWith("default.")) {
       // default
       // use if empty, we will give it a default random name
-      use = DEFAULT_USE_NAME + "_" + task.taskIndex;
-      importVar = use;
+      if (use.startsWith("default.")) {
+        importVar = DEFAULT_USE_NAME + "_" + task.taskIndex;
+        use = importVar +
+          use.slice("default".length);
+      } else {
+        use = DEFAULT_USE_NAME + "_" + task.taskIndex;
+        importVar = use;
+      }
       importPath = `{ default as ${importVar} }`;
       runtimeImportPath = `{ default: ${importVar} }`;
     } else {
@@ -598,6 +604,7 @@ function withIndent(code: string, indent: number): string {
 
 function getImportPathValue(use: string): string[] {
   let importPath = `{ ${use} }`;
+
   let importVar = use;
   const useDotIndex = use.indexOf(".");
   // test if use include ., like rss.entries, _.get
