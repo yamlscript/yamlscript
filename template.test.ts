@@ -139,7 +139,7 @@ Deno.test("convertValueToLiteral #12", () => {
 
   assertEquals(
     result,
-    '{"content":"Deno","name":`${name}222`,"os":"macos",  "obj": {"name":"testmacos22"  }}',
+    '{"content":"Deno","name":`${name}222`,"os":"macos","obj": {"name":"testmacos22"}}',
   );
 });
 Deno.test("getConditionResult #13", () => {
@@ -196,5 +196,25 @@ Deno.test("getConditionResult #16", () => {
   assertEquals(
     result,
     "`${test===2}`",
+  );
+});
+
+Deno.test("convertValueToLiteral #17", () => {
+  const result = convertValueToLiteral([
+    "${typeof var2}",
+    "undefined",
+  ], {
+    build: {
+      env: {},
+      os: {
+        "name": "macos",
+      },
+    },
+  });
+  assertEquals(typeof result, "string");
+
+  assertEquals(
+    result,
+    '[`${typeof var2}`,"undefined"]',
   );
 });

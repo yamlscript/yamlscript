@@ -4,3 +4,6 @@ export default async function main(){
   result = await extname("test.ys.yml");
   result = await console.log(`${result}`);
 }
+if (import.meta.main) {
+  main();
+}

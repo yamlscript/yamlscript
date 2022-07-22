@@ -43,7 +43,7 @@ export enum UseType {
 export interface TasksOptions {
   public?: PublicContext;
   indent?: number;
-  uniqueVars?: Record<string, boolean>;
+  uniqueVars?: Record<string, UseType>;
 }
 
 export interface RunTasksOptions extends TasksOptions {

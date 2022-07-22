@@ -60,7 +60,7 @@ if (import.meta.main) {
         await run(runOptions);
         log.info(`build to ${dist} success`);
       } else {
-        console.log("no args");
+        log.info("no args");
       }
     });
 

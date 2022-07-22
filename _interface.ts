@@ -30,6 +30,7 @@ export interface FileCode {
 export interface LiteralCode {
   importCode?: string;
   runtimeImportCode?: string;
+  mainFunctionBodyTop?: string;
   mainFunctionBody?: string;
   functions?: string[];
   subTasks?: LiteralCode[];
@@ -50,6 +51,7 @@ export interface StrictLiteralCode extends LiteralCode {
   importCode: string;
   runtimeImportCode: string;
   mainFunctionBody: string;
+  mainFunctionBodyTop: string;
   functions: string[];
   subTasks: LiteralCode[];
   infoLog: string;
@@ -72,7 +74,7 @@ export interface BuiltCode {
 export interface StrictTasksOptions extends TasksOptions {
   public: PublicContext;
   indent: number;
-  varsMap: Record<string, boolean>;
+  varsMap: Record<string, UseType>;
 }
 export interface StrictTask extends Task {
   args: unknown[];

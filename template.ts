@@ -78,8 +78,14 @@ export function compile(
 
     fnString += "`;";
 
-    const fn = new Function(INTERNAL_CONTEXT_NAME, fnString);
-    return fn(locals);
+    try {
+      const fn = new Function(INTERNAL_CONTEXT_NAME, fnString);
+      return fn(locals);
+    } catch (error) {
+      error.message += "\nrun function string failed: " + fnString + "\n";
+      error.message += "args: " + JSON.stringify(locals, null, 2);
+      throw error;
+    }
   };
 }
 
@@ -145,25 +151,6 @@ export function template(
   }
 }
 
-// export function compileWithKnownKeys(
-//   str: string,
-//   keys: string[],
-// ): (locals: Record<string, unknown>) => string {
-//   if (typeof str !== "string") {
-//     throw new Error("The argument must be a string type");
-//   }
-
-//   const declare = getRootKeysDeclare(keys);
-
-//   return function (locals: Record<string, unknown>) {
-//     let fnString = declare + ";return `";
-//     fnString += str.replace(TEMPLATE_REGEX, variableToEs6TemplateString) + "`;";
-
-//     const fn = new Function(INTERNAL_CONTEXT_NAME, fnString);
-//     return fn(locals);
-//   };
-// }
-
 function variableToEs6TemplateStringOnlyForKnownKeys(
   matched: string,
   locals: Record<string, unknown>,
@@ -181,22 +168,19 @@ function variableToEs6TemplateStringOnlyForKnownKeys(
   if (matched[0] === "\\") {
     return matched.slice(1);
   }
-
-  const knownKeys = Object.keys(locals);
-  const declare = getRootKeysDeclare(knownKeys);
-
-  const fnString = `${declare};return \`\${${exp}}\``;
-
-  const fn = new Function(INTERNAL_CONTEXT_NAME, fnString);
   let result = matched;
-  try {
-    const tempResult = fn(locals);
 
-    if (typeof tempResult === "string") {
-      result = tempResult;
-    } else {
-      result = JSON.stringify(tempResult);
-    }
+  // check if it's typeof, cause typeof will never fail, even in compiled time.
+  // we should check typeof params first
+  if (exp.includes("typeof")) {
+    // then try to remove it and to test
+    // TODO
+    // temply treat it as runtime
+    return result;
+  }
+
+  try {
+    result = getExpressResult(exp, locals);
   } catch (e) {
     if (e instanceof ReferenceError) {
       // dont't know the expression when compile time
@@ -206,7 +190,37 @@ function variableToEs6TemplateStringOnlyForKnownKeys(
     }
   }
   return result;
+
   // return '${__yamlscript_escapeJSON(' + exp+")}";
+}
+/**
+ * if failed, then it's not possible to get this when compiled
+ * @param exp
+ * @param locals
+ * @returns
+ */
+export function getExpressResult(
+  exp: string,
+  locals: Record<string, unknown>,
+): string {
+  const knownKeys = Object.keys(locals);
+  const declare = getRootKeysDeclare(knownKeys);
+  const fnString = `${declare}return \`\${${exp}}\``;
+  try {
+    const fn = new Function(INTERNAL_CONTEXT_NAME, fnString);
+    const tempResult = fn(locals);
+    let result = "";
+    if (typeof tempResult === "string") {
+      result = tempResult;
+    } else {
+      result = JSON.stringify(tempResult);
+    }
+    return result;
+  } catch (error) {
+    error.message += "\nrun function string failed: " + fnString + "\n";
+    error.message += "args: " + JSON.stringify(locals, null, 2);
+    throw error;
+  }
 }
 export const templateWithKnownKeys = (
   str: string,
@@ -261,17 +275,15 @@ export function convertValueToLiteral(
   value: unknown,
   publicCtx: PublicContext,
 ): string {
-  if (isObject(value)) {
+  if (isObject(value) || Array.isArray(value)) {
     // split with \n
     const json = JSON.stringify(value, null, 2);
-
     return json.split("\n").map((line) => {
       const trimLine = line.trim();
       // if the line if [,],{,}, if so, return the line
       if (["[", "]", "{", "}"].includes(trimLine)) {
-        return line;
+        return trimLine;
       }
-
       // try to add { }, if it's a object, then change the value to literal
       const isEndWithComma = trimLine.endsWith(",");
       let trimLineWithoutComma = trimLine;
@@ -279,11 +291,11 @@ export function convertValueToLiteral(
         // remove end comma
         trimLineWithoutComma = trimLine.slice(0, -1);
       }
+
       const tryObject = `{${trimLineWithoutComma}}`;
 
       try {
         const obj = JSON.parse(tryObject);
-
         // it's a object, then change the value to literal
         const keys = Object.keys(obj);
         if (keys.length === 1) {
@@ -298,18 +310,21 @@ export function convertValueToLiteral(
       } catch (e) {
         if (e instanceof SyntaxError) {
           // it's a string
-          const trimLine = line.trim();
+          // check type
+          let parsedValue = "";
           if (
-            trimLine.length > 0 && trimLine[0] === '"' &&
-            trimLine[trimLine.length - 1] === '"'
+            trimLineWithoutComma.startsWith('"') &&
+            trimLineWithoutComma.endsWith('"')
           ) {
-            // it's a string
-            const parsed = templateWithKnownKeys(trimLine, publicCtx);
-            return parsed;
+            // string
+            parsedValue = convertStringToLiteral(
+              trimLineWithoutComma.slice(1, -1),
+              publicCtx,
+            );
           } else {
-            return line;
-            // throw new Error(`unknow string ${line} when parsing`);
+            parsedValue = trimLineWithoutComma;
           }
+          return `${parsedValue}${isEndWithComma ? "," : ""}`;
         } else {
           log.error(`unknow object ${line} when parsing`);
           // unknown
@@ -319,17 +334,25 @@ export function convertValueToLiteral(
     }).join("");
   } else if (typeof value === "string") {
     // check if variable
-    if (isVariable(value)) {
-      // it's a variable
-      // should return literal directly
-      return variableValueToVariable(value);
-    } else {
-      // as template
-      const parsed = templateWithKnownKeys(value, publicCtx);
-      return parsed;
-    }
+    return convertStringToLiteral(value, publicCtx);
   } else {
     return JSON.stringify(value);
+  }
+}
+
+function convertStringToLiteral(
+  value: string,
+  publicCtx: PublicContext,
+): string {
+  // check if variable
+  if (isVariable(value)) {
+    // it's a variable
+    // should return literal directly
+    return variableValueToVariable(value);
+  } else {
+    // as template
+    const parsed = templateWithKnownKeys(value, publicCtx);
+    return parsed;
   }
 }
 

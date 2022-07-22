@@ -3,7 +3,7 @@
     allItems:
       - 1
       - 9
-      - ${build.env.1}
+      - ${build.env.test}
     test2: teset
 - name: get max value
   use: Math.max

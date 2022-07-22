@@ -30,6 +30,7 @@ import {
   createDistFile,
   get,
   getDefaultPublicContext,
+  isAsyncFunction,
   isObject,
 } from "./util.ts";
 import {
@@ -89,29 +90,32 @@ export function compileTasks(
     if (importResult.tasksOptions) {
       options = importResult.tasksOptions;
     }
-    const ifResult = transformIf(task, options);
+    const ifResult = transformIf(task, {
+      ...options,
+      indent: mainIndent,
+    });
     concatFileCode(fileCode, ifResult);
 
-    let isNeedCloseBlock = ifResult.isNeedCloseBlock;
+    const isNeedCloseBlock = ifResult.isNeedCloseBlock;
     // add Indent TODO: add indent to all code
 
     // check if loop
     if (rawLoop) {
       const loopResult = transformLoop(task, {
         ...options,
-        indent: mainIndent,
+        indent: isNeedCloseBlock ? mainIndent + 2 : mainIndent,
       });
       concatFileCode(fileCode, loopResult);
     } else {
       const useCallResult = transformUseCall(task, {
         ...options,
-        indent: mainIndent,
+        indent: isNeedCloseBlock ? mainIndent + 2 : mainIndent,
       });
       concatFileCode(fileCode, useCallResult);
     }
 
     if (isNeedCloseBlock) {
-      fileCode.mainFunctionBody += `}\n`;
+      fileCode.mainFunctionBody += withIndent(`}\n`, mainIndent);
     }
   }
   return getTasksCode(fileCode);
@@ -153,7 +157,11 @@ function transformImport(
         `import { __yamlscript_create_process } from "${GLOBAL_RUNTIME_CMD_PACKAGE_URL}";\n`;
       runtimeImportCode =
         `const { __yamlscript_create_process } = await import("${GLOBAL_RUNTIME_CMD_PACKAGE_URL}");\n`;
-      setVarsMap(varsMap, "__yamlscript_create_process");
+      setVarsMap(
+        varsMap,
+        "__yamlscript_create_process",
+        UseType.GlobalsFunction,
+      );
     }
 
     const newUse = DEFAULT_USE_NAME + "_" + task.taskIndex;
@@ -172,7 +180,7 @@ function transformImport(
     return {
       use: use,
       tasksOptions: options,
-      useType: UseType.RuntimeFunction,
+      useType: UseType.AsyncRuntimeFunction,
     };
   }
 
@@ -205,7 +213,11 @@ function transformImport(
       importCode += `import ${importPath} from "${from}";\n`;
       runtimeImportCode +=
         `  const ${runtimeImportPath} = await import("${from}");\n`;
-      setVarsMap(options.varsMap, importVar);
+
+      // get import var type
+      // TODO, cause import is an async operation, we should consider if we should check it. now we just treat it as async operation
+
+      setVarsMap(options.varsMap, importVar, UseType.AsyncThirdPartyFunction);
       // TODO: check function type
       // async or other
       debugLog += `use ${green(importPath)} from {${from}}`;
@@ -213,20 +225,26 @@ function transformImport(
     useType = UseType.AsyncThirdPartyFunction;
   } else if (use && get(globals, use)) {
     //
+    // deno-lint-ignore ban-types
+    const fn = get(globals, use) as Function;
     const importPathValue = getImportPathValue(use);
     const importPath = importPathValue[0];
     const importVar = importPathValue[1];
-
+    // check if it's a async function
+    if (isAsyncFunction(fn)) {
+      useType = UseType.AsyncGlobalsFunction;
+    } else {
+      useType = UseType.GlobalsFunction;
+    }
     // check if import already
     if (!varsMap[importVar]) {
-      setVarsMap(options.varsMap, importVar);
+      setVarsMap(options.varsMap, importVar, useType);
       // TODO check useType
       importCode += `import ${importPath} from "${GLOBAL_PACKAGE_URL}";\n`;
       runtimeImportCode +=
         `const ${importPath} = ${RUNTIME_FUNCTION_OPTIONS_NAME}.globals;\n`;
       debugLog += `use { ${green(use)} } from "globals/mod.ts"`;
     }
-    useType = UseType.AsyncGlobalsFunction;
   } else if (
     use && get(globalThis, use) &&
     typeof get(globalThis, use) === "function"
@@ -234,7 +252,14 @@ function transformImport(
     // global runtime use
     // do not need to import
     debugLog += `use ${green(use)}`;
-    useType = UseType.AsyncRuntimeFunction;
+    // deno-lint-ignore ban-types
+    const fn = get(globalThis, use) as Function;
+    // check type
+    if (isAsyncFunction(fn)) {
+      useType = UseType.AsyncRuntimeFunction;
+    } else {
+      useType = UseType.RuntimeFunction;
+    }
   } else {
     if (use) {
       // not found use
@@ -264,28 +289,24 @@ function transformIf(
   options: StrictTasksOptions,
 ): LiteralCode {
   const { if: rawIf } = task;
-  let mainFunctionBody = "";
+  const literalCode: LiteralCode = {
+    mainFunctionBody: "",
+  };
   const mainIndent = options.indent;
-  if (rawIf === true) {
+  if (rawIf === true || rawIf === undefined) {
     // dont generate any code
-    return { mainFunctionBody };
-  } else if (rawIf === undefined) {
-    // no if, just return
-    return { mainFunctionBody };
   } else if (typeof rawIf === "string") {
     const conditionCompiledResult = getConditionResult(rawIf, options.public);
     if (
       typeof conditionCompiledResult === "boolean" &&
       conditionCompiledResult === true
     ) {
-      return { mainFunctionBody };
+      // no need to generate code
     } else {
-      mainFunctionBody += `if (${conditionCompiledResult}) {\n`;
+      literalCode.mainFunctionBody += `if (${conditionCompiledResult}) {\n`;
+      // TODO add transform use
 
-      return {
-        mainFunctionBody,
-        isNeedCloseBlock: true,
-      };
+      literalCode.isNeedCloseBlock = true;
     }
   } else {
     // invalid
@@ -293,21 +314,28 @@ function transformIf(
       `invalid if condition: ${rawIf}, you can only use boolean or string`,
     );
   }
+  literalCode.mainFunctionBody = withIndent(
+    literalCode.mainFunctionBody!,
+    mainIndent,
+  );
+  return literalCode;
 }
 function transformLoop(
   task: StrictTask,
   options: StrictTasksOptions,
 ): LiteralCode {
   const { loop: rawLoop } = task;
-  let mainFunctionBody = "";
-  let importCode = "";
-  let runtimeImportCode = "";
   const mainIndent = options.indent;
+  const literalCode: LiteralCode = {
+    mainFunctionBody: "",
+    mainFunctionBodyTop: "",
+  };
+
   // start build function body
   if (rawLoop && typeof rawLoop === "string" && rawLoop.trim()) {
     // consider as direct literal code
     const arrayLiberal = convertValueToLiteral(rawLoop, options.public);
-    mainFunctionBody +=
+    literalCode.mainFunctionBody +=
       `for(let index = 0; index < ${arrayLiberal}.length; index++){
   const item = ${arrayLiberal}[index];\n`;
     // transform use call
@@ -315,16 +343,13 @@ function transformLoop(
       ...options,
       indent: options.indent,
     });
-    // TODO import code
-    mainFunctionBody += useCallResult.mainFunctionBody;
-    importCode += useCallResult.importCode;
-    runtimeImportCode += useCallResult.runtimeImportCode;
-    mainFunctionBody += `}\n`;
+    concatLiteralCode(literalCode, useCallResult);
+    literalCode.mainFunctionBody += `}\n`;
   } else if (rawLoop && Array.isArray(rawLoop)) {
     // loop array
     // compiled loop
     for (let i = 0; i < rawLoop.length; i++) {
-      mainFunctionBody += `{
+      literalCode.mainFunctionBody += `{
   const item = ${convertValueToLiteral(rawLoop[i], options.public)};
   const index = ${i};\n`;
       // transform useCall
@@ -332,20 +357,23 @@ function transformLoop(
         ...options,
         indent: options.indent,
       });
-      mainFunctionBody += useCallResult.mainFunctionBody;
+      concatLiteralCode(literalCode, useCallResult);
 
-      mainFunctionBody += `}\n`;
+      literalCode.mainFunctionBody += `}\n`;
     }
   } else {
     throw new Error("invalid loop params");
   }
 
-  mainFunctionBody = withIndent(mainFunctionBody, mainIndent);
-  return {
-    mainFunctionBody,
-    importCode,
-    runtimeImportCode,
-  };
+  literalCode.mainFunctionBody = withIndent(
+    literalCode.mainFunctionBody!,
+    mainIndent,
+  );
+  literalCode.mainFunctionBodyTop = withIndent(
+    literalCode.mainFunctionBodyTop!,
+    mainIndent,
+  );
+  return literalCode;
 }
 
 function transformUseCall(
@@ -353,8 +381,7 @@ function transformUseCall(
   options: StrictTasksOptions,
 ): LiteralCode {
   let mainFunctionBody = "";
-  let importCode = "";
-  let runtimeImportCode = "";
+  let mainFunctionBodyTop = "";
   const { args, use, useType } = task;
   const { indent } = options;
   // check if it's setVars
@@ -383,14 +410,13 @@ function transformUseCall(
       if (!Array.isArray(args[0])) {
         const keys = Object.keys(args[0] as Record<string, unknown>);
         for (const key of keys) {
-          const setGlobalVarsCode = `const ${key}=${
+          mainFunctionBodyTop += `let ${key} = null;\n`;
+          mainFunctionBody += `${key} = ${
             convertValueToLiteral(
               (args[0] as Record<string, unknown>)[key],
               options.public,
             )
           };\n`;
-          importCode += setGlobalVarsCode;
-          runtimeImportCode += setGlobalVarsCode;
         }
       } else {
         throw new Error("invalid args, setVars args must be object");
@@ -420,16 +446,16 @@ result = await ${task.use}\`${command}\`;\n`;
         arg,
       ) => (convertValueToLiteral(arg, options.public)))
         .join(",");
-
       mainFunctionBody +=
         `${contextConfig.lastTaskResultName} = await ${use}(${argsFlatten});\n`;
     }
   }
   mainFunctionBody = withIndent(mainFunctionBody, indent);
+  // always 2;
+  mainFunctionBodyTop = withIndent(mainFunctionBodyTop, 2);
   return {
+    mainFunctionBodyTop,
     mainFunctionBody,
-    importCode,
-    runtimeImportCode,
   };
 }
 
@@ -453,18 +479,20 @@ function parseBuildIf(ifValue: boolean | string | undefined): boolean {
  * @returns
  */
 function setVarsMap(
-  varsMap: Record<string, boolean>,
+  varsMap: Record<string, UseType>,
   importVar: string,
+  importVarType: UseType,
 ) {
   if (varsMap[importVar]) {
     throw new Error(`duplicate  var name ${importVar}`);
   } else {
-    varsMap[importVar] = true;
+    varsMap[importVar] = importVarType;
   }
 }
 function formatLiteralCode(result: LiteralCode): StrictLiteralCode {
   return {
     mainFunctionBody: result.mainFunctionBody ?? "",
+    mainFunctionBodyTop: result.mainFunctionBodyTop ?? "",
     debugLog: result.debugLog ?? "",
     infoLog: result.infoLog ?? "",
     importCode: result.importCode ?? "",
@@ -586,9 +614,33 @@ function concatFileCode(fileCode: FileCode, literalCode: LiteralCode): void {
   const strickLiteralCode = formatLiteralCode(literalCode);
   fileCode.importCode += strickLiteralCode.importCode;
   fileCode.runtimeImportCode += strickLiteralCode.runtimeImportCode;
+  if (strickLiteralCode.mainFunctionBodyTop) {
+    fileCode.mainFunctionBody = strickLiteralCode.mainFunctionBodyTop +
+      fileCode.mainFunctionBody;
+  }
+
   fileCode.mainFunctionBody += strickLiteralCode.mainFunctionBody;
 }
+// affect function
+function concatLiteralCode(l1: LiteralCode, l2: LiteralCode): void {
+  l1.mainFunctionBody = l1.mainFunctionBody ?? "";
+  l1.mainFunctionBodyTop = l1.mainFunctionBodyTop ?? "";
+  l1.debugLog = l1.debugLog ?? "";
+  l1.infoLog = l1.infoLog ?? "";
+  l1.importCode = l1.importCode ?? "";
+  l1.runtimeImportCode = l1.runtimeImportCode ?? "";
+  l1.functions = l1.functions ?? [];
+  l1.subTasks = l1.subTasks ?? [];
+  l1.tasksOptions = l1.tasksOptions
+    ? getDefaultTasksOptions(l1.tasksOptions)
+    : getDefaultTasksOptions({});
 
+  const strickLiteralCode2 = formatLiteralCode(l2);
+  l1.importCode += strickLiteralCode2.importCode;
+  l1.runtimeImportCode += strickLiteralCode2.runtimeImportCode;
+  l1.mainFunctionBodyTop += strickLiteralCode2.mainFunctionBodyTop;
+  l1.mainFunctionBody += strickLiteralCode2.mainFunctionBody;
+}
 function initFileCode(): FileCode {
   const importCode = "";
   // for runtime code to import modules

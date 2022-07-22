@@ -19,7 +19,7 @@ Deno.test("compileTasks tasks #1", async () => {
     relativePath: "./tast1.yml",
   });
   const expected = await Deno.readTextFile(
-    "./examples/__fixtures__/tast1.mod.js",
+    "./examples/__fixtures__/tast1.js",
   );
   assertEquals(result.moduleFileCode, expected);
 });
@@ -43,7 +43,7 @@ Deno.test("compileTasks tasks loop #2", async () => {
     relativePath: "./tast2.yml",
   });
   const expected = await Deno.readTextFile(
-    "./examples/__fixtures__/tast2.mod.js",
+    "./examples/__fixtures__/tast2.js",
   );
   assertEquals(result.moduleFileCode, expected);
 });
@@ -63,7 +63,7 @@ Deno.test("compileTasks tasks #3", async () => {
     relativePath: "./tast3.yml",
   });
   const expected = await Deno.readTextFile(
-    "./examples/__fixtures__/tast3.mod.js",
+    "./examples/__fixtures__/tast3.js",
   );
   assertEquals(result.moduleFileCode, expected);
 });
@@ -75,7 +75,7 @@ Deno.test("compileTasks full tasks #4", async () => {
     dist: cacheDist,
     relativePath: "./full.ys.yml",
   });
-  // const expected = await Deno.readTextFile("./__fixtures__/tast3.mod.js");
+  // const expected = await Deno.readTextFile("./__fixtures__/tast3.js");
   // assertEquals(result.moduleFileCode, expected);
 });
 Deno.test("test if condition #5", async () => {
@@ -100,7 +100,7 @@ Deno.test("compileTasks tasks #6", async () => {
   });
   // TODO
   // const expected = await Deno.readTextFile(
-  //   "./examples/__fixtures__/tast6.mod.js",
+  //   "./examples/__fixtures__/tast6.js",
   // );
   // assertEquals(result.moduleFileCode, expected);
 });

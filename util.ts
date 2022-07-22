@@ -77,3 +77,14 @@ export function getDefaultPublicContext() {
   };
   return defaultPublicContext;
 }
+
+// deno-lint-ignore ban-types
+export function isAsyncFunction(fn: Function): boolean {
+  if (
+    fn.constructor.name === "AsyncFunction"
+  ) {
+    return true;
+  } else {
+    return false;
+  }
+}
