@@ -4,11 +4,18 @@
     - What is it?
     - yamlscript is written in yaml format and can be compiled into javscript that runs in deno.
     - What can it do?
-    - We can use it to manage our dotfiles, workflows like send feed entries to chat room, or we can even choose to deploy it to a serverless server such as deno deploy.
+    - We can use it to manage our dotfiles, workflows like send feed entries to chat room, 
+    or we can even choose to deploy it to a serverless server such as deno deploy.
   use: console.log
   args: ${index}. ${item}
 
-- name: As you see, we use `loop` to define a loop, it can be an literal array, like above, and you can access the item by using \${item}, the index by using \${index}, just like javascript template strings. You will use `use` to call a function, it can be any global function from deno. We also have some yamlscript built-in functions, for example, we have `rss.entries` function, which can help you to get the fedd entries. (you can see all built-in function here https://github.com/yamlscript/yamlscript/blob/main/globals/mod.ts )
+- name: As you see, we use `loop` to define a loop, it can be an literal array, like above, 
+and you can access the item by using \${item}, the index by using \${index}, just like 
+javascript template strings. You will use `use` to call a function, it can be any global 
+function from deno. We also have some yamlscript built-in functions, for example, 
+we have `rss.entries` function, which can help you to get the fedd entries. 
+(you can see all built-in function here
+ https://github.com/yamlscript/yamlscript/blob/main/globals/mod.ts )
   use: rss.entries
   args: https://actionsflow.github.io/test-page/hn-rss.xml
 
