@@ -27,14 +27,10 @@
         }
 
 - name: How to run this yaml file? Cause yamlscript depended Deno, so we should install https://deno.land/#installation first, as you see, we can run a command line tool that begins with a colon `:`, then yamlscript will consider it as a cmd call. You also noticed that I use `if` with `false` to prevent this task.
-  use: :brew
-  args:
-    - install
-    - deno
+  use: :brew install deno
   if: false
 - name: Once deno installed in your local enviroment, you can install yamlscript now.
-  use: :deno
-  args: install -A https://deno.land/x/yamlscript/ys.ts
+  use: :deno install -A https://deno.land/x/yamlscript/ys.ts
   if: false
 - name: Now you can run this file
   use: :ys
@@ -43,11 +39,8 @@
     - https://raw.githubusercontent.com/yamlscript/yamlscript/main/README.ys.yml
   if: false
 - name: You can also see the compiled javascript code , the built file will placed in `dist` folder, you can submit this folder to git, if you want to run the code with serverless service like deno deploy.
-  use: :ys
+  use: :ys build https://raw.githubusercontent.com/yamlscript/yamlscript/main/README.ys.yml
   if: false
-  args:
-    - build
-    - https://raw.githubusercontent.com/yamlscript/yamlscript/main/README.ys.yml
 
 - name: You have seen we use `if` before, actually, we can use any condition here, you should't add $, or \${} in if condition.
   if: Date.now() > 0

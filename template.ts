@@ -43,7 +43,7 @@ export function isCommand(str: string | undefined) {
     return false;
   }
 }
-export function getCommandProgram(str: string | undefined): string {
+export function getCommand(str: string | undefined): string {
   if (str === undefined) {
     throw new Error("invalid cmd program");
   }

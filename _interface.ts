@@ -3,7 +3,7 @@ import {
   PublicContext,
   Task,
   TasksOptions,
-  UseProperties,
+  UseType,
 } from "./interface.ts";
 /**
  * internal files
@@ -28,8 +28,6 @@ export interface FileCode {
 }
 
 export interface LiteralCode {
-  use?: string;
-  from?: string;
   importCode?: string;
   runtimeImportCode?: string;
   mainFunctionBody?: string;
@@ -41,9 +39,14 @@ export interface LiteralCode {
   isNeedCloseBlock?: boolean;
 }
 
-export interface StrictLiteralCode extends LiteralCode {
+export interface ImportResult extends LiteralCode {
   use: string;
-  from: string;
+  from?: string;
+  useType: UseType;
+  command?: string;
+}
+
+export interface StrictLiteralCode extends LiteralCode {
   importCode: string;
   runtimeImportCode: string;
   mainFunctionBody: string;
@@ -55,14 +58,11 @@ export interface StrictLiteralCode extends LiteralCode {
 }
 export interface TasksCode {
   moduleFileCode: string;
-  runFileCode: string;
   runtimeFunctionBodyCode: string;
   runtimeFileCode: string;
 }
 export interface BuiltCode {
   moduleFileCode: string;
-  runFileCode: string;
-  runFilePath: string;
   moduleFilePath: string;
   runtimeFileCode: string;
   runtimeFilePath?: string;
@@ -73,10 +73,11 @@ export interface StrictTasksOptions extends TasksOptions {
   public: PublicContext;
   indent: number;
   varsMap: Record<string, boolean>;
-  usesMap: Record<string, UseProperties>;
 }
 export interface StrictTask extends Task {
   args: unknown[];
+  useType: UseType;
+  command?: string;
   taskIndex: number;
 }
 export interface GetDefaultTaskOptionsOptions {

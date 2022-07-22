@@ -18,7 +18,7 @@ export const LOOP_ITEM_INDEX = config.context.loopItemIndex;
 export const GLOBAL_PACKAGE_URL =
   `${config.globalPackageUrlPrefix}/globals/mod.ts`;
 export const GLOBAL_RUNTIME_CMD_PACKAGE_URL =
-  `${config.globalPackageUrlPrefix}/runtimes/cmd.ts`;
+  `${config.globalPackageUrlPrefix}/runtimes/cmd/mod.ts`;
 
 // export const TEMPLATE_REGEX = /(\\)?\$\{(.*?)\}/g;
 

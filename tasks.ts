@@ -9,6 +9,7 @@ import {
   BuiltCode,
   FileCode,
   GetDefaultTaskOptionsOptions,
+  ImportResult,
   LiteralCode,
   StrictLiteralCode,
   StrictTask,
@@ -19,7 +20,7 @@ import {
 import {
   compile,
   convertValueToLiteral,
-  getCommandProgram,
+  getCommand,
   getConditionResult,
   isCommand,
   isVariable,
@@ -82,6 +83,8 @@ export function compileTasks(
     // change use to final value
     task.use = importResult.use as string;
     task.from = importResult.from as string;
+    task.useType = importResult.useType;
+    task.command = importResult.command;
     // transform main function body
     if (importResult.tasksOptions) {
       options = importResult.tasksOptions;
@@ -122,7 +125,7 @@ export function compileTasks(
 function transformImport(
   task: StrictTask,
   originalOptions: StrictTasksOptions,
-): LiteralCode {
+): ImportResult {
   const { from: rawFrom, use: rawUse } = task;
   const options = {
     ...originalOptions,
@@ -130,14 +133,12 @@ function transformImport(
   const varsMap = {
     ...options.varsMap,
   };
-  const usesMap = {
-    ...options.usesMap,
-  };
+
   options.varsMap = varsMap;
-  options.usesMap = usesMap;
   let importCode = "";
   let runtimeImportCode = "";
   let use = "";
+  let useType = UseType.Default;
   if (rawUse && rawUse.trim() !== "") {
     const useTemplateFn = compile(rawUse, COMPILED_CONTEXT_KEYS);
     use = useTemplateFn(options.public) as string;
@@ -145,20 +146,34 @@ function transformImport(
 
   if (use === "setVars" || use === "setGlobalVars") {
     // no more import
-    usesMap[use] = { type: UseType.SetVars };
-    return { use: use, tasksOptions: options };
+    return { use: use, tasksOptions: options, useType: UseType.SetVars };
   } else if (isCommand(use)) {
-    usesMap[use] = { type: UseType.Command };
-    importCode = `import { $ } from "${GLOBAL_RUNTIME_CMD_PACKAGE_URL}";\n`;
-    runtimeImportCode =
-      `const { __yamlscript_run_cmd } = await import("${GLOBAL_RUNTIME_CMD_PACKAGE_URL}");\n`;
-    setVarsMap(varsMap, "__yamlscript_run_cmd");
-    return { use: use, tasksOptions: options, importCode, runtimeImportCode };
+    if (!varsMap["__yamlscript_create_process"]) {
+      importCode =
+        `import { __yamlscript_create_process } from "${GLOBAL_RUNTIME_CMD_PACKAGE_URL}";\n`;
+      runtimeImportCode =
+        `const { __yamlscript_create_process } = await import("${GLOBAL_RUNTIME_CMD_PACKAGE_URL}");\n`;
+      setVarsMap(varsMap, "__yamlscript_create_process");
+    }
+
+    const newUse = DEFAULT_USE_NAME + "_" + task.taskIndex;
+
+    return {
+      use: newUse,
+      tasksOptions: options,
+      importCode,
+      runtimeImportCode,
+      useType: UseType.Command,
+      command: getCommand(use),
+    };
   } else if (isVariable(use)) {
     // if it's variable, then it's a runtime function, just use it
     // but we don't know if it's a async or not, we can assume it's async, // TODO  or maybe we can add a sync option to specify it's sync
-    usesMap[use] = { type: UseType.AsyncRuntimeFunction };
-    return { use: use, tasksOptions: options };
+    return {
+      use: use,
+      tasksOptions: options,
+      useType: UseType.RuntimeFunction,
+    };
   }
 
   let debugLog = ``;
@@ -193,9 +208,9 @@ function transformImport(
       setVarsMap(options.varsMap, importVar);
       // TODO: check function type
       // async or other
-      usesMap[use] = { type: UseType.Default };
       debugLog += `use ${green(importPath)} from {${from}}`;
     }
+    useType = UseType.AsyncThirdPartyFunction;
   } else if (use && get(globals, use)) {
     //
     const importPathValue = getImportPathValue(use);
@@ -206,12 +221,12 @@ function transformImport(
     if (!varsMap[importVar]) {
       setVarsMap(options.varsMap, importVar);
       // TODO check useType
-      usesMap[use] = { type: UseType.Default };
       importCode += `import ${importPath} from "${GLOBAL_PACKAGE_URL}";\n`;
       runtimeImportCode +=
         `const ${importPath} = ${RUNTIME_FUNCTION_OPTIONS_NAME}.globals;\n`;
       debugLog += `use { ${green(use)} } from "globals/mod.ts"`;
     }
+    useType = UseType.AsyncGlobalsFunction;
   } else if (
     use && get(globalThis, use) &&
     typeof get(globalThis, use) === "function"
@@ -219,6 +234,7 @@ function transformImport(
     // global runtime use
     // do not need to import
     debugLog += `use ${green(use)}`;
+    useType = UseType.AsyncRuntimeFunction;
   } else {
     if (use) {
       // not found use
@@ -235,6 +251,7 @@ function transformImport(
   }
   return {
     use: use,
+    useType: useType,
     from,
     importCode,
     runtimeImportCode,
@@ -338,7 +355,7 @@ function transformUseCall(
   let mainFunctionBody = "";
   let importCode = "";
   let runtimeImportCode = "";
-  const { args, use } = task;
+  const { args, use, useType } = task;
   const { indent } = options;
   // check if it's setVars
   // if it's setVars
@@ -384,8 +401,17 @@ function transformUseCall(
     }
   } else {
     // check if use is command
-    if (isCommand(use)) {
-      mainFunctionBody += transformCommandCall(task, options).mainFunctionBody;
+    if (useType === UseType.Command) {
+      const command = task.command!;
+      const { args } = task;
+      const argsFlatten = args.map((
+        arg,
+      ) => (convertValueToLiteral(arg, options.public)))
+        .join(",");
+
+      mainFunctionBody =
+        `const ${task.use} =  __yamlscript_create_process(${argsFlatten});
+result = await ${task.use}\`${command}\`;\n`;
     } else if (use) {
       // consider as function
       // array, then put args to literal args
@@ -438,8 +464,6 @@ function setVarsMap(
 }
 function formatLiteralCode(result: LiteralCode): StrictLiteralCode {
   return {
-    use: result.use ?? "",
-    from: result.from ?? "",
     mainFunctionBody: result.mainFunctionBody ?? "",
     debugLog: result.debugLog ?? "",
     infoLog: result.infoLog ?? "",
@@ -461,7 +485,6 @@ function getDefaultTasksOptions(
     public: tasksOptions.public ?? getDefaultPublicContext(),
     indent: tasksOptions.indent ?? 0,
     varsMap: tasksOptions.uniqueVars ?? {},
-    usesMap: tasksOptions.usesMap ?? {},
   };
 }
 function getDefaultTaskOptions(
@@ -479,6 +502,7 @@ function getDefaultTaskOptions(
     ...task,
     args: argsArray,
     taskIndex: options.taskIndex,
+    useType: UseType.Default,
   };
 }
 
@@ -507,24 +531,6 @@ function getImportPathValue(use: string): string[] {
   return [importPath, importVar];
 }
 
-function transformCommandCall(
-  task: StrictTask,
-  options: StrictTasksOptions,
-): LiteralCode {
-  let cmdArrayString = `"${getCommandProgram(task.use)}"`;
-  const { args } = task;
-
-  if (args.length > 0) {
-    cmdArrayString += ",";
-    cmdArrayString += args.map((
-      arg,
-    ) => (convertValueToLiteral(arg, options.public)))
-      .join(",");
-  }
-
-  const mainFunctionBody = `__yamlscript_run_cmd(${cmdArrayString});\n`;
-  return { mainFunctionBody };
-}
 export function buildTasks(
   tasks: Task[],
   options: BuildTasksOptions,
@@ -559,14 +565,19 @@ function getTasksCode(fileCode: FileCode): TasksCode {
   const runtimeFunctionBodyCode =
     `${fileCode.runtimeImportCode}\n${fileCode.mainFunctionBody}`;
   const runtimeFileCode =
-    `async function main() {\n${runtimeFunctionBodyCode}\n}\nmain();`;
+    `export default async function main() {\n${runtimeFunctionBodyCode}\n}
+if (import.meta.main) {
+  main();
+}`;
   const compiledModuleCode = fileCode.importCode +
-    `export default async function main(){\n${fileCode.mainFunctionBody}}`;
+    `export default async function main(){\n${fileCode.mainFunctionBody}}
+if (import.meta.main) {
+  main();
+}`;
   return {
     moduleFileCode: compiledModuleCode,
     runtimeFunctionBodyCode,
     runtimeFileCode,
-    runFileCode: compiledModuleCode,
   };
 }
 

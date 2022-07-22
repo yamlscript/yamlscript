@@ -1,0 +1,3 @@
+- use: :echo hello world
+- use: console.log
+  args: $result

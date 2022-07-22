@@ -29,16 +29,11 @@ export const createDistFile = async (
   codeResult: TasksCode,
   options: BuildTasksOptions,
 ): Promise<BuiltCode> => {
-  const moduleFilerelativePath = changeExt(options.relativePath, ".mod.js");
-  const runFilerelativePath = changeExt(options.relativePath, ".js");
+  const moduleFilerelativePath = changeExt(options.relativePath, ".js");
   const dist = options.dist || "dist";
   const moduleFilePath = resolve(dist, moduleFilerelativePath);
   await ensureDir(dirname(moduleFilePath));
   await Deno.writeTextFile(moduleFilePath, codeResult.moduleFileCode);
-
-  // then create run file
-  const runFilePath = resolve(dist, runFilerelativePath);
-  await Deno.writeTextFile(runFilePath, codeResult.runFileCode);
 
   let runtimeFilePath: string | undefined;
 
@@ -55,7 +50,6 @@ export const createDistFile = async (
   return {
     ...codeResult,
     moduleFilePath: moduleFilePath,
-    runFilePath: runFilePath,
     runtimeFilePath: runtimeFilePath,
   };
 };
