@@ -79,7 +79,7 @@ export class Process extends Reader<ProcessOutput> {
       console.log(__yamlscript_global_options.brightBlue("$ %s"), cmd);
     }
   }
-
+  // TODO env permission
   get #process(): Deno.Process {
     if (!this.#proc) {
       this.#proc = Deno.run({
@@ -89,7 +89,7 @@ export class Process extends Reader<ProcessOutput> {
           this.#options.prefix + " " + this.#cmd,
         ],
         env: {
-          ...Deno.env.toObject(),
+          // ...Deno.env.toObject(),
           ...this.#env,
         },
         stdin: this.#options.stdin,
