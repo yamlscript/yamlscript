@@ -23,7 +23,11 @@
   use: rss.entries
   args: https://actionsflow.github.io/test-page/hn-rss.xml
 
-- name: '`result` variable will be the last task returned result, please note\: `$result` is a variable, but `\${result}` is a string. `rss.entries` function will return an array, so we can loop the array like the following. You can visit https://requestbin.com/r/enyvb91j5zjv9/23eNPamD4DK4YK1rfEB1FAQOKIj to check the request'
+- name: '`result` variable will be the last task returned result,
+    please note\: `$result` is a variable, but `\${result}` is a string.
+    `rss.entries` function will return an array, so we can loop the array like the following.
+    You can visit https://requestbin.com/r/enyvb91j5zjv9/23eNPamD4DK4YK1rfEB1FAQOKIj
+    to check the request'
   loop: $result
   use: fetch
   args:
@@ -37,7 +41,11 @@
           "link":  "${item.links[0].href}"
         }
 
-- name: How to run this yaml file? Cause yamlscript depended Deno, so we should install https://deno.land/#installation first, as you see, we can run a command line tool that begins with a colon `:`, then yamlscript will consider it as a cmd call. You also noticed that I use `if` with `false` to prevent this task.
+- name:
+    How to run this yaml file? Cause yamlscript depended Deno, so we should install
+    https://deno.land/#installation first, as you see, we can run a command line tool
+    that begins with a colon `:`, then yamlscript will consider it as a cmd call.
+    You also noticed that I use `if` with `false` to prevent this task.
   use: :brew install deno
   if: false
 - name: Once deno installed in your local enviroment, you can install yamlscript now.
@@ -49,16 +57,23 @@
     - run
     - https://raw.githubusercontent.com/yamlscript/yamlscript/main/README.ys.yml
   if: false
-- name: You can also see the compiled javascript code , the built file will placed in `dist` folder, you can submit this folder to git, if you want to run the code with serverless service like deno deploy.
+- name:
+    You can also see the compiled javascript code , the built file will placed
+    in `dist` folder, you can submit this folder to git, if you want to run the code
+    with serverless service like deno deploy.
   use: :ys build https://raw.githubusercontent.com/yamlscript/yamlscript/main/README.ys.yml
   if: false
 
-- name: You have seen we use `if` before, actually, we can use any condition here, you should't add $, or \${} in if condition.
+- name:
+    You have seen we use `if` before, actually, we can use any condition here,
+    you should't add $, or \${} in if condition.
   if: Date.now() > 0
   use: setGlobalVars
   args:
     nowIsGreaterThanZero: true
-- name: We can use assertEquals to test our code, once it failed, it'll throw an error. `assertEquals` is a built-in function, you can use it directly.
+- name:
+    We can use assertEquals to test our code, once it failed, it'll throw an error.
+    `assertEquals` is a built-in function, you can use it directly.
   use: assertEquals
   args:
     - $nowIsGreaterThanZero
