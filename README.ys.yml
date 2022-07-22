@@ -11,7 +11,7 @@
 
 - name:
     As you see, we use `loop` to define a loop, it can be an literal array, like above,
-    and you can access the item by using \${item}, the index by using \${index}, just like
+    you can access the item by using \${item}, the index by using \${index}, just like
     javascript template strings. You will use `use` to call a function, it can be any global
     function from deno. We also have some yamlscript built-in functions, for example,
     we have `rss.entries` function, which can help you to get the fedd entries.
