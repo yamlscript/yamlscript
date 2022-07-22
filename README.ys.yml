@@ -49,10 +49,7 @@
   use: :deno install -A https://deno.land/x/yamlscript/ys.ts
   if: false
 - name: Now you can run this file
-  use: :ys
-  args:
-    - run
-    - https://raw.githubusercontent.com/yamlscript/yamlscript/main/README.ys.yml
+  use: :ys run https://raw.githubusercontent.com/yamlscript/yamlscript/main/README.ys.yml
   if: false
 - name:
     You can also see the compiled javascript code , the built file will placed
