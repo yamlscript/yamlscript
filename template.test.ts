@@ -1,10 +1,11 @@
-import { assertEquals, assertThrows } from "./deps.ts";
+import { assertEquals, assertThrows, parse } from "./deps.ts";
 import {
   convertValueToLiteral,
   getConditionResult,
   isIncludeTemplate,
   precompile,
   template,
+  templateWithKnownKeys,
 } from "./template.ts";
 // Simple name and function, compact form, but not configurable
 Deno.test("template #1", () => {
@@ -217,4 +218,28 @@ Deno.test("convertValueToLiteral #17", () => {
     result,
     '[`${typeof var2}`,"undefined"]',
   );
+});
+
+Deno.test("escape Apostrophe #18", () => {
+  const str = "As you see, we use `loop`";
+  const result = templateWithKnownKeys(str, {});
+  assertEquals(result, "`As you see, we use \\`loop\\``");
+});
+
+Deno.test("escape Apostrophe #19", () => {
+  const str =
+    "As you see, we use `loop` to define a loop, it can be an literal array, like above, and you can access the item by using \\${item}, the index by using \\${index}, just like javascript template strings. You will use `use` to call a function, it can be any global function from deno. We also have some yamlscript built-in functions, for example, we have `rss.entries` function, which can help you to get the fedd entries. (you can see all built-in function here https://github.com/yamlscript/yamlscript/blob/main/globals/mod.ts )";
+  const result = templateWithKnownKeys(str, {});
+  console.log("result", result);
+  assertEquals(
+    result,
+    "`As you see, we use \\`loop\\` to define a loop, it can be an literal array, like above, and you can access the item by using \\${item}, the index by using \\${index}, just like javascript template strings. You will use \\`use\\` to call a function, it can be any global function from deno. We also have some yamlscript built-in functions, for example, we have \\`rss.entries\\` function, which can help you to get the fedd entries. (you can see all built-in function here https://github.com/yamlscript/yamlscript/blob/main/globals/mod.ts )`",
+  );
+});
+
+Deno.test("yaml test #20", () => {
+  const result = parse("name: test \\${item}");
+  assertEquals(result, {
+    name: "test \\${item}",
+  });
 });

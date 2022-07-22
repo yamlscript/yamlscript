@@ -1,9 +1,12 @@
 export interface Task {
+  id?: string;
+  name?: string;
   from?: string;
   use?: string;
   args?: unknown | unknown[];
   loop?: string | number | unknown[];
   if?: boolean | string;
+  catch?: boolean;
 }
 export interface BuildContext {
   env: Record<string, string>;

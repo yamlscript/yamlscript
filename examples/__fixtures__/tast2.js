@@ -10,6 +10,7 @@ export default async function main(){
     const index = 1;
     result = await console.log("hello",`${item}`,`${index}`,`${index+1}1234567`);
   }
+  console.log(`Task #0 done.`);
 }
 if (import.meta.main) {
   main();

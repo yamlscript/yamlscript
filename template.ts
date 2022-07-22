@@ -166,7 +166,7 @@ function variableToEs6TemplateStringOnlyForKnownKeys(
     throw new Error(`Invalid template variable: ${matched}`);
   }
   if (matched[0] === "\\") {
-    return matched.slice(1);
+    return matched;
   }
   let result = matched;
 
@@ -236,17 +236,25 @@ export const templateWithKnownKeys = (
   if (isIncludeTemplate(parsed)) {
     parsed = `\`${parsed}\``;
   }
-  parsed = surroundDoubleQuotes(parsed);
+  parsed = surroundQuotes(parsed);
   return parsed;
 };
-function surroundDoubleQuotes(str: string): string {
+function surroundQuotes(str: string): string {
   // check if start with `
   const trimStr = str.trim();
+  let final = "";
   if (trimStr[0] === "`" && trimStr[trimStr.length - 1] === "`") {
-    return str;
+    const pureStr = trimStr.slice(1, trimStr.length - 1);
+    final = `\`${escapeApostrophe(pureStr)}\``;
   } else {
-    return `"${str}"`;
+    final = `\`${escapeApostrophe(str)}\``;
   }
+  return (final);
+}
+
+function escapeApostrophe(str: string) {
+  const result = str.replace(/`/g, "\\`");
+  return result;
 }
 
 /**
@@ -344,8 +352,10 @@ function convertStringToLiteral(
   value: string,
   publicCtx: PublicContext,
 ): string {
-  // check if variable
-  if (isVariable(value)) {
+  if (!value) {
+    return value;
+  } else if (isVariable(value)) {
+    // check if variable
     // it's a variable
     // should return literal directly
     return variableValueToVariable(value);

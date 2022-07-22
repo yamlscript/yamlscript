@@ -2,6 +2,7 @@ import { EntryOptions, Task } from "./interface.ts";
 import { StrictEntryOptions } from "./_interface.ts";
 import { buildTasks, runTasks } from "./tasks.ts";
 import { getDefaultPublicContext, parseYamlFile } from "./util.ts";
+import log from "./log.ts";
 export async function run(originalOptions: EntryOptions) {
   const options = getDefaultEntryOptions(originalOptions);
   const { files } = options;
@@ -23,6 +24,8 @@ export async function run(originalOptions: EntryOptions) {
       });
     }
   }
+  // done
+  log.info("Done");
 }
 function getDefaultEntryOptions(options: EntryOptions): StrictEntryOptions {
   const { files, isBuild, shouldBuildRuntime, dist, public: publicContext } =

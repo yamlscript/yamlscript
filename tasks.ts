@@ -56,15 +56,17 @@ export function compileTasks(
   let options = getDefaultTasksOptions(originalOptions);
   // for precompiled code to import modules
   const fileCode = initFileCode();
-  let mainIndent = options.indent + 2;
+  const mainIndent = options.indent + 2;
   // one by one
   for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
     const originalTask = tasks[taskIndex];
     const task = getDefaultTaskOptions(originalTask, {
       taskIndex,
     });
-    const { loop: rawLoop, if: rawIf } = task;
+    const { loop: rawLoop, if: rawIf, name: rawName } = task;
+    // transfor name
 
+    task.name = convertValueToLiteral(rawName, options.public);
     // check compiled if condition
     if (rawIf !== undefined && !rawIf) {
       // dont generate any code
@@ -113,6 +115,15 @@ export function compileTasks(
       });
       concatFileCode(fileCode, useCallResult);
     }
+
+    // add success print
+    fileCode.mainFunctionBody += appendPrintInfo(
+      `"Task #${taskIndex} done.${task.name ? ' %s", ' : '"'}${task.name}`,
+      {
+        ...options,
+        indent: mainIndent,
+      },
+    );
 
     if (isNeedCloseBlock) {
       fileCode.mainFunctionBody += withIndent(`}\n`, mainIndent);
@@ -437,7 +448,8 @@ function transformUseCall(
 
       mainFunctionBody =
         `const ${task.use} =  __yamlscript_create_process(${argsFlatten});
-result = await ${task.use}\`${command}\`;\n`;
+${contextConfig.lastTaskResultName} = await ${task.use}\`${command}\`;\n`;
+      mainFunctionBody += appendId(task, options);
     } else if (use) {
       // consider as function
       // array, then put args to literal args
@@ -448,15 +460,50 @@ result = await ${task.use}\`${command}\`;\n`;
         .join(",");
       mainFunctionBody +=
         `${contextConfig.lastTaskResultName} = await ${use}(${argsFlatten});\n`;
+      mainFunctionBody += appendId(task, options);
     }
   }
+
+  // check if need to catch error
+  if (task.catch) {
+    mainFunctionBody = `try {\n${
+      withIndent(mainFunctionBody, 2)
+    }} catch (_error) {\n  // ignore\n}\n`;
+  }
+
   mainFunctionBody = withIndent(mainFunctionBody, indent);
+
   // always 2;
   mainFunctionBodyTop = withIndent(mainFunctionBodyTop, 2);
   return {
     mainFunctionBodyTop,
     mainFunctionBody,
   };
+}
+function appendId(task: Task, options: StrictTasksOptions) {
+  if (task.id) {
+    const { id: rawId } = task;
+    let id: string | undefined;
+    if (rawId && rawId.trim() !== "") {
+      const idTemplateFn = compile(rawId, COMPILED_CONTEXT_KEYS);
+      id = idTemplateFn(options.public) as string;
+      if (id) {
+        return `const ${id} = ${contextConfig.lastTaskResultName};\n`;
+      }
+    }
+    return "";
+  } else {
+    return "";
+  }
+}
+function appendPrintInfo(message: string, options: StrictTasksOptions): string {
+  const { indent } = options;
+  return `${
+    withIndent(
+      `console.log(${message});\n`,
+      indent,
+    )
+  }`;
 }
 
 function parseBuildIf(ifValue: boolean | string | undefined): boolean {
@@ -531,6 +578,8 @@ function getDefaultTaskOptions(
     args: argsArray,
     taskIndex: options.taskIndex,
     useType: UseType.Default,
+    catch: task.catch ?? false,
+    name: task.name ?? "",
   };
 }
 
@@ -576,17 +625,19 @@ export function runAsyncFunction(runtimeCode: string) {
   const AsyncFunction = Object.getPrototypeOf(
     async function () {},
   ).constructor;
-
-  const runtimeFn = new AsyncFunction(
-    RUNTIME_FUNCTION_OPTIONS_NAME,
-    runtimeCode,
-  );
-  return runtimeFn({
-    globals: globals,
-  }).catch((e: Error) => {
-    log.debug("runtimeCode", runtimeCode);
-    log.fatal(e.message);
-  });
+  try {
+    const runtimeFn = new AsyncFunction(
+      RUNTIME_FUNCTION_OPTIONS_NAME,
+      runtimeCode,
+    );
+    return runtimeFn({
+      globals: globals,
+    });
+  } catch (error) {
+    error.message =
+      `Run generated tasks code failed, ${error.message}\nFor more details, you can run \`ys build <file>\` command to check out the generated code`;
+    log.fatal(error.message);
+  }
 }
 
 function getTasksCode(fileCode: FileCode): TasksCode {
@@ -646,7 +697,7 @@ function initFileCode(): FileCode {
   // for runtime code to import modules
   const runtimeImportCode = "";
   const mainFunctionBody =
-    `  let ${contextConfig.lastTaskResultName}=null, ${contextConfig.rootName}=null, ${contextConfig.envName}=null;\n`;
+    `  let ${contextConfig.lastTaskResultName} = null, ${contextConfig.rootName} = null, ${contextConfig.envName} = null;\n`;
   return {
     importCode,
     runtimeImportCode,

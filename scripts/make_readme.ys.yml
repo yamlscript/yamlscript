@@ -1,0 +1,14 @@
+- id: yamlContent
+  use: Deno.readTextFile
+  args: ./README.ys.yml
+- id: readmeTemplate
+  use: Deno.readTextFile
+  args: ./README.template.md
+- id: readmeContent
+  from: https://esm.sh/mustache@4.2.0
+  use: .render
+  args:
+    - $readmeTemplate
+    - readmeYamlContent: $yamlContent
+- use: console.log
+  args: $readmeContent

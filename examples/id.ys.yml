@@ -1,0 +1,9 @@
+- id: test
+  use: Math.max
+  args:
+    - 1
+    - 3
+    - 9
+- use: console.log
+  args:
+    - $test.result

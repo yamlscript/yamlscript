@@ -81,6 +81,8 @@ export interface StrictTask extends Task {
   useType: UseType;
   command?: string;
   taskIndex: number;
+  catch: boolean;
+  name: string;
 }
 export interface GetDefaultTaskOptionsOptions {
   taskIndex: number;
