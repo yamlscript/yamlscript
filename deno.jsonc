@@ -10,7 +10,8 @@
         ".yamlscript/",
         ".vscode/",
         "dist/",
-        "examples/__fixtures__/"
+        "examples/__fixtures__/",
+        "README.md"
       ]
     }
   }
