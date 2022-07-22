@@ -149,8 +149,7 @@ function transformImport(
     return { use: use, tasksOptions: options };
   } else if (isCommand(use)) {
     usesMap[use] = { type: UseType.Command };
-    importCode =
-      `import { __yamlscript_run_cmd } from "${GLOBAL_RUNTIME_CMD_PACKAGE_URL}";\n`;
+    importCode = `import { $ } from "${GLOBAL_RUNTIME_CMD_PACKAGE_URL}";\n`;
     runtimeImportCode =
       `const { __yamlscript_run_cmd } = await import("${GLOBAL_RUNTIME_CMD_PACKAGE_URL}");\n`;
     setVarsMap(varsMap, "__yamlscript_run_cmd");

@@ -2,7 +2,7 @@
 export {
   parse,
   stringify,
-} from "https://deno.land/std@0.148.0/encoding/yaml.ts";
+} from "https://deno.land/std@0.149.0/encoding/yaml.ts";
 export {
   assert,
   assertAlmostEquals,
@@ -15,8 +15,8 @@ export {
   assertObjectMatch,
   assertRejects,
   assertThrows,
-} from "https://deno.land/std@0.148.0/testing/asserts.ts";
-import * as log from "https://deno.land/std@0.148.0/log/mod.ts";
+} from "https://deno.land/std@0.149.0/testing/asserts.ts";
+import * as log from "https://deno.land/std@0.149.0/log/mod.ts";
 export { log };
 export {
   dim,
@@ -24,16 +24,16 @@ export {
   green,
   red,
   yellow,
-} from "https://deno.land/std@0.148.0/fmt/colors.ts";
+} from "https://deno.land/std@0.149.0/fmt/colors.ts";
 
 export {
   basename,
   dirname,
   normalize,
   resolve,
-} from "https://deno.land/std@0.148.0/path/mod.ts";
+} from "https://deno.land/std@0.149.0/path/mod.ts";
 
-export { ensureDir } from "https://deno.land/std@0.148.0/fs/mod.ts";
+export { ensureDir } from "https://deno.land/std@0.149.0/fs/mod.ts";
 // third party
 
 export {

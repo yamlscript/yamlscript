@@ -57,3 +57,8 @@ export interface BuildTasksOptions extends TasksOptions {
   relativePath: string;
   shouldBuildRuntime?: boolean;
 }
+export interface RunCmdOptions {
+  shell?: string;
+  prefix?: string;
+  args?: string;
+}
