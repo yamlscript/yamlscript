@@ -1,5 +1,6 @@
 import {
   EntryOptions,
+  ParentType,
   PublicContext,
   Task,
   TasksOptions,
@@ -36,7 +37,6 @@ export interface LiteralCode {
   subTasks?: LiteralCode[];
   infoLog?: string;
   debugLog?: string;
-  tasksOptions?: StrictTasksOptions;
   isNeedCloseBlock?: boolean;
 }
 
@@ -56,7 +56,6 @@ export interface StrictLiteralCode extends LiteralCode {
   subTasks: LiteralCode[];
   infoLog: string;
   debugLog: string;
-  tasksOptions: StrictTasksOptions;
 }
 export interface TasksCode {
   moduleFileCode: string;
@@ -75,6 +74,7 @@ export interface StrictTasksOptions extends TasksOptions {
   public: PublicContext;
   indent: number;
   varsMap: Record<string, UseType>;
+  parentType: ParentType;
 }
 export interface StrictTask extends Task {
   args: unknown[];

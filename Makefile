@@ -19,6 +19,14 @@ test:
 	deno task test
 	@echo "Done."
 
+.Phony: test-readme
+test-readme:
+	@echo "Testing README..."
+	deno run -A ys.ts run README.ys.yml
+	@echo "Done."
+
+
+
 .Phony: t
 t:
 	@echo "Testing..."
@@ -51,4 +59,10 @@ d:
 readme:
 	@echo "Generating README.md..."
 	deno run -A ys.ts run scripts/make_readme.ys.yml
+	@echo "Done."
+
+.Phony: devreadme
+devreadme:
+	@echo "Generating README.md..."
+	YAMLSCRIPT_DEV=1 deno run -A ys.ts build scripts/make_readme.ys.yml
 	@echo "Done."

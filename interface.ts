@@ -42,11 +42,18 @@ export enum UseType {
   Command,
   Default,
 }
+export enum ParentType {
+  Root,
+  Loop,
+}
 
 export interface TasksOptions {
   public?: PublicContext;
   indent?: number;
-  uniqueVars?: Record<string, UseType>;
+  varsMap?: Record<string, UseType>;
+  relativePath?: string;
+  dist?: string;
+  parentType?: ParentType;
 }
 
 export interface RunTasksOptions extends TasksOptions {

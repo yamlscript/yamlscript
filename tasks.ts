@@ -1,5 +1,6 @@
 import {
   BuildTasksOptions,
+  ParentType,
   RunTasksOptions,
   Task,
   TasksOptions,
@@ -30,12 +31,14 @@ import {
   createDistFile,
   get,
   getDefaultPublicContext,
+  getDistFilePath,
   isAsyncFunction,
   isObject,
 } from "./util.ts";
 import {
   COMPILED_CONTEXT_KEYS,
   DEFAULT_USE_NAME,
+  DEV_FLAG,
   GLOBAL_PACKAGE_URL,
   GLOBAL_RUNTIME_CMD_PACKAGE_URL,
   LOOP_ITEM_INDEX,
@@ -45,8 +48,9 @@ import {
   RUNTIME_FUNCTION_OPTIONS_NAME,
 } from "./constant.ts";
 import log from "./log.ts";
-import { green } from "./deps.ts";
+import { dirname, fromFileUrl, green, relative, resolve } from "./deps.ts";
 import config from "./config.json" assert { type: "json" };
+import listCacheClear from "https://deno.land/x/lodash@4.17.15-es/_listCacheClear.js";
 const contextConfig = config.context;
 export function compileTasks(
   tasks: Task[],
@@ -89,9 +93,7 @@ export function compileTasks(
     task.useType = importResult.useType;
     task.command = importResult.command;
     // transform main function body
-    if (importResult.tasksOptions) {
-      options = importResult.tasksOptions;
-    }
+
     const ifResult = transformIf(task, {
       ...options,
       indent: mainIndent,
@@ -139,29 +141,22 @@ export function compileTasks(
  */
 function transformImport(
   task: StrictTask,
-  originalOptions: StrictTasksOptions,
+  options: StrictTasksOptions,
 ): ImportResult {
   const { from: rawFrom, use: rawUse } = task;
-  const options = {
-    ...originalOptions,
-  };
-  const varsMap = {
-    ...options.varsMap,
-  };
 
-  options.varsMap = varsMap;
+  const varsMap = options.varsMap;
+
   let importCode = "";
   let runtimeImportCode = "";
-  let use = "";
+  let use = templateCompiledString(rawUse, options.public);
   let useType = UseType.Default;
-  if (rawUse && rawUse.trim() !== "") {
-    const useTemplateFn = compile(rawUse, COMPILED_CONTEXT_KEYS);
-    use = useTemplateFn(options.public) as string;
-  }
 
-  if (use === "setVars" || use === "setGlobalVars") {
+  if (
+    use === "setVars" || use === "setGlobalVars"
+  ) {
     // no more import
-    return { use: use, tasksOptions: options, useType: UseType.SetVars };
+    return { use: use, useType: UseType.SetVars };
   } else if (isCommand(use)) {
     if (!varsMap["__yamlscript_create_process"]) {
       importCode =
@@ -179,7 +174,6 @@ function transformImport(
 
     return {
       use: newUse,
-      tasksOptions: options,
       importCode,
       runtimeImportCode,
       useType: UseType.Command,
@@ -190,116 +184,139 @@ function transformImport(
     // but we don't know if it's a async or not, we can assume it's async, // TODO  or maybe we can add a sync option to specify it's sync
     return {
       use: use,
-      tasksOptions: options,
       useType: UseType.AsyncRuntimeFunction,
     };
-  }
-
-  let debugLog = ``;
-  let from: string | undefined;
-  if (rawFrom && rawFrom.trim() !== "") {
-    const fromTemplateFn = compile(rawFrom, COMPILED_CONTEXT_KEYS);
-    from = fromTemplateFn(options.public) as string;
-  }
-  // add compile code
-  if (from) {
-    let importPath = "";
-    let runtimeImportPath = "";
-    let importVar = "";
-    if (!use || use === "default" || use.startsWith("default.")) {
-      // default
-      // use if empty, we will give it a default random name
-      if (use.startsWith("default.")) {
-        importVar = DEFAULT_USE_NAME + "_" + task.taskIndex;
-        use = importVar +
-          use.slice("default".length);
-      } else {
-        use = DEFAULT_USE_NAME + "_" + task.taskIndex;
-        importVar = use;
-      }
-      importPath = `{ default as ${importVar} }`;
-      runtimeImportPath = `{ default: ${importVar} }`;
-    } else {
-      const importPathValue = getImportPathValue(use);
-      importPath = importPathValue[0];
-      importVar = importPathValue[1];
-      runtimeImportPath = importPath;
-    }
-    // check if import already
-    if (!varsMap[importVar]) {
-      importCode += `import ${importPath} from "${from}";\n`;
-      runtimeImportCode +=
-        `  const ${runtimeImportPath} = await import("${from}");\n`;
-
-      // get import var type
-      // TODO, cause import is an async operation, we should consider if we should check it. now we just treat it as async operation
-
-      setVarsMap(options.varsMap, importVar, UseType.AsyncThirdPartyFunction);
-      // TODO: check function type
-      // async or other
-      debugLog += `use ${green(importPath)} from {${from}}`;
-    }
-    useType = UseType.AsyncThirdPartyFunction;
-  } else if (use && get(globals, use)) {
-    //
-    // deno-lint-ignore ban-types
-    const fn = get(globals, use) as Function;
-    const importPathValue = getImportPathValue(use);
-    const importPath = importPathValue[0];
-    const importVar = importPathValue[1];
-    // check if it's a async function
-    if (isAsyncFunction(fn)) {
-      useType = UseType.AsyncGlobalsFunction;
-    } else {
-      useType = UseType.GlobalsFunction;
-    }
-    // check if import already
-    if (!varsMap[importVar]) {
-      setVarsMap(options.varsMap, importVar, useType);
-      // TODO check useType
-      importCode += `import ${importPath} from "${GLOBAL_PACKAGE_URL}";\n`;
-      runtimeImportCode +=
-        `const ${importPath} = ${RUNTIME_FUNCTION_OPTIONS_NAME}.globals;\n`;
-      debugLog += `use { ${green(use)} } from "globals/mod.ts"`;
-    }
-  } else if (
-    use && get(globalThis, use) &&
-    typeof get(globalThis, use) === "function"
-  ) {
-    // global runtime use
-    // do not need to import
-    debugLog += `use ${green(use)}`;
-    // deno-lint-ignore ban-types
-    const fn = get(globalThis, use) as Function;
-    // check type
-    if (isAsyncFunction(fn)) {
-      useType = UseType.AsyncRuntimeFunction;
-    } else {
-      useType = UseType.RuntimeFunction;
-    }
   } else {
-    if (use) {
-      // not found use
-      log.fatal(
-        `can't found function ${green(use)}, did you forget \`${
-          green(
-            "from",
-          )
-        }\` param?`,
-      );
+    let debugLog = ``;
+    const from = templateCompiledString(rawFrom, options.public);
+    // add compile code
+    if (from) {
+      let importPath = "";
+      let runtimeImportPath = "";
+      let importVar = "";
+      if (!use || use === "default" || use.startsWith("default.")) {
+        // default
+        // use if empty, we will give it a default random name
+        if (use.startsWith("default.")) {
+          importVar = DEFAULT_USE_NAME + "_" + task.taskIndex;
+          use = importVar +
+            use.slice("default".length);
+        } else {
+          use = DEFAULT_USE_NAME + "_" + task.taskIndex;
+          importVar = use;
+        }
+        importPath = `{ default as ${importVar} }`;
+        runtimeImportPath = `{ default: ${importVar} }`;
+      } else {
+        const importPathValue = getImportPathValue(use);
+        importPath = importPathValue[0];
+        importVar = importPathValue[1];
+        runtimeImportPath = importPath;
+      }
+      // check if import already
+      if (!varsMap[importVar]) {
+        importCode += `import ${importPath} from "${from}";\n`;
+        runtimeImportCode +=
+          `  const ${runtimeImportPath} = await import("${from}");\n`;
+
+        // get import var type
+        // TODO, cause import is an async operation, we should consider if we should check it. now we just treat it as async operation
+
+        setVarsMap(options.varsMap, importVar, UseType.AsyncThirdPartyFunction);
+        // TODO: check function type
+        // async or other
+        debugLog += `use ${green(importPath)} from {${from}}`;
+      }
+      useType = UseType.AsyncThirdPartyFunction;
+    } else if (use && get(globals, use)) {
+      //
+      // deno-lint-ignore ban-types
+      const fn = get(globals, use) as Function;
+      const importPathValue = getImportPathValue(use);
+      const importPath = importPathValue[0];
+      const importVar = importPathValue[1];
+      // check if it's a async function
+      if (isAsyncFunction(fn)) {
+        useType = UseType.AsyncGlobalsFunction;
+      } else {
+        useType = UseType.GlobalsFunction;
+      }
+      console.log("varsMap", task.taskIndex, varsMap);
+      // check if import already
+      if (!varsMap[importVar]) {
+        console.log("importVar", importVar);
+        setVarsMap(options.varsMap, importVar, useType);
+        // TODO check useType
+
+        if (
+          Deno.env.get(DEV_FLAG) && Deno.env.get(DEV_FLAG) !== "false" &&
+          options.relativePath && options.dist
+        ) {
+          // for dev
+          // get relative path
+          const currentDirname = dirname(fromFileUrl(import.meta.url));
+          const globalModFilePath = resolve(currentDirname, "./globals/mod.ts");
+
+          const targetPath = getDistFilePath(
+            options.relativePath,
+            ".js",
+            options.dist,
+          );
+          console.log("targetPath", targetPath);
+          const relativeGlobalModFilePath = relative(
+            dirname(targetPath),
+            globalModFilePath,
+          );
+
+          importCode +=
+            `import ${importPath} from "${relativeGlobalModFilePath}";\n`;
+        } else {
+          importCode += `import ${importPath} from "${GLOBAL_PACKAGE_URL}";\n`;
+        }
+
+        runtimeImportCode +=
+          `const ${importPath} = ${RUNTIME_FUNCTION_OPTIONS_NAME}.globals;\n`;
+        debugLog += `use { ${green(use)} } from "globals/mod.ts"`;
+      }
+    } else if (
+      use && get(globalThis, use) &&
+      typeof get(globalThis, use) === "function"
+    ) {
+      // global runtime use
+      // do not need to import
+      debugLog += `use ${green(use)}`;
+      // deno-lint-ignore ban-types
+      const fn = get(globalThis, use) as Function;
+      // check type
+      if (isAsyncFunction(fn)) {
+        useType = UseType.AsyncRuntimeFunction;
+      } else {
+        useType = UseType.RuntimeFunction;
+      }
     } else {
-      // ignore, no use.
+      if (use) {
+        // not found use
+        log.fatal(
+          `can't found function ${green(use)}, did you forget \`${
+            green(
+              "from",
+            )
+          }\` param?`,
+        );
+      } else {
+        // ignore, no use.
+      }
     }
+
+    return {
+      use: use,
+      useType: useType,
+      from,
+      importCode,
+      runtimeImportCode,
+      debugLog,
+    };
   }
-  return {
-    use: use,
-    useType: useType,
-    from,
-    importCode,
-    runtimeImportCode,
-    debugLog,
-    tasksOptions: options,
-  };
 }
 function transformIf(
   task: StrictTask,
@@ -341,13 +358,19 @@ function transformLoop(
   task: StrictTask,
   options: StrictTasksOptions,
 ): LiteralCode {
-  const { loop: rawLoop } = task;
+  const { loop: rawLoop, id: rawId } = task;
   const mainIndent = options.indent;
   const literalCode: LiteralCode = {
     mainFunctionBody: "",
     mainFunctionBodyTop: "",
   };
-
+  const tempParentType = options.parentType;
+  options.parentType = ParentType.Loop;
+  // check if loop has a id
+  if (rawId) {
+    const id = templateCompiledString(rawId, options.public);
+    literalCode.mainFunctionBody += `let ${id} = [];\n`;
+  }
   // start build function body
   if (rawLoop && typeof rawLoop === "string" && rawLoop.trim()) {
     // consider as direct literal code
@@ -390,6 +413,7 @@ function transformLoop(
     literalCode.mainFunctionBodyTop!,
     mainIndent,
   );
+  options.parentType = tempParentType;
   return literalCode;
 }
 
@@ -401,46 +425,83 @@ function transformUseCall(
   let mainFunctionBodyTop = "";
   const { args, use, useType } = task;
   const { indent } = options;
+
+  const varsMap = options.varsMap;
+
   // check if it's setVars
-  // if it's setVars
-  if (use === "setVars") {
-    if (args && args.length === 1 && isObject(args[0])) {
-      if (!Array.isArray(args[0])) {
-        const keys = Object.keys(args[0] as Record<string, unknown>);
-        for (const key of keys) {
-          mainFunctionBody += `const ${key}=${
-            convertValueToLiteral(
-              (args[0] as Record<string, unknown>)[key],
-              options.public,
-            )
-          };\n`;
+  if (
+    use === "setVars" || use === "setGlobalVars"
+  ) {
+    const globalVars: string[] = [];
+    // if it's setVars
+    if (use === "setVars") {
+      if (args && args.length === 1 && isObject(args[0])) {
+        if (!Array.isArray(args[0])) {
+          const keys = Object.keys(args[0] as Record<string, unknown>);
+          for (const key of keys) {
+            if (varsMap[key]) {
+              // overwrite it
+              mainFunctionBody += `${key}=${
+                convertValueToLiteral(
+                  (args[0] as Record<string, unknown>)[key],
+                  options.public,
+                )
+              };\n`;
+            } else {
+              mainFunctionBody += `let ${key}=${
+                convertValueToLiteral(
+                  (args[0] as Record<string, unknown>)[key],
+                  options.public,
+                )
+              };\n`;
+            }
+          }
+        } else {
+          throw new Error("invalid args, setVars args must be object");
         }
       } else {
+        // invalid setVars
+        throw new Error("invalid args, setVars args must be object");
+      }
+    } else if (use === "setGlobalVars") {
+      if (args && args.length === 1 && isObject(args[0])) {
+        if (!Array.isArray(args[0])) {
+          const keys = Object.keys(args[0] as Record<string, unknown>);
+          for (const key of keys) {
+            // check if it already exists
+
+            if (varsMap[key]) {
+              throw new Error(`global variable ${key} already exists`);
+            } else {
+              globalVars.push(key);
+              mainFunctionBodyTop += `let ${key} = null;\n`;
+              mainFunctionBody += `${key} = ${
+                convertValueToLiteral(
+                  (args[0] as Record<string, unknown>)[key],
+                  options.public,
+                )
+              };\n`;
+            }
+          }
+        } else {
+          throw new Error("invalid args, setVars args must be object");
+        }
+      } else {
+        // invalid setVars
         throw new Error("invalid args, setVars args must be object");
       }
     } else {
-      // invalid setVars
-      throw new Error("invalid args, setVars args must be object");
+      throw new Error("invalid use, this may be a bug");
     }
-  } else if (use === "setGlobalVars") {
-    if (args && args.length === 1 && isObject(args[0])) {
-      if (!Array.isArray(args[0])) {
-        const keys = Object.keys(args[0] as Record<string, unknown>);
-        for (const key of keys) {
-          mainFunctionBodyTop += `let ${key} = null;\n`;
-          mainFunctionBody += `${key} = ${
-            convertValueToLiteral(
-              (args[0] as Record<string, unknown>)[key],
-              options.public,
-            )
-          };\n`;
-        }
-      } else {
-        throw new Error("invalid args, setVars args must be object");
-      }
-    } else {
-      // invalid setVars
-      throw new Error("invalid args, setVars args must be object");
+    // get vars
+    if (use.includes("Global")) {
+      globalVars.forEach((key) => {
+        setVarsMap(
+          varsMap,
+          key,
+          UseType.SetVars,
+        );
+      });
     }
   } else {
     // check if use is command
@@ -489,14 +550,18 @@ ${contextConfig.lastTaskResultName} = await ${task.use}\`${command}\`;\n`;
 function appendId(task: Task, options: StrictTasksOptions) {
   if (task.id) {
     const { id: rawId } = task;
-    let id: string | undefined;
-    if (rawId && rawId.trim() !== "") {
-      const idTemplateFn = compile(rawId, COMPILED_CONTEXT_KEYS);
-      id = idTemplateFn(options.public) as string;
-      if (id) {
+    const id = templateCompiledString(rawId, options.public);
+    if (id) {
+      // check current parent type
+
+      if (options.parentType === ParentType.Loop) {
+        // the result should be push to the array
+        return `${id}.push(${contextConfig.lastTaskResultName});\n`;
+      } else {
         return `const ${id} = ${contextConfig.lastTaskResultName};\n`;
       }
     }
+
     return "";
   } else {
     return "";
@@ -552,9 +617,6 @@ function formatLiteralCode(result: LiteralCode): StrictLiteralCode {
     runtimeImportCode: result.runtimeImportCode ?? "",
     functions: result.functions ?? [],
     subTasks: result.subTasks ?? [],
-    tasksOptions: result.tasksOptions
-      ? getDefaultTasksOptions(result.tasksOptions)
-      : getDefaultTasksOptions({}),
   };
 }
 
@@ -565,7 +627,8 @@ function getDefaultTasksOptions(
     ...tasksOptions,
     public: tasksOptions.public ?? getDefaultPublicContext(),
     indent: tasksOptions.indent ?? 0,
-    varsMap: tasksOptions.uniqueVars ?? {},
+    varsMap: tasksOptions.varsMap ?? {},
+    parentType: tasksOptions.parentType ?? ParentType.Root,
   };
 }
 function getDefaultTaskOptions(
@@ -689,9 +752,6 @@ function concatLiteralCode(l1: LiteralCode, l2: LiteralCode): void {
   l1.runtimeImportCode = l1.runtimeImportCode ?? "";
   l1.functions = l1.functions ?? [];
   l1.subTasks = l1.subTasks ?? [];
-  l1.tasksOptions = l1.tasksOptions
-    ? getDefaultTasksOptions(l1.tasksOptions)
-    : getDefaultTasksOptions({});
 
   const strickLiteralCode2 = formatLiteralCode(l2);
   l1.importCode += strickLiteralCode2.importCode;
@@ -710,4 +770,16 @@ function initFileCode(): FileCode {
     runtimeImportCode,
     mainFunctionBody,
   };
+}
+function templateCompiledString(
+  str: string | undefined,
+  ctx: Record<string, unknown>,
+): string {
+  if (str && str.trim() !== "") {
+    const templateFn = compile(str, Object.keys(ctx));
+    str = templateFn(ctx) as string;
+    return str;
+  } else {
+    return str || "";
+  }
 }

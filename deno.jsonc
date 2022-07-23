@@ -11,7 +11,8 @@
         ".vscode/",
         "dist/",
         "examples/__fixtures__/",
-        "README.md"
+        "README.md",
+        "README.template.md"
       ]
     }
   }

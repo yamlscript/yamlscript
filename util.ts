@@ -2,6 +2,7 @@ import { BuildContext, BuildTasksOptions, PublicContext } from "./interface.ts";
 import { dirname, ensureDir, parse, resolve } from "./deps.ts";
 import { BuiltCode, TasksCode } from "./_interface.ts";
 import pkg from "./pkg.json" assert { type: "json" };
+import log from "./log.ts";
 export const get = (obj: unknown, path: string, defaultValue = undefined) => {
   const travel = (regexp: RegExp) =>
     String.prototype.split
@@ -25,13 +26,27 @@ export const changeExt = (path: string, ext: string) => {
   filename = filename.replace(suffixRegex, "");
   return `${filename}${ext}`;
 };
+
+export const getDistFilePath = (
+  relativePath: string,
+  ext: string,
+  distDir?: string,
+): string => {
+  const dist = distDir || "dist";
+  const moduleFilerelativePath = changeExt(relativePath, ext);
+  const moduleFilePath = resolve(dist, moduleFilerelativePath);
+  return moduleFilePath;
+};
+
 export const createDistFile = async (
   codeResult: TasksCode,
   options: BuildTasksOptions,
 ): Promise<BuiltCode> => {
-  const moduleFilerelativePath = changeExt(options.relativePath, ".js");
-  const dist = options.dist || "dist";
-  const moduleFilePath = resolve(dist, moduleFilerelativePath);
+  const moduleFilePath = getDistFilePath(
+    options.relativePath,
+    ".js",
+    options.dist,
+  );
   await ensureDir(dirname(moduleFilePath));
   await Deno.writeTextFile(moduleFilePath, codeResult.moduleFileCode);
 
@@ -39,11 +54,11 @@ export const createDistFile = async (
 
   // check if need to create runtime file
   if (options.shouldBuildRuntime) {
-    const runtimeFilerelativePath = changeExt(
+    runtimeFilePath = getDistFilePath(
       options.relativePath,
       ".runtime.js",
+      options.dist,
     );
-    runtimeFilePath = resolve(dist, runtimeFilerelativePath);
     await ensureDir(dirname(runtimeFilePath));
     await Deno.writeTextFile(runtimeFilePath, codeResult.runtimeFileCode);
   }
@@ -86,5 +101,19 @@ export function isAsyncFunction(fn: Function): boolean {
     return true;
   } else {
     return false;
+  }
+}
+export async function hasPermissionSlient(
+  permission: Deno.PermissionDescriptor,
+): Promise<boolean> {
+  const permissionState = await Deno.permissions.query(permission);
+  const is = permissionState.state === "granted";
+  if (!is) {
+    log.debug(
+      `--allow-${permission.name} flag now set, skip ${permission.name} permission`,
+    );
+    return false;
+  } else {
+    return true;
   }
 }

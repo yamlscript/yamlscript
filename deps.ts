@@ -1,4 +1,13 @@
 // std
+
+export {
+  basename,
+  dirname,
+  fromFileUrl,
+  normalize,
+  relative,
+  resolve,
+} from "https://deno.land/std@0.149.0/path/mod.ts";
 export {
   parse,
   stringify,
@@ -25,13 +34,6 @@ export {
   red,
   yellow,
 } from "https://deno.land/std@0.149.0/fmt/colors.ts";
-
-export {
-  basename,
-  dirname,
-  normalize,
-  resolve,
-} from "https://deno.land/std@0.149.0/path/mod.ts";
 
 export { ensureDir } from "https://deno.land/std@0.149.0/fs/mod.ts";
 // third party
