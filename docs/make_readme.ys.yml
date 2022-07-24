@@ -25,7 +25,7 @@
     - use: getArgs
       args:
         source: $sourceContent
-        target: ${targetCode.importCode}${targetCode.mainFunctionBodyCode}
+        target: ${targetCode.topLevelCode}${targetCode.mainFunctionBodyCode}
 
 - id: simpleUsageSources
   loop: $simpleUsageFiles

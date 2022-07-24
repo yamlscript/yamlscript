@@ -1,4 +1,4 @@
-import { BuildContext, BuildTasksOptions, PublicContext } from "./interface.ts";
+import { BuildContext, BuildTasksContext, PublicContext } from "./interface.ts";
 import { dirname, ensureDir, parse, resolve } from "./deps.ts";
 import { BuiltCode, TasksCode } from "./_interface.ts";
 import pkg from "./pkg.json" assert { type: "json" };
@@ -40,7 +40,7 @@ export const getDistFilePath = (
 
 export const createDistFile = async (
   codeResult: TasksCode,
-  options: BuildTasksOptions,
+  options: BuildTasksContext,
 ): Promise<BuiltCode> => {
   const moduleFilePath = getDistFilePath(
     options.relativePath,
@@ -116,4 +116,19 @@ export async function hasPermissionSlient(
   } else {
     return true;
   }
+}
+export function withIndent(code: string, indent: number): string {
+  if (!indent) {
+    return code;
+  }
+  return code.split("\n").map((line) => {
+    // if line is only \n
+    if (line.trim() === "") {
+      return line;
+    } else {
+      return `${" ".repeat(indent)}${line}`;
+    }
+  }).join(
+    "\n",
+  );
 }

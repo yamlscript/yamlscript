@@ -1,20 +1,21 @@
 import {
-  BuildTasksOptions,
+  BuildTasksContext,
   ParentType,
-  RunTasksOptions,
+  RunTasksContext,
   Task,
-  TasksOptions,
+  TasksContext,
   UseType,
 } from "./interface.ts";
 import {
   BuiltCode,
+  ConcatFileCodeOptions,
   FileCode,
   GetDefaultTaskOptionsOptions,
   LiteralCode,
   MetaResult,
   StrictLiteralCode,
   StrictTask,
-  StrictTasksOptions,
+  StrictTasksContext,
   TasksCode,
 } from "./_interface.ts";
 
@@ -25,6 +26,7 @@ import {
   getConditionResult,
   isCommand,
   isVariable,
+  removeRootQuotes,
 } from "./template.ts";
 import * as globals from "./globals/mod.ts";
 import {
@@ -34,6 +36,7 @@ import {
   getDistFilePath,
   isAsyncFunction,
   isObject,
+  withIndent,
 } from "./util.ts";
 import {
   COMPILED_CONTEXT_KEYS,
@@ -52,16 +55,15 @@ import {
 } from "./constant.ts";
 import log from "./log.ts";
 import { dirname, fromFileUrl, green, relative, resolve } from "./deps.ts";
-import config from "./config.json" assert { type: "json" };
 export function getCompiledCode(
   tasks: Task[],
-  originalOptions: TasksOptions,
+  originalOptions: TasksContext,
 ): TasksCode {
   log.debug("run single options", JSON.stringify(originalOptions, null, 2));
-  const options = getDefaultTasksOptions(originalOptions);
+  const options = getDefaultTasksContext(originalOptions);
   // for precompiled code to import modules
   const fileCode = getInitialFileCode();
-  const mainIndent = options.indent + 2;
+  const mainIndent = options.indent;
   // one by one
   for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
     const originalTask = tasks[taskIndex];
@@ -86,50 +88,62 @@ export function getCompiledCode(
       }
     }
     // first transform top level from and use code
-    const importResult = transformMeta(task, options);
-    concatFileCode(fileCode, importResult);
-    // change use to final value
-    task.use = importResult.use as string;
-    task.from = importResult.from as string;
-    task.useType = importResult.useType;
-    task.command = importResult.command;
-    // transform main function body
+    const metaResult = transformMeta(task, options);
 
-    const ifResult = transformIf(task, {
-      ...options,
-      indent: mainIndent,
-    });
-    concatFileCode(fileCode, ifResult);
+    concatFileCode(fileCode, metaResult, { indent: mainIndent });
+    // change use to final value
+    task.use = metaResult.use as string;
+    task.from = metaResult.from as string;
+    task.useType = metaResult.useType;
+    task.command = metaResult.command;
+    // transform main function body
+    // add empty line for pretty
+    fileCode.mainFunctionBodyCode += "\n";
+
+    // add comment
+
+    const taskName = task.name
+      ? (": " + removeRootQuotes(task.name))
+      : task.id
+      ? (": " + removeRootQuotes(task.id))
+      : "";
+    const commentSuffix = withIndent(
+      taskName,
+      mainIndent,
+    );
+    fileCode.mainFunctionBodyCode += withIndent(
+      `// Task #${task.taskIndex}${commentSuffix}\n`,
+      mainIndent,
+    );
+
+    const ifResult = transformIf(task, options);
+    concatFileCode(fileCode, ifResult, { indent: mainIndent + 2 });
 
     const isNeedCloseBlock = ifResult.isNeedCloseBlock;
     // add Indent TODO: add indent to all code
 
     // check if loop
     if (rawLoop) {
-      const loopResult = transformLoop(task, {
-        ...options,
-        indent: isNeedCloseBlock ? mainIndent + 2 : mainIndent,
-      });
-      concatFileCode(fileCode, loopResult);
+      // isNeedCloseBlock ? mainIndent + 2 : mainIndent,
+      const loopResult = transformLoop(task, options);
+      concatFileCode(fileCode, loopResult, { indent: mainIndent });
     } else {
-      const useCallResult = transformUseCall(task, {
-        ...options,
-        indent: isNeedCloseBlock ? mainIndent + 2 : mainIndent,
+      //         indent: isNeedCloseBlock ? mainIndent + 2 : mainIndent,
+
+      const useCallResult = transformUseCall(task, options);
+      concatFileCode(fileCode, useCallResult, {
+        indent: mainIndent,
       });
-      concatFileCode(fileCode, useCallResult);
     }
 
     // add success print
-    fileCode.mainFunctionBody += appendPrintInfo(
-      `"Task #${taskIndex} done.${task.name ? ' %s", ' : '"'}${task.name}`,
-      {
-        ...options,
-        indent: mainIndent,
-      },
-    );
+    // TODO: add condition verbose
 
+    // fileCode.mainFunctionBodyCode += `console.log("Task #${taskIndex} done.${
+    //   task.name ? ' %s", ' : '"'
+    // }${task.name});\n`;
     if (isNeedCloseBlock) {
-      fileCode.mainFunctionBody += withIndent(`}\n`, mainIndent);
+      fileCode.mainFunctionBodyCode += withIndent(`}\n`, mainIndent);
     }
   }
   return getTasksCode(fileCode);
@@ -142,14 +156,14 @@ export function getCompiledCode(
  */
 function transformMeta(
   task: StrictTask,
-  options: StrictTasksOptions,
+  options: StrictTasksContext,
 ): MetaResult {
   const { from: rawFrom, use: rawUse, id: rawId } = task;
 
   const varsMap = options.varsMap;
 
-  let importCode = "";
-  let runtimeImportCode = "";
+  let topLevelCode = "";
+  let runtimetopLevelCode = "";
   let use = templateCompiledString(rawUse, options.public);
   let useType = UseType.Default;
   let command: string | undefined;
@@ -172,9 +186,9 @@ function transformMeta(
     useType = UseType.DefineFunction;
   } else if (isCommand(use)) {
     if (!varsMap["__yamlscript_create_process"]) {
-      importCode =
+      topLevelCode =
         `import { __yamlscript_create_process } from "${GLOBAL_RUNTIME_CMD_PACKAGE_URL}";\n`;
-      runtimeImportCode =
+      runtimetopLevelCode =
         `const { __yamlscript_create_process } = await import("${GLOBAL_RUNTIME_CMD_PACKAGE_URL}");\n`;
       setVarsMap(
         varsMap,
@@ -187,7 +201,7 @@ function transformMeta(
     command = getCommand(use);
     useType = UseType.Command;
     use = newUse;
-    importCode += `const ${newUse} = ${command};\n`;
+    topLevelCode += `const ${newUse} = ${command};\n`;
   } else if (isVariable(use)) {
     // if it's variable, then it's a runtime function, just use it
     // but we don't know if it's a async or not, we can assume it's async, // TODO  or maybe we can add a sync option to specify it's sync
@@ -222,9 +236,9 @@ function transformMeta(
       }
       // check if import already
       if (!varsMap[importVar]) {
-        importCode += `import ${importPath} from "${from}";\n`;
-        runtimeImportCode +=
-          `  const ${runtimeImportPath} = await import("${from}");\n`;
+        topLevelCode += `import ${importPath} from "${from}";\n`;
+        runtimetopLevelCode +=
+          `const ${runtimeImportPath} = await import("${from}");\n`;
 
         // get import var type
         // TODO, cause import is an async operation, we should consider if we should check it. now we just treat it as async operation
@@ -272,13 +286,14 @@ function transformMeta(
             globalModFilePath,
           );
 
-          importCode +=
+          topLevelCode +=
             `import ${importPath} from "${relativeGlobalModFilePath}";\n`;
         } else {
-          importCode += `import ${importPath} from "${GLOBAL_PACKAGE_URL}";\n`;
+          topLevelCode +=
+            `import ${importPath} from "${GLOBAL_PACKAGE_URL}";\n`;
         }
 
-        runtimeImportCode +=
+        runtimetopLevelCode +=
           `const ${importPath} = ${RUNTIME_FUNCTION_OPTIONS_NAME}.globals;\n`;
         debugLog += `use { ${green(use)} } from "globals/mod.ts"`;
       }
@@ -318,8 +333,8 @@ function transformMeta(
     id,
     use,
     from,
-    importCode,
-    runtimeImportCode,
+    topLevelCode,
+    runtimetopLevelCode,
     useType,
     command,
     debugLog,
@@ -327,13 +342,12 @@ function transformMeta(
 }
 function transformIf(
   task: StrictTask,
-  options: StrictTasksOptions,
+  options: StrictTasksContext,
 ): LiteralCode {
   const { if: rawIf } = task;
   const literalCode: LiteralCode = {
-    mainFunctionBody: "",
+    mainFunctionBodyCode: "",
   };
-  const mainIndent = options.indent;
   if (rawIf === true || rawIf === undefined) {
     // dont generate any code
   } else if (typeof rawIf === "string") {
@@ -344,7 +358,7 @@ function transformIf(
     ) {
       // no need to generate code
     } else {
-      literalCode.mainFunctionBody += `if (${conditionCompiledResult}) {\n`;
+      literalCode.mainFunctionBodyCode += `if (${conditionCompiledResult}) {\n`;
       // TODO add transform use
 
       literalCode.isNeedCloseBlock = true;
@@ -355,86 +369,74 @@ function transformIf(
       `invalid if condition: ${rawIf}, you can only use boolean or string`,
     );
   }
-  literalCode.mainFunctionBody = withIndent(
-    literalCode.mainFunctionBody!,
-    mainIndent,
-  );
+
   return literalCode;
 }
 function transformLoop(
   task: StrictTask,
-  options: StrictTasksOptions,
+  options: StrictTasksContext,
 ): LiteralCode {
   const { loop: rawLoop, id } = task;
-  const mainIndent = options.indent;
   const literalCode: LiteralCode = {
-    mainFunctionBody: "",
-    mainFunctionBodyTop: "",
+    mainFunctionBodyCode: "",
+    mainFunctionBodyTopLevelCode: "",
   };
+  if (!options.isInitIndexVariable) {
+    literalCode.mainFunctionBodyTopLevelCode +=
+      `let ${LOOP_ITEM_INDEX_NAME} = 0;\n`;
+    options.isInitIndexVariable = true;
+  }
+
   const tempParentType = options.parentType;
   options.parentType = ParentType.Loop;
   // check if loop has a id
   if (id) {
-    literalCode.mainFunctionBody += `let ${id} = [];\n`;
+    literalCode.mainFunctionBodyCode += `let ${id} = [];\n`;
   }
   // start build function body
   if (rawLoop && typeof rawLoop === "string" && rawLoop.trim()) {
     // consider as direct literal code
     const arrayLiberal = convertValueToLiteral(rawLoop, options.public);
-    literalCode.mainFunctionBody +=
-      `${LOOP_ITEM_INDEX_NAME} = 0;\nfor await (const ${LOOP_ITEM_NAME} of ${arrayLiberal}){\n`;
+    literalCode.mainFunctionBodyCode +=
+      `for await (const ${LOOP_ITEM_NAME} of ${arrayLiberal}){\n`;
     // transform use call
-    const useCallResult = transformUseCall(task, {
-      ...options,
-      indent: options.indent,
-    });
-    concatLiteralCode(literalCode, useCallResult);
-    literalCode.mainFunctionBody += `${LOOP_ITEM_INDEX_NAME}++;\n`;
-    literalCode.mainFunctionBody += `}\n${LOOP_ITEM_INDEX_NAME}=undefined;\n`;
+    const useCallResult = transformUseCall(task, options);
+    concatLiteralCode(literalCode, useCallResult, { indent: 2 });
+    literalCode.mainFunctionBodyCode += `  ${LOOP_ITEM_INDEX_NAME}++;\n`;
+    literalCode.mainFunctionBodyCode += `}\n${LOOP_ITEM_INDEX_NAME}=0;\n`;
   } else if (rawLoop && Array.isArray(rawLoop)) {
     // loop array
     // compiled loop
     for (let i = 0; i < rawLoop.length; i++) {
-      literalCode.mainFunctionBody += `{
+      literalCode.mainFunctionBodyCode += `{
   const ${LOOP_ITEM_NAME} = ${
         convertValueToLiteral(rawLoop[i], options.public)
       };
   const ${LOOP_ITEM_INDEX_NAME} = ${i};\n`;
       // transform useCall
-      const useCallResult = transformUseCall(task, {
-        ...options,
-        indent: options.indent,
-      });
-      concatLiteralCode(literalCode, useCallResult);
+      const useCallResult = transformUseCall(task, options);
+      concatLiteralCode(literalCode, useCallResult, { indent: 2 });
 
-      literalCode.mainFunctionBody += `}\n`;
+      literalCode.mainFunctionBodyCode += `}\n`;
     }
   } else {
     throw new Error("invalid loop params");
   }
 
-  literalCode.mainFunctionBody = withIndent(
-    literalCode.mainFunctionBody!,
-    mainIndent,
-  );
-  literalCode.mainFunctionBodyTop = withIndent(
-    literalCode.mainFunctionBodyTop!,
-    mainIndent,
-  );
   options.parentType = tempParentType;
+
   return literalCode;
 }
 
 function transformUseCall(
   task: StrictTask,
-  options: StrictTasksOptions,
+  options: StrictTasksContext,
 ): LiteralCode {
-  let mainFunctionBody = "";
-  let mainFunctionBodyTop = "";
-  let importCode = "";
-  let runtimeImportCode = "";
+  let mainFunctionBodyCode = "";
+  let mainFunctionBodyTopLevelCode = "";
+  let topLevelCode = "";
+  let runtimetopLevelCode = "";
   const { args, use, useType, id } = task;
-  const { indent } = options;
 
   const varsMap = options.varsMap;
 
@@ -449,14 +451,14 @@ function transformUseCall(
         for (const key of keys) {
           if (varsMap[key]) {
             // overwrite it
-            mainFunctionBody += `${key} = ${
+            mainFunctionBodyCode += `${key} = ${
               convertValueToLiteral(
                 (args[0] as Record<string, unknown>)[key],
                 options.public,
               )
             };\n`;
           } else {
-            mainFunctionBody += `let ${key} = ${
+            mainFunctionBodyCode += `let ${key} = ${
               convertValueToLiteral(
                 (args[0] as Record<string, unknown>)[key],
                 options.public,
@@ -480,8 +482,8 @@ function transformUseCall(
             throw new Error(`global variable ${key} already exists`);
           } else {
             globalVars.push(key);
-            mainFunctionBodyTop += `let ${key} = null;\n`;
-            mainFunctionBody += `${key} = ${
+            mainFunctionBodyTopLevelCode += `let ${key} = null;\n`;
+            mainFunctionBodyCode += `${key} = ${
               convertValueToLiteral(
                 (args[0] as Record<string, unknown>)[key],
                 options.public,
@@ -507,22 +509,27 @@ function transformUseCall(
         "define function must have id, id will be the function's name",
       );
     } else {
-      mainFunctionBody += `async function ${id}(...args){\n`;
+      mainFunctionBodyCode += `async function ${id}(...args){\n`;
 
       // insert function body
       // check args
-
+      options.indent = options.indent + 2;
       const functionResult = getCompiledCode(args as Task[], options);
       // merge result
-      mainFunctionBody += functionResult.mainFunctionBody;
-      importCode += functionResult.importCode;
-      runtimeImportCode += functionResult.runtimeImportCode;
+      mainFunctionBodyCode += functionResult.mainFunctionBodyCode;
+      topLevelCode += functionResult.topLevelCode;
+      runtimetopLevelCode += functionResult.runtimetopLevelCode;
       // add return
-      mainFunctionBody += `return result;\n`;
+      mainFunctionBodyCode += `\n  return result;\n`;
       // insert end block
-      mainFunctionBody += "}\n";
+      mainFunctionBodyCode += "}\n";
     }
   } else {
+    // add result init variable
+    if (!options.isInitLastTaskResultVariable) {
+      mainFunctionBodyTopLevelCode += `let ${LAST_TASK_RESULT_NAME} = null;\n`;
+      options.isInitLastTaskResultVariable = true;
+    }
     // check if use is command
     if (useType === UseType.Command) {
       const command = task.command!;
@@ -532,10 +539,10 @@ function transformUseCall(
       ) => (convertValueToLiteral(arg, options.public)))
         .join(",");
 
-      mainFunctionBody =
+      mainFunctionBodyCode =
         `const ${task.use} =  __yamlscript_create_process(${argsFlatten});
 ${LAST_TASK_RESULT_NAME} = await ${task.use}\`${command}\`;\n`;
-      mainFunctionBody += assignId(task, options);
+      mainFunctionBodyCode += assignId(task, options);
     } else if (use) {
       // consider as function
       // array, then put args to literal args
@@ -544,31 +551,26 @@ ${LAST_TASK_RESULT_NAME} = await ${task.use}\`${command}\`;\n`;
         arg,
       ) => (convertValueToLiteral(arg, options.public)))
         .join(",");
-      mainFunctionBody +=
+      mainFunctionBodyCode +=
         `${LAST_TASK_RESULT_NAME} = await ${use}(${argsFlatten});\n`;
-      mainFunctionBody += assignId(task, options);
+      mainFunctionBodyCode += assignId(task, options);
     }
   }
 
   // check if need to catch error
   if (task.catch) {
-    mainFunctionBody = `try {\n${
-      withIndent(mainFunctionBody, 2)
+    mainFunctionBodyCode = `try {\n${
+      withIndent(mainFunctionBodyCode, 2)
     }} catch (_error) {\n  // ignore\n}\n`;
   }
-
-  mainFunctionBody = withIndent(mainFunctionBody, indent);
-
-  // always 2;
-  mainFunctionBodyTop = withIndent(mainFunctionBodyTop, 2);
   return {
-    mainFunctionBodyTop,
-    mainFunctionBody,
-    importCode,
-    runtimeImportCode,
+    mainFunctionBodyTopLevelCode,
+    mainFunctionBodyCode,
+    topLevelCode,
+    runtimetopLevelCode,
   };
 }
-function assignId(task: Task, options: StrictTasksOptions) {
+function assignId(task: Task, options: StrictTasksContext) {
   if (task.id) {
     const { id } = task;
     if (id) {
@@ -585,28 +587,6 @@ function assignId(task: Task, options: StrictTasksOptions) {
     return "";
   } else {
     return "";
-  }
-}
-function appendPrintInfo(message: string, options: StrictTasksOptions): string {
-  const { indent } = options;
-  return `${
-    withIndent(
-      `console.log(${message});\n`,
-      indent,
-    )
-  }`;
-}
-
-function parseBuildIf(ifValue: boolean | string | undefined): boolean {
-  if (ifValue === false) {
-    return false;
-  } else if (ifValue === true) {
-    return true;
-  } else if (ifValue === undefined) {
-    return true;
-  } else {
-    return false;
-    // const ifLiteral = convertValueToLiteral(ifValue);
   }
 }
 
@@ -629,28 +609,31 @@ function setVarsMap(
 }
 function formatLiteralCode(result: LiteralCode): StrictLiteralCode {
   return {
-    mainFunctionBody: result.mainFunctionBody ?? "",
-    mainFunctionBodyTop: result.mainFunctionBodyTop ?? "",
+    mainFunctionBodyCode: result.mainFunctionBodyCode ?? "",
+    mainFunctionBodyTopLevelCode: result.mainFunctionBodyTopLevelCode ??
+      "",
     debugLog: result.debugLog ?? "",
     infoLog: result.infoLog ?? "",
-    importCode: result.importCode ?? "",
-    runtimeImportCode: result.runtimeImportCode ?? "",
+    topLevelCode: result.topLevelCode ?? "",
+    runtimetopLevelCode: result.runtimetopLevelCode ?? "",
     functions: result.functions ?? [],
     subTasks: result.subTasks ?? [],
   };
 }
 
-function getDefaultTasksOptions(
-  tasksOptions?: TasksOptions,
-): StrictTasksOptions {
-  tasksOptions = tasksOptions || {};
-  return {
-    ...tasksOptions,
-    public: tasksOptions.public ?? getDefaultPublicContext(),
-    indent: tasksOptions.indent ?? 0,
-    varsMap: tasksOptions.varsMap ?? {},
-    parentType: tasksOptions.parentType ?? ParentType.Root,
-  };
+function getDefaultTasksContext(
+  taskContext?: TasksContext,
+): StrictTasksContext {
+  taskContext = taskContext || {};
+  taskContext.public = taskContext.public ?? getDefaultPublicContext();
+  taskContext.indent = taskContext.indent ?? 0;
+  taskContext.varsMap = taskContext.varsMap ?? {};
+  taskContext.parentType = taskContext.parentType ?? ParentType.Root;
+  taskContext.isInitIndexVariable = taskContext.isInitIndexVariable ?? false;
+  taskContext.isInitLastTaskResultVariable =
+    taskContext.isInitLastTaskResultVariable ?? false;
+
+  return taskContext as StrictTasksContext;
 }
 function getDefaultTaskOptions(
   task: Task,
@@ -673,19 +656,6 @@ function getDefaultTaskOptions(
   };
 }
 
-function withIndent(code: string, indent: number): string {
-  return code.split("\n").map((line) => {
-    // if line is only \n
-    if (line.trim() === "") {
-      return line;
-    } else {
-      return `${" ".repeat(indent)}${line}`;
-    }
-  }).join(
-    "\n",
-  );
-}
-
 function getImportPathValue(use: string): string[] {
   let importPath = `{ ${use} }`;
 
@@ -701,12 +671,12 @@ function getImportPathValue(use: string): string[] {
 
 export function buildTasks(
   tasks: Task[],
-  options: BuildTasksOptions,
+  options: BuildTasksContext,
 ): Promise<BuiltCode> {
   const codeResult = getCompiledCode(tasks, options);
   return createDistFile(codeResult, options);
 }
-export function runTasks(tasks: Task[], options?: RunTasksOptions) {
+export function runTasks(tasks: Task[], options?: RunTasksContext) {
   options = options ?? {};
   const codeResult = getCompiledCode(tasks, options);
   return runAsyncFunction(codeResult.runtimeFunctionBodyCode);
@@ -733,14 +703,21 @@ export function runAsyncFunction(runtimeCode: string) {
 
 function getTasksCode(fileCode: FileCode): TasksCode {
   const runtimeFunctionBodyCode =
-    `${fileCode.runtimeImportCode}\n${fileCode.mainFunctionBody}`;
-  const runtimeFileCode =
-    `export default async function main() {\n${runtimeFunctionBodyCode}\n}
+    `${fileCode.runtimetopLevelCode}${fileCode.mainFunctionBodyTopLevelCode}${fileCode.mainFunctionBodyCode}`;
+  const runtimeFileCode = `export default async function main() {\n${
+    withIndent(runtimeFunctionBodyCode, 2)
+  }\n}
 if (import.meta.main) {
   main();
 }`;
-  const compiledModuleCode = fileCode.importCode +
-    `export default async function main(){\n${fileCode.mainFunctionBody}}
+  const compiledModuleCode = fileCode.topLevelCode +
+    `export default async function main(){\n${
+      withIndent(
+        fileCode.mainFunctionBodyTopLevelCode +
+          fileCode.mainFunctionBodyCode,
+        2,
+      )
+    }}
 if (import.meta.main) {
   main();
 }`;
@@ -753,44 +730,63 @@ if (import.meta.main) {
 }
 
 // affect function
-function concatFileCode(fileCode: FileCode, literalCode: LiteralCode): void {
-  const strickLiteralCode = formatLiteralCode(literalCode);
-  fileCode.importCode += strickLiteralCode.importCode;
-  fileCode.runtimeImportCode += strickLiteralCode.runtimeImportCode;
-  if (strickLiteralCode.mainFunctionBodyTop) {
-    fileCode.mainFunctionBody = strickLiteralCode.mainFunctionBodyTop +
-      fileCode.mainFunctionBody;
-  }
+function concatFileCode(
+  fileCode: FileCode,
+  literalCode: LiteralCode,
+  options?: ConcatFileCodeOptions,
+): void {
+  options = options ?? {};
+  const indent = options.indent ?? 0;
+  const strictLiteralCode = formatLiteralCode(literalCode);
+  fileCode.topLevelCode += strictLiteralCode.topLevelCode;
+  fileCode.runtimetopLevelCode += strictLiteralCode.runtimetopLevelCode;
+  fileCode.mainFunctionBodyTopLevelCode += withIndent(
+    strictLiteralCode.mainFunctionBodyTopLevelCode,
+    0,
+  );
 
-  fileCode.mainFunctionBody += strickLiteralCode.mainFunctionBody;
+  fileCode.mainFunctionBodyCode += withIndent(
+    strictLiteralCode.mainFunctionBodyCode,
+    indent,
+  );
 }
 // affect function
-function concatLiteralCode(l1: LiteralCode, l2: LiteralCode): void {
-  l1.mainFunctionBody = l1.mainFunctionBody ?? "";
-  l1.mainFunctionBodyTop = l1.mainFunctionBodyTop ?? "";
+function concatLiteralCode(
+  l1: LiteralCode,
+  l2: LiteralCode,
+  options?: ConcatFileCodeOptions,
+): void {
+  l1.mainFunctionBodyCode = l1.mainFunctionBodyCode ?? "";
+  l1.mainFunctionBodyTopLevelCode = l1.mainFunctionBodyTopLevelCode ??
+    "";
   l1.debugLog = l1.debugLog ?? "";
   l1.infoLog = l1.infoLog ?? "";
-  l1.importCode = l1.importCode ?? "";
-  l1.runtimeImportCode = l1.runtimeImportCode ?? "";
+  l1.topLevelCode = l1.topLevelCode ?? "";
+  l1.runtimetopLevelCode = l1.runtimetopLevelCode ?? "";
   l1.functions = l1.functions ?? [];
   l1.subTasks = l1.subTasks ?? [];
-
-  const strickLiteralCode2 = formatLiteralCode(l2);
-  l1.importCode += strickLiteralCode2.importCode;
-  l1.runtimeImportCode += strickLiteralCode2.runtimeImportCode;
-  l1.mainFunctionBodyTop += strickLiteralCode2.mainFunctionBodyTop;
-  l1.mainFunctionBody += strickLiteralCode2.mainFunctionBody;
+  options = options ?? {};
+  const indent = options.indent ?? 0;
+  const strictLiteralCode2 = formatLiteralCode(l2);
+  l1.topLevelCode += strictLiteralCode2.topLevelCode;
+  l1.runtimetopLevelCode += strictLiteralCode2.runtimetopLevelCode;
+  l1.mainFunctionBodyTopLevelCode +=
+    strictLiteralCode2.mainFunctionBodyTopLevelCode;
+  l1.mainFunctionBodyCode += withIndent(
+    strictLiteralCode2.mainFunctionBodyCode,
+    indent,
+  );
 }
 function getInitialFileCode(): FileCode {
-  const importCode = "";
+  const topLevelCode = "";
   // for runtime code to import modules
-  const runtimeImportCode = "";
-  const mainFunctionBody =
-    `  let ${LAST_TASK_RESULT_NAME} = null, ${LOOP_ITEM_INDEX_NAME} = undefined;\n`;
+  const runtimetopLevelCode = "";
+  const mainFunctionBodyCode = ``;
   return {
-    importCode,
-    runtimeImportCode,
-    mainFunctionBody,
+    topLevelCode,
+    runtimetopLevelCode,
+    mainFunctionBodyTopLevelCode: "",
+    mainFunctionBodyCode,
   };
 }
 function templateCompiledString(

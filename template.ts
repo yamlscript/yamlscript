@@ -1,7 +1,7 @@
 import { TemplateSpecs } from "./_interface.ts";
 import { PublicContext } from "./interface.ts";
 import { INTERNAL_CONTEXT_NAME, TEMPLATE_REGEX } from "./constant.ts";
-import { isObject } from "./util.ts";
+import { isObject, withIndent } from "./util.ts";
 import log from "./log.ts";
 export function isIncludeTemplate(str: string) {
   if (typeof str !== "string") {
@@ -253,6 +253,19 @@ function surroundQuotes(str: string): string {
   return (final);
 }
 
+export function removeRootQuotes(str: string): string {
+  // check if start with `
+  if (str.startsWith("`") && str.endsWith("`")) {
+    return str.slice(1, str.length - 1);
+  } else if (str.startsWith("'") && str.endsWith("'")) {
+    return str.slice(1, str.length - 1);
+  } else if (str.startsWith('"') && str.endsWith('"')) {
+    return str.slice(1, str.length - 1);
+  } else {
+    return str;
+  }
+}
+
 function escapeApostrophe(str: string) {
   const result = str.replace(/`/g, "\\`");
   return result;
@@ -289,9 +302,18 @@ export function convertValueToLiteral(
     const json = JSON.stringify(value, null, 2);
     return json.split("\n").map((line) => {
       const trimLine = line.trim();
+      const indent = line.indexOf(trimLine);
+
       // if the line if [,],{,}, if so, return the line
       if (["[", "]", "{", "}"].includes(trimLine)) {
-        return trimLine;
+        if (trimLine === "[") {
+          return `[\n`;
+        }
+
+        if (trimLine === "{") {
+          return `{\n`;
+        }
+        return line;
       }
       // try to add { }, if it's a object, then change the value to literal
       const isEndWithComma = trimLine.endsWith(",");
@@ -304,6 +326,7 @@ export function convertValueToLiteral(
       const tryObject = `{${trimLineWithoutComma}}`;
       try {
         const obj = JSON.parse(tryObject);
+        // get trimLineWithoutComma spaces before string
         // it's a object, then change the value to literal
         const keys = Object.keys(obj);
         if (keys.length === 1) {
@@ -317,7 +340,10 @@ export function convertValueToLiteral(
             parsed = value;
           }
 
-          return `"${key}":${parsed}${isEndWithComma ? "," : ""}`;
+          return withIndent(
+            `"${key}" : ${parsed}${isEndWithComma ? ",\n" : "\n"}`,
+            indent,
+          );
         } else {
           throw new Error(`unknow object ${line}`);
         }
@@ -338,7 +364,9 @@ export function convertValueToLiteral(
           } else {
             parsedValue = trimLineWithoutComma;
           }
-          return `${parsedValue}${isEndWithComma ? "," : ""}`;
+          return `${withIndent(parsedValue, indent)}${
+            isEndWithComma ? ",\n" : "\n"
+          }`;
         } else {
           log.error(`unknow object ${line} when parsing`);
           // unknown

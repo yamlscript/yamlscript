@@ -3,7 +3,7 @@ import {
   ParentType,
   PublicContext,
   Task,
-  TasksOptions,
+  TasksContext,
   UseType,
 } from "./interface.ts";
 /**
@@ -23,16 +23,17 @@ export enum Level {
   Fatal = 4,
 }
 export interface FileCode {
-  importCode: string;
-  runtimeImportCode: string;
-  mainFunctionBody: string;
+  topLevelCode: string;
+  runtimetopLevelCode: string;
+  mainFunctionBodyCode: string;
+  mainFunctionBodyTopLevelCode: string;
 }
 
 export interface LiteralCode {
-  importCode?: string;
-  runtimeImportCode?: string;
-  mainFunctionBodyTop?: string;
-  mainFunctionBody?: string;
+  topLevelCode?: string;
+  runtimetopLevelCode?: string;
+  mainFunctionBodyTopLevelCode?: string;
+  mainFunctionBodyCode?: string;
   functions?: string[];
   subTasks?: LiteralCode[];
   infoLog?: string;
@@ -49,10 +50,10 @@ export interface MetaResult extends LiteralCode {
 }
 
 export interface StrictLiteralCode extends LiteralCode {
-  importCode: string;
-  runtimeImportCode: string;
-  mainFunctionBody: string;
-  mainFunctionBodyTop: string;
+  topLevelCode: string;
+  runtimetopLevelCode: string;
+  mainFunctionBodyCode: string;
+  mainFunctionBodyTopLevelCode: string;
   functions: string[];
   subTasks: LiteralCode[];
   infoLog: string;
@@ -62,9 +63,9 @@ export interface TasksCode {
   moduleFileCode: string;
   runtimeFunctionBodyCode: string;
   runtimeFileCode: string;
-  importCode: string;
-  runtimeImportCode: string;
-  mainFunctionBody: string;
+  topLevelCode: string;
+  runtimetopLevelCode: string;
+  mainFunctionBodyCode: string;
 }
 export interface BuiltCode {
   moduleFileCode: string;
@@ -74,11 +75,13 @@ export interface BuiltCode {
   runtimeFunctionBodyCode: string;
 }
 
-export interface StrictTasksOptions extends TasksOptions {
+export interface StrictTasksContext extends TasksContext {
   public: PublicContext;
   indent: number;
   varsMap: Record<string, UseType>;
   parentType: ParentType;
+  isInitIndexVariable: boolean;
+  isInitLastTaskResultVariable: boolean;
 }
 export interface StrictTask extends Task {
   args: unknown[];
@@ -97,4 +100,7 @@ export interface StrictEntryOptions extends EntryOptions {
   isBuild: boolean;
   shouldBuildRuntime: boolean;
   public: PublicContext;
+}
+export interface ConcatFileCodeOptions {
+  indent?: number;
 }

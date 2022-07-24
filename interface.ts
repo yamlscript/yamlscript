@@ -49,19 +49,21 @@ export enum ParentType {
   Loop,
 }
 
-export interface TasksOptions {
+export interface TasksContext {
   public?: PublicContext;
   indent?: number;
   varsMap?: Record<string, UseType>;
   relativePath?: string;
   dist?: string;
   parentType?: ParentType;
+  isInitIndexVariable?: boolean;
+  isInitLastTaskResultVariable?: boolean;
 }
 
-export interface RunTasksOptions extends TasksOptions {
+export interface RunTasksContext extends TasksContext {
 }
 
-export interface BuildTasksOptions extends TasksOptions {
+export interface BuildTasksContext extends TasksContext {
   dist?: string;
   relativePath: string;
   shouldBuildRuntime?: boolean;
