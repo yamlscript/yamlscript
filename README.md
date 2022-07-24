@@ -334,6 +334,7 @@ let result = null;
   index = 1;
   result = await console.log(`${index}. ${item}`);
 }
+index = 0;
 
 // Task #1: sources
 let sources = [
