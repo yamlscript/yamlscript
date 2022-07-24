@@ -1,7 +1,7 @@
 - if: true
   use: def
-  args:
-    var1: true
+  id: var1
+  args: true
 - use: assertEquals
   args:
     - $var1
@@ -9,33 +9,33 @@
 
 - if: false
   use: def
-  args:
-    var2: true
+  id: var2
+  args: true
 - use: assertEquals
   args:
     - ${typeof var2}
     - undefined
 
 - use: def
-  args:
-    - condition: true
+  id: condition
+  args: true
 - if: condition
   use: defg
-  args:
-    setLiteralVars: true
+  id: setLiteralVars
+  args: true
 - use: assertEquals
   args:
     - $setLiteralVars
     - true
 
 - use: def
-  args:
-    - str: "hello"
+  id: str
+  args: "hello"
 
 - if: str === "hello"
   use: defg
-  args:
-    setStr: true
+  id: setStr
+  args: true
 
 - use: assertEquals
   args:

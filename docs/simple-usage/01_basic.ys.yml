@@ -1,0 +1,18 @@
+# We use `def` to define a new variable
+# `id` will be the variable name, `args` will be the value
+- use: def
+  id: obj
+  args:
+    list:
+      - Hello - true
+    foo:
+      cat: 10
+
+# We use javascript template string ${expression} for string interpolation
+# You can use any valid js template expression here, even function.
+# ${} can be escaped as \${} if needed
+- use: console.log
+  args:
+    - ${obj.list[0]} World
+    - ${obj.foo.cat}
+    - ${JSON.stringify(obj.foo)}

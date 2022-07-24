@@ -6,7 +6,7 @@ export interface Task {
   args?: unknown | unknown[];
   loop?: string | number | unknown[];
   if?: boolean | string;
-  catch?: boolean;
+  throw?: boolean;
 }
 export interface BuildContext {
   env: Record<string, string>;
@@ -42,6 +42,7 @@ export enum UseType {
   DefineGlobalVariable,
   DefineFunction,
   Command,
+  Return,
   Default,
 }
 export enum ParentType {

@@ -10,10 +10,9 @@ export {
   assertNotMatch,
   assertObjectMatch,
   assertRejects,
+  assertStringIncludes,
   assertThrows,
 } from "./deps.ts";
-
-export { default as getArgs } from "./get_args.ts";
 
 export * as fsExtra from "./fs_extra.ts";
 export * as rss from "./rss.ts";

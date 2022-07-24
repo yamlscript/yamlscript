@@ -1,0 +1,16 @@
+# Sometimes we need to define a global var in child block
+# We can use defg to define a global variable.
+- use: Math.max
+  args:
+    - 1
+    - 9
+
+- if: result===9
+  use: defg
+  id: foo
+  args: bar
+
+- use: assertEquals
+  args:
+    - $foo
+    - bar

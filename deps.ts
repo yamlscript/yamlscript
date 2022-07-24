@@ -24,6 +24,7 @@ export {
   assertNotMatch,
   assertObjectMatch,
   assertRejects,
+  assertStringIncludes,
   assertThrows,
 } from "https://deno.land/std@0.149.0/testing/asserts.ts";
 import * as log from "https://deno.land/std@0.149.0/log/mod.ts";
@@ -36,7 +37,7 @@ export {
   yellow,
 } from "https://deno.land/std@0.149.0/fmt/colors.ts";
 
-export { ensureDir } from "https://deno.land/std@0.149.0/fs/mod.ts";
+export { ensureDir, ensureFile } from "https://deno.land/std@0.149.0/fs/mod.ts";
 // third party
 
 export {

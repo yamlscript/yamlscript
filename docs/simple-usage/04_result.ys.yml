@@ -1,0 +1,23 @@
+- use: Math.max
+  args: [1, 9, 5]
+
+# We use `result` to indicate the return result of the previous task
+# This will print "9"
+- use: console.log
+  args: ${result}
+
+# How to print number 9?
+# use `$expression`
+# $expression can be escaped as \$expression if needed
+- use: console.log
+  args: $result
+
+# We can also use `id` to define a identifier of the task
+- id: max
+  use: Math.max
+  args: [1, 9, 5]
+
+# then we can use the $id to represent the task result.
+- use: console.log
+  args:
+    - $max

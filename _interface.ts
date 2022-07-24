@@ -67,6 +67,9 @@ export interface TasksCode {
   runtimetopLevelCode: string;
   mainFunctionBodyCode: string;
 }
+export interface TasksResult extends TasksCode {
+  tasksMetaResults: MetaResult[];
+}
 export interface BuiltCode {
   moduleFileCode: string;
   moduleFilePath: string;
@@ -88,7 +91,7 @@ export interface StrictTask extends Task {
   useType: UseType;
   command?: string;
   taskIndex: number;
-  catch: boolean;
+  throw: boolean;
   name: string;
 }
 export interface GetDefaultTaskOptionsOptions {

@@ -17,6 +17,7 @@ import {
   StrictTask,
   StrictTasksContext,
   TasksCode,
+  TasksResult,
 } from "./_interface.ts";
 
 import {
@@ -51,6 +52,7 @@ import {
   LOOP_ITEM_INDEX_NAME,
   LOOP_ITEM_NAME,
   LOOP_VARIABLE_NAME,
+  RETURN_TOKEN,
   RUNTIME_FUNCTION_OPTIONS_NAME,
 } from "./constant.ts";
 import log from "./log.ts";
@@ -58,13 +60,14 @@ import { dirname, fromFileUrl, green, relative, resolve } from "./deps.ts";
 export function getCompiledCode(
   tasks: Task[],
   originalOptions: TasksContext,
-): TasksCode {
+): TasksResult {
   log.debug("run single options", JSON.stringify(originalOptions, null, 2));
   const options = getDefaultTasksContext(originalOptions);
   // for precompiled code to import modules
   const fileCode = getInitialFileCode();
   const mainIndent = options.indent;
   // one by one
+  const tasksMetaResults: MetaResult[] = [];
   for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
     const originalTask = tasks[taskIndex];
     const task = getDefaultTaskOptions(originalTask, {
@@ -89,7 +92,7 @@ export function getCompiledCode(
     }
     // first transform top level from and use code
     const metaResult = transformMeta(task, options);
-
+    tasksMetaResults.push(metaResult);
     concatFileCode(fileCode, metaResult, { indent: mainIndent });
     // change use to final value
     task.use = metaResult.use as string;
@@ -117,22 +120,20 @@ export function getCompiledCode(
     );
 
     const ifResult = transformIf(task, options);
-    concatFileCode(fileCode, ifResult, { indent: mainIndent + 2 });
+    concatFileCode(fileCode, ifResult, { indent: mainIndent });
 
     const isNeedCloseBlock = ifResult.isNeedCloseBlock;
-    // add Indent TODO: add indent to all code
 
     // check if loop
     if (rawLoop) {
-      // isNeedCloseBlock ? mainIndent + 2 : mainIndent,
       const loopResult = transformLoop(task, options);
-      concatFileCode(fileCode, loopResult, { indent: mainIndent });
+      concatFileCode(fileCode, loopResult, {
+        indent: isNeedCloseBlock ? mainIndent + 2 : mainIndent,
+      });
     } else {
-      //         indent: isNeedCloseBlock ? mainIndent + 2 : mainIndent,
-
       const useCallResult = transformUseCall(task, options);
       concatFileCode(fileCode, useCallResult, {
-        indent: mainIndent,
+        indent: isNeedCloseBlock ? mainIndent + 2 : mainIndent,
       });
     }
 
@@ -146,7 +147,7 @@ export function getCompiledCode(
       fileCode.mainFunctionBodyCode += withIndent(`}\n`, mainIndent);
     }
   }
-  return getTasksCode(fileCode);
+  return { ...getTasksCode(fileCode), tasksMetaResults };
 }
 
 /**
@@ -184,6 +185,8 @@ function transformMeta(
     useType = UseType.DefineGlobalVariable;
   } else if (use === DEFINE_FUNCTION_TOKEN) {
     useType = UseType.DefineFunction;
+  } else if (use === RETURN_TOKEN) {
+    useType = UseType.Return;
   } else if (isCommand(use)) {
     if (!varsMap["__yamlscript_create_process"]) {
       topLevelCode =
@@ -412,7 +415,7 @@ function transformLoop(
   const ${LOOP_ITEM_NAME} = ${
         convertValueToLiteral(rawLoop[i], options.public)
       };
-  const ${LOOP_ITEM_INDEX_NAME} = ${i};\n`;
+  ${LOOP_ITEM_INDEX_NAME} = ${i};\n`;
       // transform useCall
       const useCallResult = transformUseCall(task, options);
       concatLiteralCode(literalCode, useCallResult, { indent: 2 });
@@ -445,68 +448,70 @@ function transformUseCall(
     useType === UseType.DefineVariable
   ) {
     // if it's def
-    if (args && args.length === 1 && isObject(args[0])) {
-      if (!Array.isArray(args[0])) {
-        const keys = Object.keys(args[0] as Record<string, unknown>);
-        for (const key of keys) {
-          if (varsMap[key]) {
-            // overwrite it
-            mainFunctionBodyCode += `${key} = ${
-              convertValueToLiteral(
-                (args[0] as Record<string, unknown>)[key],
-                options.public,
-              )
-            };\n`;
-          } else {
-            mainFunctionBodyCode += `let ${key} = ${
-              convertValueToLiteral(
-                (args[0] as Record<string, unknown>)[key],
-                options.public,
-              )
-            };\n`;
-          }
-        }
+    if (!id) {
+      // id is required
+      throw new Error(
+        `Task #${task.taskIndex}: id is required for def operation`,
+      );
+    }
+    if (args && args.length === 1) {
+      if (varsMap[id]) {
+        // overwrite it
+        mainFunctionBodyCode += `${id} = ${
+          convertValueToLiteral(
+            args[0] as Record<string, unknown>,
+            options.public,
+          )
+        };\n`;
       } else {
-        throw new Error("invalid args, def args must be object");
+        mainFunctionBodyCode += `let ${id} = ${
+          convertValueToLiteral(
+            args[0] as Record<string, unknown>,
+            options.public,
+          )
+        };\n`;
       }
+    } else {
+      throw new Error(
+        `invalid def args at task ${task.taskIndex}, def args can only take one param`,
+      );
     }
   } else if (useType === UseType.DefineGlobalVariable) {
-    const globalVars: string[] = [];
-    if (args && args.length === 1 && isObject(args[0])) {
-      if (!Array.isArray(args[0])) {
-        const keys = Object.keys(args[0] as Record<string, unknown>);
-        for (const key of keys) {
-          // check if it already exists
-
-          if (varsMap[key]) {
-            throw new Error(`global variable ${key} already exists`);
-          } else {
-            globalVars.push(key);
-            mainFunctionBodyTopLevelCode += `let ${key} = null;\n`;
-            mainFunctionBodyCode += `${key} = ${
-              convertValueToLiteral(
-                (args[0] as Record<string, unknown>)[key],
-                options.public,
-              )
-            };\n`;
-          }
-        }
-      } else {
-        throw new Error("invalid args, def args must be object");
-      }
+    if (!id) {
+      // id is required
+      throw new Error("id is required for def operation");
     }
-    globalVars.forEach((key) => {
+    if (args && args.length === 1) {
+      // check if it already exists
+
+      if (varsMap[id]) {
+        // throw new Error(`global variable ${id} already exists`);
+        mainFunctionBodyCode += `${id} = ${
+          convertValueToLiteral(
+            args[0] as Record<string, unknown>,
+            options.public,
+          )
+        };\n`;
+      } else {
+        mainFunctionBodyTopLevelCode += `let ${id} = null;\n`;
+        mainFunctionBodyCode += `${id} = ${
+          convertValueToLiteral(
+            args[0] as Record<string, unknown>,
+            options.public,
+          )
+        };\n`;
+      }
       setVarsMap(
         varsMap,
-        key,
+        id,
         UseType.DefineGlobalVariable,
       );
-    });
+    }
   } else if (useType === UseType.DefineFunction) {
     // check required id
     if (!id) {
       throw new Error(
-        "define function must have id, id will be the function's name",
+        `Task #${task.taskIndex} defn operation must have an id, and id will be the function's name`,
       );
     } else {
       mainFunctionBodyCode += `async function ${id}(...args){\n`;
@@ -520,9 +525,29 @@ function transformUseCall(
       topLevelCode += functionResult.topLevelCode;
       runtimetopLevelCode += functionResult.runtimetopLevelCode;
       // add return
-      mainFunctionBodyCode += `\n  return result;\n`;
+      // check if the latest task is alread return
+      if (
+        functionResult.tasksMetaResults.length > 0 &&
+        functionResult
+            .tasksMetaResults[functionResult.tasksMetaResults.length - 1]
+            .useType !== UseType.Return
+      ) {
+        mainFunctionBodyCode += `\n  return result;\n`;
+      }
       // insert end block
       mainFunctionBodyCode += "}\n";
+    }
+  } else if (useType === UseType.Return) {
+    if (args && args.length === 1) {
+      mainFunctionBodyCode += `return ${
+        convertValueToLiteral(args[0], options.public)
+      };\n`;
+    } else if (!args || args.length === 0) {
+      mainFunctionBodyCode += `return;\n`;
+    } else {
+      throw new Error(
+        `Task #${task.taskIndex} return operator takes at most one argument, but got ${args.length}`,
+      );
     }
   } else {
     // add result init variable
@@ -558,10 +583,20 @@ ${LAST_TASK_RESULT_NAME} = await ${task.use}\`${command}\`;\n`;
   }
 
   // check if need to catch error
-  if (task.catch) {
+  if (task.throw === false) {
+    // change returned result
+    mainFunctionBodyCode += `result = {
+  value: result,
+  done: true
+};\n`;
     mainFunctionBodyCode = `try {\n${
       withIndent(mainFunctionBodyCode, 2)
-    }} catch (_error) {\n  // ignore\n}\n`;
+    }} catch (error) {
+  result = {
+    value: error,
+    done: false
+  };
+}\n`;
   }
   return {
     mainFunctionBodyTopLevelCode,
@@ -651,7 +686,7 @@ function getDefaultTaskOptions(
     args: argsArray,
     taskIndex: options.taskIndex,
     useType: UseType.Default,
-    catch: task.catch ?? false,
+    throw: task.throw ?? true,
     name: task.name ?? "",
   };
 }

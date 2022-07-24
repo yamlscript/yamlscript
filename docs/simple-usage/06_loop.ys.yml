@@ -1,0 +1,25 @@
+# We use `loop` to define a loop, it can be an literal array
+# You can access the item by using `item`
+# the index by using `index`
+
+# This will print "1. foo\n2. bar"
+- loop:
+    - foo
+    - bar
+  use: console.log
+  args: ${index}. ${item}
+
+- id: sources
+  use: def
+  args:
+    - - 1
+      - 2
+# use $sources to get literals result
+
+- id: loopResults
+  loop: $sources
+  use: _.multiply
+  args:
+    - $item
+    - 2
+# loopResults will be an array, every result of the loop will be pushed.

@@ -1,0 +1,19 @@
+# We also support define a function by using `defn`
+# args[0] is the first argument, args[1] is the second argument.
+- use: defn
+  id: myFunction
+  args:
+    - use: _.upperCase
+      args: $args[0]
+
+# Then we can use this function
+- use: myFunction
+  args: abc
+
+# assertEquals is a built-in function to do some tests
+# which is from Deno std
+# https://deno.land/std@0.149.0/testing#usage
+- use: assertEquals
+  args:
+    - $result
+    - ABC

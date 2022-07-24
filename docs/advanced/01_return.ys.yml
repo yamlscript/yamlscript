@@ -1,0 +1,11 @@
+# Use `return` to end the function
+- use: defn
+  id: myFunction
+  args:
+    - use: console.log
+      args: foo
+    - use: return
+      if: true
+    - use: console.log
+      args: this will not be printed
+- use: myFunction

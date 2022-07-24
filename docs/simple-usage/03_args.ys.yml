@@ -1,0 +1,17 @@
+# `args` can be array or other type
+# if it's not an array, will be the first argument for the task
+- use: rss.entries
+  args: https://actionsflow.github.io/test-page/hn-rss.xml
+
+# You can visit https://requestbin.com/r/enyvb91j5zjv9/23eNPamD4DK4YK1rfEB1FAQOKIj
+# to check the http request.
+- use: fetch
+  args:
+    - https://enyvb91j5zjv9.x.pipedream.net/
+    - method: POST
+      headers:
+        Content-Type: application/json
+      body: |
+        {
+          "title": "Hello world"
+        }

@@ -1,14 +1,14 @@
+# get readme.template.md content
 - id: readmeTemplate
   use: Deno.readTextFile
   args: ./README.template.md
+
+# get yaml content
 - id: yamlMakeReadmeScript
   use: Deno.readTextFile
   args: ./docs/make_readme.ys.yml
 
-- id: simpleUsageFiles
-  use: Deno.readDir
-  args: ./docs/simple-usage
-
+# get source content and target
 - use: defn
   id: mapFiles
   args:
@@ -22,23 +22,40 @@
       use: YAMLScript.getCompiledCode
       args:
         - $sourceTasks
-    - use: getArgs
+    - use: return
       args:
         source: $sourceContent
-        target: ${targetCode.topLevelCode}${targetCode.mainFunctionBodyCode}
+        target: ${targetCode.topLevelCode}${targetCode.mainFunctionBodyTopLevelCode}${targetCode.mainFunctionBodyCode}
 
+# get simple usage sources and targets
+- id: simpleUsageFiles
+  use: Deno.readDir
+  args: ./docs/simple-usage
 - id: simpleUsageSources
   loop: $simpleUsageFiles
   use: mapFiles
   args: ./docs/simple-usage/${item.name}
 
+# get advanced usage sources and targets
+- id: advancedFiles
+  use: Deno.readDir
+  args: ./docs/advanced
+- id: advancedSources
+  loop: $advancedFiles
+  use: mapFiles
+  args: ./docs/advanced/${item.name}
+
+# use mustache to render readme.template.md
 - id: readmeContent
   from: https://esm.sh/mustache@4.2.0
   use: default.render
   args:
     - $readmeTemplate
     - simpleUsageSources: $simpleUsageSources
+      advancedSources: $advancedSources
       yamlMakeReadmeScript: $yamlMakeReadmeScript
+
+# write to readme.md
 - use: Deno.writeTextFile
   args:
     - README.md

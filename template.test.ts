@@ -1,4 +1,10 @@
-import { assertEquals, assertThrows, parse, parseAll } from "./deps.ts";
+import {
+  assertEquals,
+  assertStringIncludes,
+  assertThrows,
+  parse,
+  parseAll,
+} from "./deps.ts";
 import {
   convertValueToLiteral,
   getConditionResult,
@@ -283,4 +289,15 @@ Deno.test("convert Va #23", () => {
 Deno.test("convert Va #24", () => {
   const result = convertValueToLiteral(["Hello", true]);
   assertEquals("[\n  `Hello`,\n  true\n]", result);
+});
+
+Deno.test("convert new Date #25", () => {
+  const result = convertValueToLiteral("${new Date()}");
+  assertEquals(typeof result, "string");
+  assertStringIncludes(result, "GMT");
+});
+Deno.test("escapted literal #26", () => {
+  const result = convertValueToLiteral("\\$5");
+  assertEquals(typeof result, "string");
+  assertEquals(result, "$5");
 });

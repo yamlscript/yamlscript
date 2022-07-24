@@ -1,0 +1,44 @@
+# what if we want to deduplicate the rss items?
+- id: entries
+  use: rss.entries
+  args: https://actionsflow.github.io/test-page/hn-rss.xml
+
+- name: get cache
+  id: kv
+  use: fsExtra.readJSONFileWithDefaultValue
+  args:
+    - ./.yamlscript/cache/kv.json
+    - ${}
+- use: defn
+  id: handleRssEntry
+  args:
+    - use: return
+      if: kv[args[0].links[0].href]
+    - name: notify
+      use: fetch
+      args:
+        - https://enyvb91j5zjv9.x.pipedream.net/
+        - method: POST
+          headers:
+            Content-Type: application/json
+          body: |
+            {
+              "title": "${args[0].title.value}",
+              "link":  "${args[0].links[0].href}"
+            }
+    - use: _.assign
+      args:
+        - $kv
+        - $[args[0].links[0].href]: true
+
+# You can visit https://requestbin.com/r/enyvb91j5zjv9/23eNPamD4DK4YK1rfEB1FAQOKIj
+# to check the http request.
+- loop: $entries
+  use: handleRssEntry
+  args: $item
+
+- name: set to cache
+  use: fsExtra.writeJSONFile
+  args:
+    - ./.yamlscript/cache/kv.json
+    - $kv

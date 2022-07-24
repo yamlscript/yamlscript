@@ -1,0 +1,19 @@
+# fetch rss entries and notify some webhook
+- id: entries
+  use: rss.entries
+  args: https://actionsflow.github.io/test-page/hn-rss.xml
+
+# You can visit https://requestbin.com/r/enyvb91j5zjv9/23eNPamD4DK4YK1rfEB1FAQOKIj
+# to check the http request.
+- loop: $entries
+  use: fetch
+  args:
+    - https://enyvb91j5zjv9.x.pipedream.net/
+    - method: POST
+      headers:
+        Content-Type: application/json
+      body: |
+        {
+          "title": "${item.title.value}",
+          "link":  "${item.links[0].href}"
+        }

@@ -1,4 +1,5 @@
 - use: def
+  id: obj
   args:
     allItems:
       - 1
@@ -25,4 +26,3 @@
   args:
     - $result
     - bar
-- use:

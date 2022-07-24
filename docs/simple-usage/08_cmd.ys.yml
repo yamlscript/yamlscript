@@ -1,0 +1,17 @@
+# We use colon plus cmd to run a command
+- id: echo
+  use: :echo Hello World
+
+# Result will be:
+# {
+#   stdout: "Hello World\n",
+#   stderr: "",
+#   combined: "Hello World\n",
+#   status: { success: true, code: 0 },
+#   retries: 0
+# }
+
+- use: assertEquals
+  args:
+    - $echo.stdout
+    - "Hello World\n"

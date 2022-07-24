@@ -25,8 +25,11 @@ export function isIncludeTemplate(str: string) {
  * @returns
  */
 export function isVariable(str: string) {
+  if (isIncludeTemplate(str)) {
+    return false;
+  }
   if (str.length > 1) {
-    return str[0] === "$" && /[a-zA-Z_$.]/.test(str[1]);
+    return str[0] === "$" && /[a-zA-Z_$.0-9\[{]/.test(str[1]);
     // return str[0] === "$" && /[a-zA-Z_$]/.test(str[1]) &&
     //   /[0-9a-zA-Z_$]+/.test(str.slice(1));
   } else {
@@ -346,9 +349,15 @@ export function convertValueToLiteral(
           } else {
             parsed = value;
           }
+          let parsedKey = `"${key}"`;
+          // check key is literal
+          if (isVariable(key)) {
+            // use literal key
+            parsedKey = variableValueToVariable(key);
+          }
 
           return withIndent(
-            `"${key}" : ${parsed}${isEndWithComma ? ",\n" : "\n"}`,
+            `${parsedKey} : ${parsed}${isEndWithComma ? ",\n" : "\n"}`,
             indent,
           );
         } else {
@@ -400,6 +409,8 @@ function convertStringToLiteral(
     // it's a variable
     // should return literal directly
     return variableValueToVariable(value);
+  } else if (value.startsWith("\\$")) {
+    return value.slice(1);
   } else {
     // as template
     const parsed = templateWithKnownKeys(value, publicCtx || {});

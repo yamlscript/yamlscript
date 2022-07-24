@@ -1,0 +1,16 @@
+# We can use `if` to control structures
+# args is an built-in function, return the args
+- use: def
+  id: num
+  args: 5
+
+# You can use any js expression here, you may omit the expression syntax `$`
+# Cause we evaluates the if conditional as an expression.
+# this will print: yes, the args is greater than 4
+- if: num > 4
+  use: console.log
+  args: yes, the args is greater than 4
+
+- if: true
+  use: console.log
+  args: yes, it's true
