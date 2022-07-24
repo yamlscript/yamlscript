@@ -52,7 +52,7 @@ Javascript code, which is located in the `dist` directory by default.
 
 {{#simpleUsageSources}}
 
-### {{order}}.
+### {{title}}
 
 ```yaml
 {{{source}}}
@@ -71,7 +71,7 @@ This will be compiled to:
 
 {{#advancedSources}}
 
-### {{order}}.
+### {{title}}.
 
 ```yaml
 {{{source}}}

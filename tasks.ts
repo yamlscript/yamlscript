@@ -160,7 +160,6 @@ function transformMeta(
   options: StrictTasksContext,
 ): MetaResult {
   const { from: rawFrom, use: rawUse, id: rawId } = task;
-
   const varsMap = options.varsMap;
 
   let topLevelCode = "";
@@ -332,6 +331,7 @@ function transformMeta(
       }
     }
   }
+
   return {
     id,
     use,

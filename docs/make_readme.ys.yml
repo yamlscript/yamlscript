@@ -22,32 +22,64 @@
       use: YAMLScript.getCompiledCode
       args:
         - $sourceTasks
+    - id: title
+      from: https://deno.land/x/case@2.1.1/mod.ts
+      use: titleCase
+      args: ${args[2].slice(3,-7)}
     - use: return
       args:
-        order: ${args[1]+1}
+        title: $title
         source: $sourceContent
         target: ${targetCode.topLevelCode}${targetCode.mainFunctionBodyTopLevelCode}${targetCode.mainFunctionBodyCode}
 
 # get simple usage sources and targets
 - id: simpleUsageFiles
-  use: Deno.readDir
+  use: Deno.readDirSync
   args: ./docs/simple-usage
+
+- loop: $simpleUsageFiles
+  id: simpleUsageFileNames
+  use: _.get
+  args:
+    - $item
+    - name
+# sort
+- id: sortedSimpleUsageFiles
+  use: _.sortBy
+  args:
+    - $simpleUsageFileNames
+
 - id: simpleUsageSources
-  loop: $simpleUsageFiles
+  loop: $sortedSimpleUsageFiles
   use: mapFiles
   args:
-    - ./docs/simple-usage/${item.name}
+    - ./docs/simple-usage/${item}
     - $index
+    - $item
 # get advanced usage sources and targets
 - id: advancedFiles
   use: Deno.readDir
   args: ./docs/advanced
+
+- loop: $advancedFiles
+  id: advancedFileNames
+  use: _.get
+  args:
+    - $item
+    - name
+# sort
+- id: sortedAdvancedFiles
+  use: _.sortBy
+  args:
+    - $advancedFileNames
+
 - id: advancedSources
-  loop: $advancedFiles
+  loop: $sortedAdvancedFiles
   use: mapFiles
   args:
-    - ./docs/advanced/${item.name}
+    - ./docs/advanced/${item}
     - $index
+    - $item
 # use mustache to render readme.template.md
 - id: readmeContent
   from: https://esm.sh/mustache@4.2.0

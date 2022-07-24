@@ -51,7 +51,53 @@ Javascript code, which is located in the `dist` directory by default.
 
 
 
-### 1.
+### Basic
+
+```yaml
+# We use `def` to define a new variable
+# `id` will be the variable name, `args` will be the value
+- use: def
+  id: obj
+  args:
+    list:
+      - Hello - true
+    foo:
+      cat: 10
+
+# We use javascript template string ${expression} for string interpolation
+# You can use any valid js template expression here, even function.
+# ${} can be escaped as \${} if needed
+- use: console.log
+  args:
+    - ${obj.list[0]} World
+    - ${obj.foo.cat}
+    - ${JSON.stringify(obj.foo)}
+
+```
+
+This will be compiled to:
+
+   
+```javascript
+let result = null;
+
+// Task #0: obj
+let obj = {
+  "list": [
+    `Hello - true`
+  ],
+  "foo": {
+    "cat" : 10
+  }
+};
+
+// Task #1
+result = await console.log(`${obj.list[0]} World`,`${obj.foo.cat}`,`${JSON.stringify(obj.foo)}`);
+
+```
+
+
+### Use
 
 ```yaml
 # `use` is the operator name of the a task.
@@ -94,7 +140,7 @@ result = await _.uniq(2,1,2);
 ```
 
 
-### 2.
+### Args
 
 ```yaml
 # `args` can be array or other type
@@ -142,51 +188,7 @@ result = await fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
 ```
 
 
-### 3.
-
-```yaml
-# We use colon plus cmd to run a command
-- id: echo
-  use: :echo Hello World
-
-# Result will be:
-# {
-#   stdout: "Hello World\n",
-#   stderr: "",
-#   combined: "Hello World\n",
-#   status: { success: true, code: 0 },
-#   retries: 0
-# }
-
-- use: assertEquals
-  args:
-    - $echo.stdout
-    - "Hello World\n"
-
-```
-
-This will be compiled to:
-
-   
-```javascript
-import { __yamlscript_create_process } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/runtimes/cmd/mod.ts";
-const __yamlscript_default_use_0 = echo Hello World;
-import { assertEquals } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
-let result = null;
-
-// Task #0: echo
-const __yamlscript_default_use_0 =  __yamlscript_create_process();
-result = await __yamlscript_default_use_0`echo Hello World`;
-const echo = result;
-
-// Task #1
-result = await assertEquals(echo.stdout,`Hello World
-`);
-
-```
-
-
-### 4.
+### Result
 
 ```yaml
 - use: Math.max
@@ -240,27 +242,25 @@ result = await console.log(max);
 ```
 
 
-### 5.
+### If
 
 ```yaml
-# We use `def` to define a new variable
-# `id` will be the variable name, `args` will be the value
+# We can use `if` to control structures
+# args is an built-in function, return the args
 - use: def
-  id: obj
-  args:
-    list:
-      - Hello - true
-    foo:
-      cat: 10
+  id: num
+  args: 5
 
-# We use javascript template string ${expression} for string interpolation
-# You can use any valid js template expression here, even function.
-# ${} can be escaped as \${} if needed
-- use: console.log
-  args:
-    - ${obj.list[0]} World
-    - ${obj.foo.cat}
-    - ${JSON.stringify(obj.foo)}
+# You can use any js expression here, you may omit the expression syntax `$`
+# Cause we evaluates the if conditional as an expression.
+# this will print: yes, the args is greater than 4
+- if: num > 4
+  use: console.log
+  args: yes, the args is greater than 4
+
+- if: true
+  use: console.log
+  args: yes, it's true
 
 ```
 
@@ -270,73 +270,21 @@ This will be compiled to:
 ```javascript
 let result = null;
 
-// Task #0: obj
-let obj = {
-  "list": [
-    `Hello - true`
-  ],
-  "foo": {
-    "cat" : 10
-  }
-};
+// Task #0: num
+let num = 5;
 
 // Task #1
-result = await console.log(`${obj.list[0]} World`,`${obj.foo.cat}`,`${JSON.stringify(obj.foo)}`);
-
-```
-
-
-### 6.
-
-```yaml
-# We also support define a function by using `defn`
-# args[0] is the first argument, args[1] is the second argument.
-- use: defn
-  id: myFunction
-  args:
-    - use: _.upperCase
-      args: $args[0]
-
-# Then we can use this function
-- use: myFunction
-  args: abc
-
-# assertEquals is a built-in function to do some tests
-# which is from Deno std
-# https://deno.land/std@0.149.0/testing#usage
-- use: assertEquals
-  args:
-    - $result
-    - ABC
-
-```
-
-This will be compiled to:
-
-   
-```javascript
-import { _ } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
-import { assertEquals } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
-
-// Task #0: myFunction
-async function myFunction(...args){
-
-  // Task #0
-  result = await _.upperCase(args[0]);
-
-  return result;
+if (num > 4) {
+  result = await console.log(`yes, the args is greater than 4`);
 }
 
-// Task #1
-result = await myFunction(`abc`);
-
 // Task #2
-result = await assertEquals(result,`ABC`);
+result = await console.log(`yes, it's true`);
 
 ```
 
 
-### 7.
+### Loop
 
 ```yaml
 # We use `loop` to define a loop, it can be an literal array
@@ -405,25 +353,28 @@ index=0;
 ```
 
 
-### 8.
+### Function
 
 ```yaml
-# We can use `if` to control structures
-# args is an built-in function, return the args
-- use: def
-  id: num
-  args: 5
+# We also support define a function by using `defn`
+# args[0] is the first argument, args[1] is the second argument.
+- use: defn
+  id: myFunction
+  args:
+    - use: _.upperCase
+      args: $args[0]
 
-# You can use any js expression here, you may omit the expression syntax `$`
-# Cause we evaluates the if conditional as an expression.
-# this will print: yes, the args is greater than 4
-- if: num > 4
-  use: console.log
-  args: yes, the args is greater than 4
+# Then we can use this function
+- use: myFunction
+  args: abc
 
-- if: true
-  use: console.log
-  args: yes, it's true
+# assertEquals is a built-in function to do some tests
+# which is from Deno std
+# https://deno.land/std@0.149.0/testing#usage
+- use: assertEquals
+  args:
+    - $result
+    - ABC
 
 ```
 
@@ -431,18 +382,67 @@ This will be compiled to:
 
    
 ```javascript
-let result = null;
+import { _ } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
+import { assertEquals } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
 
-// Task #0: num
-let num = 5;
+// Task #0: myFunction
+async function myFunction(...args){
 
-// Task #1
-if (num > 4) {
-  result = await console.log(`yes, the args is greater than 4`);
+  // Task #0
+  result = await _.upperCase(args[0]);
+
+  return result;
 }
 
+// Task #1
+result = await myFunction(`abc`);
+
 // Task #2
-result = await console.log(`yes, it's true`);
+result = await assertEquals(result,`ABC`);
+
+```
+
+
+### Shell
+
+```yaml
+# We use colon plus cmd to run a command
+- id: echo
+  use: :echo Hello World
+
+# Result will be:
+# {
+#   stdout: "Hello World\n",
+#   stderr: "",
+#   combined: "Hello World\n",
+#   status: { success: true, code: 0 },
+#   retries: 0
+# }
+
+- use: assertEquals
+  args:
+    - $echo.stdout
+    - "Hello World\n"
+
+```
+
+This will be compiled to:
+
+   
+```javascript
+import { __yamlscript_create_process } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/runtimes/cmd/mod.ts";
+const __yamlscript_default_use_0 = echo Hello World;
+import { assertEquals } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
+let result = null;
+
+// Task #0: echo
+const __yamlscript_default_use_0 =  __yamlscript_create_process();
+result = await __yamlscript_default_use_0`echo Hello World`;
+const echo = result;
+
+// Task #1
+result = await assertEquals(echo.stdout,`Hello World
+`);
 
 ```
 
@@ -450,7 +450,7 @@ result = await console.log(`yes, it's true`);
 ## Advanced Usage
 
 
-### 1.
+### Return.
 
 ```yaml
 # Use `return` to end the function
@@ -493,7 +493,64 @@ result = await myFunction();
 ```
 
 
-### 2.
+### Rss.
+
+```yaml
+# fetch rss entries and notify some webhook
+- id: entries
+  use: rss.entries
+  args: https://actionsflow.github.io/test-page/hn-rss.xml
+
+# You can visit https://requestbin.com/r/enyvb91j5zjv9/23eNPamD4DK4YK1rfEB1FAQOKIj
+# to check the http request.
+- loop: $entries
+  use: fetch
+  args:
+    - https://enyvb91j5zjv9.x.pipedream.net/
+    - method: POST
+      headers:
+        Content-Type: application/json
+      body: |
+        {
+          "title": "${item.title.value}",
+          "link":  "${item.links[0].href}"
+        }
+
+```
+
+This will be compiled to:
+
+   
+```javascript
+import { rss } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
+let result = null;
+let index = 0;
+
+// Task #0: entries
+result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
+const entries = result;
+
+// Task #1
+for await (const item of entries){
+  result = await fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
+    "method" : `POST`,
+    "headers": {
+      "Content-Type" : `application/json`
+    },
+    "body" : `{
+      "title": "${item.title.value}",
+      "link":  "${item.links[0].href}"
+    }
+    `
+  });
+  index++;
+}
+index=0;
+
+```
+
+
+### Cache.
 
 ```yaml
 # what if we want to deduplicate the rss items?
@@ -603,7 +660,7 @@ result = await fsExtra.writeJSONFile(`./.yamlscript/cache/kv.json`,kv);
 ```
 
 
-### 3.
+### Define Global Variables.
 
 ```yaml
 # Sometimes we need to define a global var in child block
@@ -643,63 +700,6 @@ if (result===9) {
 
 // Task #2
 result = await assertEquals(foo,`bar`);
-
-```
-
-
-### 4.
-
-```yaml
-# fetch rss entries and notify some webhook
-- id: entries
-  use: rss.entries
-  args: https://actionsflow.github.io/test-page/hn-rss.xml
-
-# You can visit https://requestbin.com/r/enyvb91j5zjv9/23eNPamD4DK4YK1rfEB1FAQOKIj
-# to check the http request.
-- loop: $entries
-  use: fetch
-  args:
-    - https://enyvb91j5zjv9.x.pipedream.net/
-    - method: POST
-      headers:
-        Content-Type: application/json
-      body: |
-        {
-          "title": "${item.title.value}",
-          "link":  "${item.links[0].href}"
-        }
-
-```
-
-This will be compiled to:
-
-   
-```javascript
-import { rss } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
-let result = null;
-let index = 0;
-
-// Task #0: entries
-result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
-const entries = result;
-
-// Task #1
-for await (const item of entries){
-  result = await fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
-    "method" : `POST`,
-    "headers": {
-      "Content-Type" : `application/json`
-    },
-    "body" : `{
-      "title": "${item.title.value}",
-      "link":  "${item.links[0].href}"
-    }
-    `
-  });
-  index++;
-}
-index=0;
 
 ```
 
@@ -746,32 +746,64 @@ This README.md file is generated by the following YAMLScript.
       use: YAMLScript.getCompiledCode
       args:
         - $sourceTasks
+    - id: title
+      from: https://deno.land/x/case@2.1.1/mod.ts
+      use: titleCase
+      args: ${args[2].slice(3,-7)}
     - use: return
       args:
-        order: ${args[1]+1}
+        title: $title
         source: $sourceContent
         target: ${targetCode.topLevelCode}${targetCode.mainFunctionBodyTopLevelCode}${targetCode.mainFunctionBodyCode}
 
 # get simple usage sources and targets
 - id: simpleUsageFiles
-  use: Deno.readDir
+  use: Deno.readDirSync
   args: ./docs/simple-usage
+
+- loop: $simpleUsageFiles
+  id: simpleUsageFileNames
+  use: _.get
+  args:
+    - $item
+    - name
+# sort
+- id: sortedSimpleUsageFiles
+  use: _.sortBy
+  args:
+    - $simpleUsageFileNames
+
 - id: simpleUsageSources
-  loop: $simpleUsageFiles
+  loop: $sortedSimpleUsageFiles
   use: mapFiles
   args:
-    - ./docs/simple-usage/${item.name}
+    - ./docs/simple-usage/${item}
     - $index
+    - $item
 # get advanced usage sources and targets
 - id: advancedFiles
   use: Deno.readDir
   args: ./docs/advanced
+
+- loop: $advancedFiles
+  id: advancedFileNames
+  use: _.get
+  args:
+    - $item
+    - name
+# sort
+- id: sortedAdvancedFiles
+  use: _.sortBy
+  args:
+    - $advancedFileNames
+
 - id: advancedSources
-  loop: $advancedFiles
+  loop: $sortedAdvancedFiles
   use: mapFiles
   args:
-    - ./docs/advanced/${item.name}
+    - ./docs/advanced/${item}
     - $index
+    - $item
 # use mustache to render readme.template.md
 - id: readmeContent
   from: https://esm.sh/mustache@4.2.0
