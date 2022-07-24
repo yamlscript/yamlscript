@@ -47,9 +47,25 @@ Javascript code, which is located in the `dist` directory by default.
 > This project is still in development, most things are already working.
 
 
+## Simple Usage
+
+
+{{#simpleUsageSources}}
+
 ```yaml
-{{{readmeYAMLContent}}}
+{{{source}}}
 ```
+
+This will be compiled to 
+
+   
+```javascript
+{{{target}}}
+```
+
+{{/simpleUsageSources}}
+
+
 
 ## Install
 

@@ -1,0 +1,9 @@
+- id: println
+  use: defn
+  args:
+    - use: console.log
+      args: $...args
+- use: println
+  args:
+    - Hello
+    - World

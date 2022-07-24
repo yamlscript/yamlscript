@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows, parse } from "./deps.ts";
+import { assertEquals, assertThrows, parse, parseAll } from "./deps.ts";
 import {
   convertValueToLiteral,
   getConditionResult,
@@ -248,4 +248,32 @@ Deno.test("convertValueToLiteral #21", () => {
     content: "$var",
   });
   assertEquals(result, '{"content":var}');
+});
+
+Deno.test("convert Va #22", () => {
+  const result = parseAll(`
+apiVersion: v1
+kind: Service
+metadata:
+  name: mock
+spec:
+...
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: mock
+spec:
+...  
+`) as string[];
+  assertEquals(result.length, 2);
+});
+
+Deno.test("convert Va #23", () => {
+  const result = convertValueToLiteral({ cat: 10 });
+  assertEquals('{"cat":10}', result);
+});
+Deno.test("convert Va #24", () => {
+  const result = convertValueToLiteral(["Hello", true]);
+  assertEquals("[`Hello`,true]", result);
 });

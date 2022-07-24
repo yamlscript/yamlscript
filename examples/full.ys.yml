@@ -1,4 +1,4 @@
-- use: setVars
+- use: def
   args:
     allItems:
       - 1

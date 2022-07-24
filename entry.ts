@@ -3,12 +3,19 @@ import { StrictEntryOptions } from "./_interface.ts";
 import { buildTasks, runTasks } from "./tasks.ts";
 import { getDefaultPublicContext, parseYamlFile } from "./util.ts";
 import log from "./log.ts";
+import { green } from "./deps.ts";
 export async function run(originalOptions: EntryOptions) {
   const options = getDefaultEntryOptions(originalOptions);
   const { files } = options;
   for (const file of files) {
     // parse file
-    const tasks = await parseYamlFile(file) as Task[];
+    let tasks: Task[] = [];
+    try {
+      tasks = await parseYamlFile(file) as Task[];
+    } catch (error) {
+      log.fatal(`parse file ${green(file)} error: ${error.message}`);
+    }
+
     if (options.isBuild) {
       await buildTasks(tasks, {
         relativePath: file,

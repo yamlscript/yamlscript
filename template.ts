@@ -26,8 +26,9 @@ export function isIncludeTemplate(str: string) {
  */
 export function isVariable(str: string) {
   if (str.length > 1) {
-    return str[0] === "$" && /[a-zA-Z_$]/.test(str[1]) &&
-      /[0-9a-zA-Z_$]+/.test(str.slice(1));
+    return str[0] === "$" && /[a-zA-Z_$.]/.test(str[1]);
+    // return str[0] === "$" && /[a-zA-Z_$]/.test(str[1]) &&
+    //   /[0-9a-zA-Z_$]+/.test(str.slice(1));
   } else {
     return false;
   }
@@ -308,8 +309,13 @@ export function convertValueToLiteral(
         if (keys.length === 1) {
           const key = keys[0];
           const value = obj[key];
-          const parsed = convertStringToLiteral(value, publicCtx || {});
-          console.log("parsed", parsed);
+          let parsed = "";
+          // check value is string or not
+          if (typeof value === "string") {
+            parsed = convertStringToLiteral(value, publicCtx || {});
+          } else {
+            parsed = value;
+          }
 
           return `"${key}":${parsed}${isEndWithComma ? "," : ""}`;
         } else {

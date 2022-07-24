@@ -40,7 +40,8 @@ export interface LiteralCode {
   isNeedCloseBlock?: boolean;
 }
 
-export interface ImportResult extends LiteralCode {
+export interface MetaResult extends LiteralCode {
+  id?: string;
   use: string;
   from?: string;
   useType: UseType;
@@ -61,6 +62,9 @@ export interface TasksCode {
   moduleFileCode: string;
   runtimeFunctionBodyCode: string;
   runtimeFileCode: string;
+  importCode: string;
+  runtimeImportCode: string;
+  mainFunctionBody: string;
 }
 export interface BuiltCode {
   moduleFileCode: string;

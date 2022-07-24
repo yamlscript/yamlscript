@@ -1,5 +1,5 @@
 - if: true
-  use: setVars
+  use: def
   args:
     var1: true
 - use: assertEquals
@@ -8,7 +8,7 @@
     - true
 
 - if: false
-  use: setVars
+  use: def
   args:
     var2: true
 - use: assertEquals
@@ -16,11 +16,11 @@
     - ${typeof var2}
     - undefined
 
-- use: setVars
+- use: def
   args:
     - condition: true
 - if: condition
-  use: setGlobalVars
+  use: defg
   args:
     setLiteralVars: true
 - use: assertEquals
@@ -28,12 +28,12 @@
     - $setLiteralVars
     - true
 
-- use: setVars
+- use: def
   args:
     - str: "hello"
 
 - if: str === "hello"
-  use: setGlobalVars
+  use: defg
   args:
     setStr: true
 

@@ -10,6 +10,7 @@ export {
 } from "https://deno.land/std@0.149.0/path/mod.ts";
 export {
   parse,
+  parseAll,
   stringify,
 } from "https://deno.land/std@0.149.0/encoding/yaml.ts";
 export {
@@ -44,4 +45,3 @@ export {
 } from "https://deno.land/x/cliffy@v0.24.2/command/mod.ts";
 export { UpgradeCommand } from "https://deno.land/x/cliffy@v0.24.2/command/upgrade/upgrade_command.ts";
 export { DenoLandProvider } from "https://deno.land/x/cliffy@v0.24.2/command/upgrade/provider/deno_land.ts";
-export { default as _ } from "https://deno.land/x/lodash@4.17.15-es/lodash.js";

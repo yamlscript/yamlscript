@@ -38,7 +38,9 @@ export enum UseType {
   AsyncGlobalsFunction,
   AsyncThirdPartyFunction,
   AsyncUserFunction,
-  SetVars,
+  DefineVariable,
+  DefineGlobalVariable,
+  DefineFunction,
   Command,
   Default,
 }

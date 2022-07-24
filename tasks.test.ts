@@ -5,7 +5,7 @@ import { parseYamlFile } from "./util.ts";
 import pkg from "./pkg.json" assert { type: "json" };
 
 const cacheDist = "." + pkg.full + "/__fixtures__";
-Deno.test("compileTasks tasks #1", async () => {
+Deno.test("getCompiledCode tasks #1", async () => {
   const result = await buildTasks([
     {
       use: "console.log",
@@ -23,7 +23,7 @@ Deno.test("compileTasks tasks #1", async () => {
   );
   assertEquals(result.moduleFileCode, expected);
 });
-Deno.test("compileTasks tasks loop #2", async () => {
+Deno.test("getCompiledCode tasks loop #2", async () => {
   const result = await buildTasks([
     {
       loop: [
@@ -47,7 +47,7 @@ Deno.test("compileTasks tasks loop #2", async () => {
   );
   assertEquals(result.moduleFileCode, expected);
 });
-Deno.test("compileTasks tasks #3", async () => {
+Deno.test("getCompiledCode tasks #3", async () => {
   const result = await buildTasks([
     {
       from: "https://deno.land/std@0.148.0/path/mod.ts",
@@ -67,7 +67,7 @@ Deno.test("compileTasks tasks #3", async () => {
   );
   assertEquals(result.moduleFileCode, expected);
 });
-Deno.test("compileTasks full tasks #4", async () => {
+Deno.test("getCompiledCode full tasks #4", async () => {
   const tasks = await parseYamlFile(
     "./examples/full.ys.yml",
   ) as Task[];
@@ -85,7 +85,7 @@ Deno.test("test if condition #5", async () => {
   await runTasks(tasks);
 });
 
-Deno.test("compileTasks tasks #6", async () => {
+Deno.test("getCompiledCode tasks #6", async () => {
   const result = await buildTasks([
     {
       use: ":echo",

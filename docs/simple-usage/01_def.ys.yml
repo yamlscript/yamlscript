@@ -1,0 +1,9 @@
+# Set Variables
+# args is an object, key is variable name, value is variable value.
+- use: def
+  args:
+    list:
+      - Hello
+      - true
+    foo:
+      cat: 10

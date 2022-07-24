@@ -10,8 +10,8 @@ import {
   BuiltCode,
   FileCode,
   GetDefaultTaskOptionsOptions,
-  ImportResult,
   LiteralCode,
+  MetaResult,
   StrictLiteralCode,
   StrictTask,
   StrictTasksOptions,
@@ -38,28 +38,29 @@ import {
 import {
   COMPILED_CONTEXT_KEYS,
   DEFAULT_USE_NAME,
+  DEFINE_FUNCTION_TOKEN,
+  DEFINE_GLOBAL_VARIABLE_TOKEN,
+  DEFINE_VARIABLE_TOKEN,
   DEV_FLAG,
   GLOBAL_PACKAGE_URL,
   GLOBAL_RUNTIME_CMD_PACKAGE_URL,
-  LOOP_ITEM_INDEX,
+  LAST_TASK_RESULT_NAME,
+  LOOP_ITEM_INDEX_NAME,
   LOOP_ITEM_NAME,
-  LOOP_LENGTH_NAME,
   LOOP_VARIABLE_NAME,
   RUNTIME_FUNCTION_OPTIONS_NAME,
 } from "./constant.ts";
 import log from "./log.ts";
 import { dirname, fromFileUrl, green, relative, resolve } from "./deps.ts";
 import config from "./config.json" assert { type: "json" };
-import listCacheClear from "https://deno.land/x/lodash@4.17.15-es/_listCacheClear.js";
-const contextConfig = config.context;
-export function compileTasks(
+export function getCompiledCode(
   tasks: Task[],
   originalOptions: TasksOptions,
 ): TasksCode {
   log.debug("run single options", JSON.stringify(originalOptions, null, 2));
-  let options = getDefaultTasksOptions(originalOptions);
+  const options = getDefaultTasksOptions(originalOptions);
   // for precompiled code to import modules
-  const fileCode = initFileCode();
+  const fileCode = getInitialFileCode();
   const mainIndent = options.indent + 2;
   // one by one
   for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
@@ -85,7 +86,7 @@ export function compileTasks(
       }
     }
     // first transform top level from and use code
-    const importResult = transformImport(task, options);
+    const importResult = transformMeta(task, options);
     concatFileCode(fileCode, importResult);
     // change use to final value
     task.use = importResult.use as string;
@@ -139,11 +140,11 @@ export function compileTasks(
  * should check import path duplicate
  * @param raw
  */
-function transformImport(
+function transformMeta(
   task: StrictTask,
   options: StrictTasksOptions,
-): ImportResult {
-  const { from: rawFrom, use: rawUse } = task;
+): MetaResult {
+  const { from: rawFrom, use: rawUse, id: rawId } = task;
 
   const varsMap = options.varsMap;
 
@@ -151,12 +152,24 @@ function transformImport(
   let runtimeImportCode = "";
   let use = templateCompiledString(rawUse, options.public);
   let useType = UseType.Default;
+  let command: string | undefined;
+  let from: string | undefined;
+  let debugLog = "";
+  let id: string | undefined;
+  if (rawId) {
+    const idString = templateCompiledString(rawId, options.public);
+    id = idString;
+  }
 
   if (
-    use === "setVars" || use === "setGlobalVars"
+    use === DEFINE_VARIABLE_TOKEN
   ) {
     // no more import
-    return { use: use, useType: UseType.SetVars };
+    useType = UseType.DefineVariable;
+  } else if (use === DEFINE_GLOBAL_VARIABLE_TOKEN) {
+    useType = UseType.DefineGlobalVariable;
+  } else if (use === DEFINE_FUNCTION_TOKEN) {
+    useType = UseType.DefineFunction;
   } else if (isCommand(use)) {
     if (!varsMap["__yamlscript_create_process"]) {
       importCode =
@@ -171,26 +184,20 @@ function transformImport(
     }
 
     const newUse = DEFAULT_USE_NAME + "_" + task.taskIndex;
-
-    return {
-      use: newUse,
-      importCode,
-      runtimeImportCode,
-      useType: UseType.Command,
-      command: getCommand(use),
-    };
+    command = getCommand(use);
+    useType = UseType.Command;
+    use = newUse;
+    importCode += `const ${newUse} = ${command};\n`;
   } else if (isVariable(use)) {
     // if it's variable, then it's a runtime function, just use it
     // but we don't know if it's a async or not, we can assume it's async, // TODO  or maybe we can add a sync option to specify it's sync
-    return {
-      use: use,
-      useType: UseType.AsyncRuntimeFunction,
-    };
+    // TODO consider better check
+    useType = UseType.AsyncRuntimeFunction;
   } else {
-    let debugLog = ``;
-    const from = templateCompiledString(rawFrom, options.public);
     // add compile code
-    if (from) {
+    if (rawFrom) {
+      const fromString = templateCompiledString(rawFrom, options.public);
+      from = fromString;
       let importPath = "";
       let runtimeImportPath = "";
       let importVar = "";
@@ -241,10 +248,8 @@ function transformImport(
       } else {
         useType = UseType.GlobalsFunction;
       }
-      console.log("varsMap", task.taskIndex, varsMap);
       // check if import already
       if (!varsMap[importVar]) {
-        console.log("importVar", importVar);
         setVarsMap(options.varsMap, importVar, useType);
         // TODO check useType
 
@@ -262,7 +267,6 @@ function transformImport(
             ".js",
             options.dist,
           );
-          console.log("targetPath", targetPath);
           const relativeGlobalModFilePath = relative(
             dirname(targetPath),
             globalModFilePath,
@@ -296,27 +300,30 @@ function transformImport(
     } else {
       if (use) {
         // not found use
-        log.fatal(
-          `can't found function ${green(use)}, did you forget \`${
-            green(
-              "from",
-            )
-          }\` param?`,
-        );
+        // consider as user custom runtime function
+        useType = UseType.AsyncRuntimeFunction;
+        // log.fatal(
+        //   `can't found function ${green(use)}, did you forget \`${
+        //     green(
+        //       "from",
+        //     )
+        //   }\` param?`,
+        // );
       } else {
         // ignore, no use.
       }
     }
-
-    return {
-      use: use,
-      useType: useType,
-      from,
-      importCode,
-      runtimeImportCode,
-      debugLog,
-    };
   }
+  return {
+    id,
+    use,
+    from,
+    importCode,
+    runtimeImportCode,
+    useType,
+    command,
+    debugLog,
+  };
 }
 function transformIf(
   task: StrictTask,
@@ -358,7 +365,7 @@ function transformLoop(
   task: StrictTask,
   options: StrictTasksOptions,
 ): LiteralCode {
-  const { loop: rawLoop, id: rawId } = task;
+  const { loop: rawLoop, id } = task;
   const mainIndent = options.indent;
   const literalCode: LiteralCode = {
     mainFunctionBody: "",
@@ -367,8 +374,7 @@ function transformLoop(
   const tempParentType = options.parentType;
   options.parentType = ParentType.Loop;
   // check if loop has a id
-  if (rawId) {
-    const id = templateCompiledString(rawId, options.public);
+  if (id) {
     literalCode.mainFunctionBody += `let ${id} = [];\n`;
   }
   // start build function body
@@ -376,22 +382,24 @@ function transformLoop(
     // consider as direct literal code
     const arrayLiberal = convertValueToLiteral(rawLoop, options.public);
     literalCode.mainFunctionBody +=
-      `for(let index = 0; index < ${arrayLiberal}.length; index++){
-  const item = ${arrayLiberal}[index];\n`;
+      `${LOOP_ITEM_INDEX_NAME} = 0;\nfor await (const ${LOOP_ITEM_NAME} of ${arrayLiberal}){\n`;
     // transform use call
     const useCallResult = transformUseCall(task, {
       ...options,
       indent: options.indent,
     });
     concatLiteralCode(literalCode, useCallResult);
-    literalCode.mainFunctionBody += `}\n`;
+    literalCode.mainFunctionBody += `${LOOP_ITEM_INDEX_NAME}++;\n`;
+    literalCode.mainFunctionBody += `}\n${LOOP_ITEM_INDEX_NAME}=undefined;\n`;
   } else if (rawLoop && Array.isArray(rawLoop)) {
     // loop array
     // compiled loop
     for (let i = 0; i < rawLoop.length; i++) {
       literalCode.mainFunctionBody += `{
-  const item = ${convertValueToLiteral(rawLoop[i], options.public)};
-  const index = ${i};\n`;
+  const ${LOOP_ITEM_NAME} = ${
+        convertValueToLiteral(rawLoop[i], options.public)
+      };
+  const ${LOOP_ITEM_INDEX_NAME} = ${i};\n`;
       // transform useCall
       const useCallResult = transformUseCall(task, {
         ...options,
@@ -423,85 +431,96 @@ function transformUseCall(
 ): LiteralCode {
   let mainFunctionBody = "";
   let mainFunctionBodyTop = "";
-  const { args, use, useType } = task;
+  let importCode = "";
+  let runtimeImportCode = "";
+  const { args, use, useType, id } = task;
   const { indent } = options;
 
   const varsMap = options.varsMap;
 
-  // check if it's setVars
+  // check if it's def
   if (
-    use === "setVars" || use === "setGlobalVars"
+    useType === UseType.DefineVariable
   ) {
-    const globalVars: string[] = [];
-    // if it's setVars
-    if (use === "setVars") {
-      if (args && args.length === 1 && isObject(args[0])) {
-        if (!Array.isArray(args[0])) {
-          const keys = Object.keys(args[0] as Record<string, unknown>);
-          for (const key of keys) {
-            if (varsMap[key]) {
-              // overwrite it
-              mainFunctionBody += `${key}=${
-                convertValueToLiteral(
-                  (args[0] as Record<string, unknown>)[key],
-                  options.public,
-                )
-              };\n`;
-            } else {
-              mainFunctionBody += `let ${key}=${
-                convertValueToLiteral(
-                  (args[0] as Record<string, unknown>)[key],
-                  options.public,
-                )
-              };\n`;
-            }
+    // if it's def
+    if (args && args.length === 1 && isObject(args[0])) {
+      if (!Array.isArray(args[0])) {
+        const keys = Object.keys(args[0] as Record<string, unknown>);
+        for (const key of keys) {
+          if (varsMap[key]) {
+            // overwrite it
+            mainFunctionBody += `${key} = ${
+              convertValueToLiteral(
+                (args[0] as Record<string, unknown>)[key],
+                options.public,
+              )
+            };\n`;
+          } else {
+            mainFunctionBody += `let ${key} = ${
+              convertValueToLiteral(
+                (args[0] as Record<string, unknown>)[key],
+                options.public,
+              )
+            };\n`;
           }
-        } else {
-          throw new Error("invalid args, setVars args must be object");
         }
       } else {
-        // invalid setVars
-        throw new Error("invalid args, setVars args must be object");
+        throw new Error("invalid args, def args must be object");
       }
-    } else if (use === "setGlobalVars") {
-      if (args && args.length === 1 && isObject(args[0])) {
-        if (!Array.isArray(args[0])) {
-          const keys = Object.keys(args[0] as Record<string, unknown>);
-          for (const key of keys) {
-            // check if it already exists
-
-            if (varsMap[key]) {
-              throw new Error(`global variable ${key} already exists`);
-            } else {
-              globalVars.push(key);
-              mainFunctionBodyTop += `let ${key} = null;\n`;
-              mainFunctionBody += `${key} = ${
-                convertValueToLiteral(
-                  (args[0] as Record<string, unknown>)[key],
-                  options.public,
-                )
-              };\n`;
-            }
-          }
-        } else {
-          throw new Error("invalid args, setVars args must be object");
-        }
-      } else {
-        // invalid setVars
-        throw new Error("invalid args, setVars args must be object");
-      }
-    } else {
-      throw new Error("invalid use, this may be a bug");
     }
-    // get vars
-    if (use.includes("Global")) {
-      globalVars.forEach((key) => {
-        setVarsMap(
-          varsMap,
-          key,
-          UseType.SetVars,
-        );
-      });
+  } else if (useType === UseType.DefineGlobalVariable) {
+    const globalVars: string[] = [];
+    if (args && args.length === 1 && isObject(args[0])) {
+      if (!Array.isArray(args[0])) {
+        const keys = Object.keys(args[0] as Record<string, unknown>);
+        for (const key of keys) {
+          // check if it already exists
+
+          if (varsMap[key]) {
+            throw new Error(`global variable ${key} already exists`);
+          } else {
+            globalVars.push(key);
+            mainFunctionBodyTop += `let ${key} = null;\n`;
+            mainFunctionBody += `${key} = ${
+              convertValueToLiteral(
+                (args[0] as Record<string, unknown>)[key],
+                options.public,
+              )
+            };\n`;
+          }
+        }
+      } else {
+        throw new Error("invalid args, def args must be object");
+      }
+    }
+    globalVars.forEach((key) => {
+      setVarsMap(
+        varsMap,
+        key,
+        UseType.DefineGlobalVariable,
+      );
+    });
+  } else if (useType === UseType.DefineFunction) {
+    // check required id
+    if (!id) {
+      throw new Error(
+        "define function must have id, id will be the function's name",
+      );
+    } else {
+      mainFunctionBody += `async function ${id}(...args){\n`;
+
+      // insert function body
+      // check args
+
+      const functionResult = getCompiledCode(args as Task[], options);
+      // merge result
+      mainFunctionBody += functionResult.mainFunctionBody;
+      importCode += functionResult.importCode;
+      runtimeImportCode += functionResult.runtimeImportCode;
+      // add return
+      mainFunctionBody += `return result;\n`;
+      // insert end block
+      mainFunctionBody += "}\n";
     }
   } else {
     // check if use is command
@@ -515,8 +534,8 @@ function transformUseCall(
 
       mainFunctionBody =
         `const ${task.use} =  __yamlscript_create_process(${argsFlatten});
-${contextConfig.lastTaskResultName} = await ${task.use}\`${command}\`;\n`;
-      mainFunctionBody += appendId(task, options);
+${LAST_TASK_RESULT_NAME} = await ${task.use}\`${command}\`;\n`;
+      mainFunctionBody += assignId(task, options);
     } else if (use) {
       // consider as function
       // array, then put args to literal args
@@ -526,8 +545,8 @@ ${contextConfig.lastTaskResultName} = await ${task.use}\`${command}\`;\n`;
       ) => (convertValueToLiteral(arg, options.public)))
         .join(",");
       mainFunctionBody +=
-        `${contextConfig.lastTaskResultName} = await ${use}(${argsFlatten});\n`;
-      mainFunctionBody += appendId(task, options);
+        `${LAST_TASK_RESULT_NAME} = await ${use}(${argsFlatten});\n`;
+      mainFunctionBody += assignId(task, options);
     }
   }
 
@@ -545,20 +564,21 @@ ${contextConfig.lastTaskResultName} = await ${task.use}\`${command}\`;\n`;
   return {
     mainFunctionBodyTop,
     mainFunctionBody,
+    importCode,
+    runtimeImportCode,
   };
 }
-function appendId(task: Task, options: StrictTasksOptions) {
+function assignId(task: Task, options: StrictTasksOptions) {
   if (task.id) {
-    const { id: rawId } = task;
-    const id = templateCompiledString(rawId, options.public);
+    const { id } = task;
     if (id) {
       // check current parent type
 
       if (options.parentType === ParentType.Loop) {
         // the result should be push to the array
-        return `${id}.push(${contextConfig.lastTaskResultName});\n`;
+        return `${id}.push(${LAST_TASK_RESULT_NAME});\n`;
       } else {
-        return `const ${id} = ${contextConfig.lastTaskResultName};\n`;
+        return `const ${id} = ${LAST_TASK_RESULT_NAME};\n`;
       }
     }
 
@@ -621,8 +641,9 @@ function formatLiteralCode(result: LiteralCode): StrictLiteralCode {
 }
 
 function getDefaultTasksOptions(
-  tasksOptions: TasksOptions,
+  tasksOptions?: TasksOptions,
 ): StrictTasksOptions {
+  tasksOptions = tasksOptions || {};
   return {
     ...tasksOptions,
     public: tasksOptions.public ?? getDefaultPublicContext(),
@@ -682,12 +703,12 @@ export function buildTasks(
   tasks: Task[],
   options: BuildTasksOptions,
 ): Promise<BuiltCode> {
-  const codeResult = compileTasks(tasks, options);
+  const codeResult = getCompiledCode(tasks, options);
   return createDistFile(codeResult, options);
 }
 export function runTasks(tasks: Task[], options?: RunTasksOptions) {
   options = options ?? {};
-  const codeResult = compileTasks(tasks, options);
+  const codeResult = getCompiledCode(tasks, options);
   return runAsyncFunction(codeResult.runtimeFunctionBodyCode);
 }
 export function runAsyncFunction(runtimeCode: string) {
@@ -724,6 +745,7 @@ if (import.meta.main) {
   main();
 }`;
   return {
+    ...fileCode,
     moduleFileCode: compiledModuleCode,
     runtimeFunctionBodyCode,
     runtimeFileCode,
@@ -759,12 +781,12 @@ function concatLiteralCode(l1: LiteralCode, l2: LiteralCode): void {
   l1.mainFunctionBodyTop += strickLiteralCode2.mainFunctionBodyTop;
   l1.mainFunctionBody += strickLiteralCode2.mainFunctionBody;
 }
-function initFileCode(): FileCode {
+function getInitialFileCode(): FileCode {
   const importCode = "";
   // for runtime code to import modules
   const runtimeImportCode = "";
   const mainFunctionBody =
-    `  let ${contextConfig.lastTaskResultName} = null, ${contextConfig.rootName} = null, ${contextConfig.envName} = null;\n`;
+    `  let ${LAST_TASK_RESULT_NAME} = null, ${LOOP_ITEM_INDEX_NAME} = undefined;\n`;
   return {
     importCode,
     runtimeImportCode,

@@ -1,0 +1,7 @@
+- use: def
+  args:
+    list:
+      - Hello
+      - true
+    foo:
+      cat: 10

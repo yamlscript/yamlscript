@@ -93,7 +93,7 @@
     You have seen we use `if` before, actually, we can use any condition here,
     you should't add $, or \${} in if condition.
   if: Date.now() > 0
-  use: setGlobalVars
+  use: defg
   args:
     nowIsGreaterThanZero: true
 - name:

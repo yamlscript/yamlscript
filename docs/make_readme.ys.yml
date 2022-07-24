@@ -1,0 +1,45 @@
+- id: readmeTemplate
+  use: Deno.readTextFile
+  args: ./README.template.md
+- id: yamlMakeReadmeScript
+  use: Deno.readTextFile
+  args: ./docs/make_readme.ys.yml
+
+- id: simpleUsageFiles
+  use: Deno.readDir
+  args: ./docs/simple-usage
+
+- use: defn
+  id: mapFiles
+  args:
+    - id: sourceContent
+      use: Deno.readTextFile
+      args: ${args[0]}
+    - id: sourceTasks
+      use: fsExtra.readYAMLFile
+      args: ${args[0]}
+    - id: targetCode
+      use: YAMLScript.getCompiledCode
+      args:
+        - $sourceTasks
+    - use: getArgs
+      args:
+        source: $sourceContent
+        target: $targetCode.moduleFileCode
+
+- id: simpleUsageSources
+  loop: $simpleUsageFiles
+  use: mapFiles
+  args: ./docs/simple-usage/${item.name}
+
+- id: readmeContent
+  from: https://esm.sh/mustache@4.2.0
+  use: default.render
+  args:
+    - $readmeTemplate
+    - simpleUsageSources: $simpleUsageSources
+      yamlMakeReadmeScript: $yamlMakeReadmeScript
+- use: Deno.writeTextFile
+  args:
+    - README.md
+    - $readmeContent

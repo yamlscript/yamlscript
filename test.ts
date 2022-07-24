@@ -1,1 +1,5 @@
-import { assert } from "https://deno.land/std@0.148.0/testing/asserts.ts";
+const result = await Deno.readDir(`./docs/simple-usage`);
+
+for await (const entry of result.entries()) {
+  console.log(entry);
+}

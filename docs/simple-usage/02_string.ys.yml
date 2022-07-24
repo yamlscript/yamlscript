@@ -1,0 +1,11 @@
+# Print something
+# We use js template string ${expression} for string interpolation, you can use any valid js template expression here, even function. ${} can be escaped as \$s{}
+- use: console.log
+  args:
+    - ${list[0]} World
+    - ${foo.cat}
+    - ${JSON.stringify(foo)}
+
+#
+
+- use: console.log
