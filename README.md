@@ -51,7 +51,7 @@ Javascript code, which is located in the `dist` directory by default.
 
 
 
-# 1.
+### 1.
 
 ```yaml
 # `use` is the operator name of the a task.
@@ -94,7 +94,7 @@ result = await _.uniq(2,1,2);
 ```
 
 
-# 2.
+### 2.
 
 ```yaml
 # `args` can be array or other type
@@ -142,7 +142,7 @@ result = await fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
 ```
 
 
-# 3.
+### 3.
 
 ```yaml
 # We use colon plus cmd to run a command
@@ -186,7 +186,7 @@ result = await assertEquals(echo.stdout,`Hello World
 ```
 
 
-# 4.
+### 4.
 
 ```yaml
 - use: Math.max
@@ -240,7 +240,7 @@ result = await console.log(max);
 ```
 
 
-# 5.
+### 5.
 
 ```yaml
 # We use `def` to define a new variable
@@ -286,7 +286,7 @@ result = await console.log(`${obj.list[0]} World`,`${obj.foo.cat}`,`${JSON.strin
 ```
 
 
-# 6.
+### 6.
 
 ```yaml
 # We also support define a function by using `defn`
@@ -336,7 +336,7 @@ result = await assertEquals(result,`ABC`);
 ```
 
 
-# 7.
+### 7.
 
 ```yaml
 # We use `loop` to define a loop, it can be an literal array
@@ -405,7 +405,7 @@ index=0;
 ```
 
 
-# 8.
+### 8.
 
 ```yaml
 # We can use `if` to control structures
