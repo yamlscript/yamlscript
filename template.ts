@@ -300,18 +300,25 @@ export function convertValueToLiteral(
   if (isObject(value) || Array.isArray(value)) {
     // split with \n
     const json = JSON.stringify(value, null, 2);
-    return json.split("\n").map((line) => {
+    const allLines = json.split("\n");
+    return allLines.map((line, index) => {
       const trimLine = line.trim();
       const indent = line.indexOf(trimLine);
 
       // if the line if [,],{,}, if so, return the line
       if (["[", "]", "{", "}"].includes(trimLine)) {
         if (trimLine === "[") {
-          return `[\n`;
+          return `${line}\n`;
         }
 
         if (trimLine === "{") {
-          return `{\n`;
+          return `${line}\n`;
+        }
+        if (trimLine === "]" && index !== allLines.length - 1) {
+          return `${line}]\n`;
+        }
+        if (trimLine === "}" && index !== allLines.length - 1) {
+          return `${line}\n`;
         }
         return line;
       }

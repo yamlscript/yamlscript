@@ -137,10 +137,16 @@ Deno.test("convertValueToLiteral #12", () => {
     },
   });
   assertEquals(typeof result, "string");
-
   assertEquals(
     result,
-    '{"content":`Deno`,"name":`${name}222`,"os":`macos`,"obj": {"name":`testmacos22`}}',
+    `{
+  "content" : \`Deno\`,
+  "name" : \`\${name}222\`,
+  "os" : \`macos\`,
+  "obj": {
+    "name" : \`testmacos22\`
+  }
+}`,
   );
 });
 Deno.test("getConditionResult #13", () => {
@@ -213,10 +219,12 @@ Deno.test("convertValueToLiteral #17", () => {
     },
   });
   assertEquals(typeof result, "string");
-
   assertEquals(
     result,
-    "[`${typeof var2}`,`undefined`]",
+    `[
+  \`\${typeof var2}\`,
+  \`undefined\`
+]`,
   );
 });
 
@@ -230,7 +238,6 @@ Deno.test("escape Apostrophe #19", () => {
   const str =
     "As you see, we use `loop` to define a loop, it can be an literal array, like above, and you can access the item by using \\${item}, the index by using \\${index}, just like javascript template strings. You will use `use` to call a function, it can be any global function from deno. We also have some yamlscript built-in functions, for example, we have `rss.entries` function, which can help you to get the fedd entries. (you can see all built-in function here https://github.com/yamlscript/yamlscript/blob/main/globals/mod.ts )";
   const result = templateWithKnownKeys(str, {});
-  console.log("result", result);
   assertEquals(
     result,
     "`As you see, we use \\`loop\\` to define a loop, it can be an literal array, like above, and you can access the item by using \\${item}, the index by using \\${index}, just like javascript template strings. You will use \\`use\\` to call a function, it can be any global function from deno. We also have some yamlscript built-in functions, for example, we have \\`rss.entries\\` function, which can help you to get the fedd entries. (you can see all built-in function here https://github.com/yamlscript/yamlscript/blob/main/globals/mod.ts )`",
@@ -247,7 +254,7 @@ Deno.test("convertValueToLiteral #21", () => {
   const result = convertValueToLiteral({
     content: "$var",
   });
-  assertEquals(result, '{"content":var}');
+  assertEquals(result, '{\n  "content" : var\n}');
 });
 
 Deno.test("convert Va #22", () => {
@@ -271,9 +278,9 @@ spec:
 
 Deno.test("convert Va #23", () => {
   const result = convertValueToLiteral({ cat: 10 });
-  assertEquals('{"cat":10}', result);
+  assertEquals('{\n  "cat" : 10\n}', result);
 });
 Deno.test("convert Va #24", () => {
   const result = convertValueToLiteral(["Hello", true]);
-  assertEquals("[`Hello`,true]", result);
+  assertEquals("[\n  `Hello`,\n  true\n]", result);
 });

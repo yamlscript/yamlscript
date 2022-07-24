@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "test": "deno test --allow-read --allow-write --allow-run --allow-net",
+    "test": "deno test --allow-read --allow-write --allow-run --allow-env --allow-net",
     "test:compile": "deno test -A tasks.test.ts"
   },
   "fmt": {
