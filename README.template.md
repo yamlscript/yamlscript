@@ -71,7 +71,7 @@ This will be compiled to:
 
 {{#advancedSources}}
 
-### {{title}}.
+### {{title}}
 
 ```yaml
 {{{source}}}

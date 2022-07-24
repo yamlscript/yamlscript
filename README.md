@@ -450,7 +450,7 @@ result = await assertEquals(echo.stdout,`Hello World
 ## Advanced Usage
 
 
-### Return.
+### Return
 
 ```yaml
 # Use `return` to end the function
@@ -493,7 +493,7 @@ result = await myFunction();
 ```
 
 
-### Rss.
+### Rss
 
 ```yaml
 # fetch rss entries and notify some webhook
@@ -550,7 +550,7 @@ index=0;
 ```
 
 
-### Cache.
+### Cache
 
 ```yaml
 # what if we want to deduplicate the rss items?
@@ -660,7 +660,7 @@ result = await fsExtra.writeJSONFile(`./.yamlscript/cache/kv.json`,kv);
 ```
 
 
-### Define Global Variables.
+### Define Global Variables
 
 ```yaml
 # Sometimes we need to define a global var in child block
