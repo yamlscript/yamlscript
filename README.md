@@ -447,6 +447,261 @@ result = await console.log(`yes, it's true`);
 ```
 
 
+## Advanced Usage
+
+
+### 1.
+
+```yaml
+# Use `return` to end the function
+- use: defn
+  id: myFunction
+  args:
+    - use: console.log
+      args: foo
+    - use: return
+      if: true
+    - use: console.log
+      args: this will not be printed
+- use: myFunction
+
+```
+
+This will be compiled to:
+
+   
+```javascript
+
+// Task #0: myFunction
+async function myFunction(...args){
+
+  // Task #0
+  result = await console.log(`foo`);
+
+  // Task #1
+  return;
+
+  // Task #2
+  result = await console.log(`this will not be printed`);
+
+  return result;
+}
+
+// Task #1
+result = await myFunction();
+
+```
+
+
+### 2.
+
+```yaml
+# what if we want to deduplicate the rss items?
+- id: entries
+  use: rss.entries
+  args: https://actionsflow.github.io/test-page/hn-rss.xml
+
+- name: get cache
+  id: kv
+  use: fsExtra.readJSONFileWithDefaultValue
+  args:
+    - ./.yamlscript/cache/kv.json
+    - ${}
+- use: defn
+  id: handleRssEntry
+  args:
+    - use: return
+      if: kv[args[0].links[0].href]
+    - name: notify
+      use: fetch
+      args:
+        - https://enyvb91j5zjv9.x.pipedream.net/
+        - method: POST
+          headers:
+            Content-Type: application/json
+          body: |
+            {
+              "title": "${args[0].title.value}",
+              "link":  "${args[0].links[0].href}"
+            }
+    - use: _.assign
+      args:
+        - $kv
+        - $[args[0].links[0].href]: true
+
+# You can visit https://requestbin.com/r/enyvb91j5zjv9/23eNPamD4DK4YK1rfEB1FAQOKIj
+# to check the http request.
+- loop: $entries
+  use: handleRssEntry
+  args: $item
+
+- name: set to cache
+  use: fsExtra.writeJSONFile
+  args:
+    - ./.yamlscript/cache/kv.json
+    - $kv
+
+```
+
+This will be compiled to:
+
+   
+```javascript
+import { rss } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
+import { fsExtra } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
+import { _ } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
+let result = null;
+let index = 0;
+
+// Task #0: entries
+result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
+const entries = result;
+
+// Task #1: get cache
+result = await fsExtra.readJSONFileWithDefaultValue(`./.yamlscript/cache/kv.json`,{});
+const kv = result;
+
+// Task #2: handleRssEntry
+async function handleRssEntry(...args){
+
+  // Task #0
+  if (kv[args[0].links[0].href]) {
+    return;
+  }
+
+  // Task #1  : notify
+  result = await fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
+    "method" : `POST`,
+    "headers": {
+      "Content-Type" : `application/json`
+    },
+    "body" : `{
+      "title": "${args[0].title.value}",
+      "link":  "${args[0].links[0].href}"
+    }
+    `
+  });
+
+  // Task #2
+  result = await _.assign(kv,{
+    [args[0].links[0].href] : true
+  });
+
+  return result;
+}
+
+// Task #3
+for await (const item of entries){
+  result = await handleRssEntry(item);
+  index++;
+}
+index=0;
+
+// Task #4: set to cache
+result = await fsExtra.writeJSONFile(`./.yamlscript/cache/kv.json`,kv);
+
+```
+
+
+### 3.
+
+```yaml
+# Sometimes we need to define a global var in child block
+# We can use defg to define a global variable.
+- use: Math.max
+  args:
+    - 1
+    - 9
+
+- if: result===9
+  use: defg
+  id: foo
+  args: bar
+
+- use: assertEquals
+  args:
+    - $foo
+    - bar
+
+```
+
+This will be compiled to:
+
+   
+```javascript
+import { assertEquals } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
+let result = null;
+let foo = null;
+
+// Task #0
+result = await Math.max(1,9);
+
+// Task #1: foo
+if (result===9) {
+  foo = `bar`;
+}
+
+// Task #2
+result = await assertEquals(foo,`bar`);
+
+```
+
+
+### 4.
+
+```yaml
+# fetch rss entries and notify some webhook
+- id: entries
+  use: rss.entries
+  args: https://actionsflow.github.io/test-page/hn-rss.xml
+
+# You can visit https://requestbin.com/r/enyvb91j5zjv9/23eNPamD4DK4YK1rfEB1FAQOKIj
+# to check the http request.
+- loop: $entries
+  use: fetch
+  args:
+    - https://enyvb91j5zjv9.x.pipedream.net/
+    - method: POST
+      headers:
+        Content-Type: application/json
+      body: |
+        {
+          "title": "${item.title.value}",
+          "link":  "${item.links[0].href}"
+        }
+
+```
+
+This will be compiled to:
+
+   
+```javascript
+import { rss } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
+let result = null;
+let index = 0;
+
+// Task #0: entries
+result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
+const entries = result;
+
+// Task #1
+for await (const item of entries){
+  result = await fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
+    "method" : `POST`,
+    "headers": {
+      "Content-Type" : `application/json`
+    },
+    "body" : `{
+      "title": "${item.title.value}",
+      "link":  "${item.links[0].href}"
+    }
+    `
+  });
+  index++;
+}
+index=0;
+
+```
 
 
 ## Install

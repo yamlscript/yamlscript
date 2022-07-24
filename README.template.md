@@ -67,7 +67,24 @@ This will be compiled to:
 
 {{/simpleUsageSources}}
 
+## Advanced Usage
 
+{{#advancedSources}}
+
+### {{order}}.
+
+```yaml
+{{{source}}}
+```
+
+This will be compiled to:
+
+   
+```javascript
+{{{target}}}
+```
+
+{{/advancedSources}}
 
 ## Install
 
