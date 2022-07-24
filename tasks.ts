@@ -422,6 +422,8 @@ function transformLoop(
 
       literalCode.mainFunctionBodyCode += `}\n`;
     }
+    // index reset to 0
+    literalCode.mainFunctionBodyCode += `${LOOP_ITEM_INDEX_NAME} = 0;\n`;
   } else {
     throw new Error("invalid loop params");
   }
