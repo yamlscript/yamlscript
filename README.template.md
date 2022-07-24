@@ -52,6 +52,8 @@ Javascript code, which is located in the `dist` directory by default.
 
 {{#simpleUsageSources}}
 
+# {{order}}.
+
 ```yaml
 {{{source}}}
 ```

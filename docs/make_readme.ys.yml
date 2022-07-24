@@ -24,6 +24,7 @@
         - $sourceTasks
     - use: return
       args:
+        order: ${args[1]+1}
         source: $sourceContent
         target: ${targetCode.topLevelCode}${targetCode.mainFunctionBodyTopLevelCode}${targetCode.mainFunctionBodyCode}
 
@@ -34,8 +35,9 @@
 - id: simpleUsageSources
   loop: $simpleUsageFiles
   use: mapFiles
-  args: ./docs/simple-usage/${item.name}
-
+  args:
+    - ./docs/simple-usage/${item.name}
+    - $index
 # get advanced usage sources and targets
 - id: advancedFiles
   use: Deno.readDir
@@ -43,8 +45,9 @@
 - id: advancedSources
   loop: $advancedFiles
   use: mapFiles
-  args: ./docs/advanced/${item.name}
-
+  args:
+    - ./docs/advanced/${item.name}
+    - $index
 # use mustache to render readme.template.md
 - id: readmeContent
   from: https://esm.sh/mustache@4.2.0
