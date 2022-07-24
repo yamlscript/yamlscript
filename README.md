@@ -432,7 +432,6 @@ This will be compiled to:
    
 ```javascript
 import { __yamlscript_create_process } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/runtimes/cmd/mod.ts";
-const __yamlscript_default_use_0 = echo Hello World;
 import { assertEquals } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
 let result = null;
 

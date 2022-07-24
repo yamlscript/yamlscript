@@ -203,7 +203,6 @@ function transformMeta(
     command = getCommand(use);
     useType = UseType.Command;
     use = newUse;
-    topLevelCode += `const ${newUse} = ${command};\n`;
   } else if (isVariable(use)) {
     // if it's variable, then it's a runtime function, just use it
     // but we don't know if it's a async or not, we can assume it's async, // TODO  or maybe we can add a sync option to specify it's sync
