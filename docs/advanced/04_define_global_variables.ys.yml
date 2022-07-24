@@ -1,5 +1,5 @@
 # Sometimes we need to define a global var in child block
-# We can use defg to define a global variable.
+# We can use `defg` to define a global variable.
 - use: Math.max
   args:
     - 1
