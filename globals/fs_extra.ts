@@ -39,3 +39,12 @@ export async function writeYAMLFile(
   await ensureFile(path);
   await writeTextFile(path, content);
 }
+
+// write text file ensure path
+export async function ensureAndWriteTextFile(
+  path: string,
+  data: string,
+): Promise<void> {
+  await ensureFile(path);
+  await writeTextFile(path, data);
+}

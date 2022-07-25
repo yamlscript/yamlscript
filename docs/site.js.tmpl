@@ -1,0 +1,4 @@
+import { serve } from "https://deno.land/std@0.149.0/http/server.ts";
+serve((_req) => {
+  return new Response(`{{{content}}}`, {headers:{{{headers}}}});
+});

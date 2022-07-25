@@ -1,0 +1,50 @@
+- id: siteMeta
+  use: fsExtra.readJSONFile
+  args: ./pkg.json
+- id: markdownHTML
+  use: def
+  args: "<p>Hello World</p>"
+
+# get readme.tmpl.html content
+- id: indexTemplate
+  use: Deno.readTextFile
+  args: ./docs/index.tmpl.html
+
+# use mustache to render readme.template.md
+- id: indexHTML
+  from: https://esm.sh/mustache@4.2.0
+  use: default.render
+  args:
+    - $indexTemplate
+    - siteMeta: $siteMeta
+      markdownHTML: $markdownHTML
+
+# write to public/index.html
+- use: fsExtra.ensureAndWriteTextFile
+  args:
+    - public/index.html
+    - $indexHTML
+
+# get index.js.tmpl content
+- id: indexJsContent
+  use: Deno.readTextFile
+  args: ./docs/site.js.tmpl
+
+- use: def
+  id: headers
+  args:
+    Content-Type: text/html; charset=UTF-8
+# use mustache to render index.js.tmpl
+- id: denoDeployEntry
+  from: https://esm.sh/mustache@4.2.0
+  use: default.render
+  args:
+    - $indexJsContent
+    - headers: ${JSON.stringify(headers)}
+      content: $indexHTML
+
+# write it to dist
+- use: fsExtra.ensureAndWriteTextFile
+  args:
+    - dist/site.js
+    - $denoDeployEntry

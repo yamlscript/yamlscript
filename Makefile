@@ -71,3 +71,10 @@ devreadme:
 .Phony: deno-deploy-hello-world
 deno-deploy-hello-world:
 	deno run -A ys.ts build docs/advanced/05_deno_deploy.ys.yml
+
+
+.Phony: site
+site:
+	@echo "Generating site..."
+	deno run -A ys.ts run docs/make_site.ys.yml
+	@echo "Done."

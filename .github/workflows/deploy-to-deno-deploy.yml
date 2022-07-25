@@ -24,5 +24,5 @@ jobs:
       - name: Deploy to Deno Deploy
         uses: denoland/deployctl@v1
         with:
-          project: yamlscript # the name of the project on Deno Deploy
+          project: yamlscript-hello-world # the name of the project on Deno Deploy
           entrypoint: dist/docs/advanced/05_deno_deploy.js # the entrypoint to deploy

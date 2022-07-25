@@ -1,7 +1,7 @@
 # get readme.template.md content
 - id: readmeTemplate
   use: Deno.readTextFile
-  args: ./README.template.md
+  args: ./docs/README.tmpl.md
 
 # get yaml content
 - id: yamlMakeReadmeScript
