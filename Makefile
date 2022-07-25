@@ -66,3 +66,8 @@ devreadme:
 	@echo "Generating README.md..."
 	YAMLSCRIPT_DEV=1 deno run -A ys.ts build docs/make_readme.ys.yml
 	@echo "Done."
+
+
+.Phony: deno-deploy-hello-world
+deno-deploy-hello-world:
+	deno run -A ys.ts build docs/advanced/05_deno_deploy.ys.yml

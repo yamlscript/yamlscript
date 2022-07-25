@@ -20,7 +20,7 @@ jobs:
       - name: Test Deno Module
         run: make test
       - name: Build
-        run: deno run -A ys.ts build serve.ys.yml
+        run: make deno-deploy-hello-world
       - name: Deploy to Deno Deploy
         uses: denoland/deployctl@v1
         with:

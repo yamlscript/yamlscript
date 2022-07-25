@@ -765,7 +765,7 @@ result = await assertEquals(foo,`bar`);
 ```
 
 
-### Deno Dep
+### Deno Deploy
 
 ```yaml
 - from: https://deno.land/std@0.149.0/http/server.ts
