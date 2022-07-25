@@ -48,6 +48,7 @@ import {
   DEV_FLAG,
   GLOBAL_PACKAGE_URL,
   GLOBAL_RUNTIME_CMD_PACKAGE_URL,
+  IMPORT_TOKEN,
   LAST_TASK_RESULT_NAME,
   LOOP_ITEM_INDEX_NAME,
   LOOP_ITEM_NAME,
@@ -57,6 +58,7 @@ import {
 } from "./constant.ts";
 import log from "./log.ts";
 import { dirname, fromFileUrl, green, relative, resolve } from "./deps.ts";
+import isElement from "https://deno.land/x/lodash@4.17.15-es/isElement.js";
 export function getCompiledCode(
   tasks: Task[],
   originalOptions: TasksContext,
@@ -68,10 +70,12 @@ export function getCompiledCode(
   const mainIndent = options.indent;
   // one by one
   const tasksMetaResults: MetaResult[] = [];
+  const parentId = options.parentId;
   for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
     const originalTask = tasks[taskIndex];
+    const taskId = `${parentId ? parentId + "_" : ""}${taskIndex}`;
     const task = getDefaultTaskOptions(originalTask, {
-      taskIndex,
+      taskId,
     });
     const { loop: rawLoop, if: rawIf, name: rawName, id: rawId } = task;
     // transfor name
@@ -99,6 +103,7 @@ export function getCompiledCode(
     task.from = metaResult.from as string;
     task.useType = metaResult.useType;
     task.command = metaResult.command;
+    task.isInstance = metaResult.isInstance;
     // transform main function body
     // add empty line for pretty
     fileCode.mainFunctionBodyCode += "\n";
@@ -115,7 +120,7 @@ export function getCompiledCode(
       mainIndent,
     );
     fileCode.mainFunctionBodyCode += withIndent(
-      `// Task #${task.taskIndex}${commentSuffix}\n`,
+      `// Task #${task.taskId}${commentSuffix}\n`,
       mainIndent,
     );
 
@@ -159,17 +164,24 @@ function transformMeta(
   task: StrictTask,
   options: StrictTasksContext,
 ): MetaResult {
-  const { from: rawFrom, use: rawUse, id: rawId } = task;
+  const { from: rawFrom, use: rawUse, id: rawId, args } = task;
   const varsMap = options.varsMap;
 
   let topLevelCode = "";
   let runtimetopLevelCode = "";
-  let use = templateCompiledString(rawUse, options.public);
+  let use = "";
   let useType = UseType.Default;
+
+  if (rawUse !== false) {
+    use = templateCompiledString(rawUse as string, options.public);
+  } else {
+    useType = UseType.None;
+  }
   let command: string | undefined;
   let from: string | undefined;
   let debugLog = "";
   let id: string | undefined;
+  let isInstance = false;
   if (rawId) {
     const idString = templateCompiledString(rawId, options.public);
     id = idString;
@@ -199,7 +211,7 @@ function transformMeta(
       );
     }
 
-    const newUse = DEFAULT_USE_NAME + "_" + task.taskIndex;
+    const newUse = DEFAULT_USE_NAME + "_" + task.taskId;
     command = getCommand(use);
     useType = UseType.Command;
     use = newUse;
@@ -209,47 +221,98 @@ function transformMeta(
     // TODO consider better check
     useType = UseType.AsyncRuntimeFunction;
   } else {
+    // check if is a instance
+    if (use.startsWith("new ")) {
+      // then it's a instance
+      isInstance = true;
+      use = use.substring(4);
+    }
     // add compile code
     if (rawFrom) {
       const fromString = templateCompiledString(rawFrom, options.public);
       from = fromString;
-      let importPath = "";
-      let runtimeImportPath = "";
-      let importVar = "";
-      if (!use || use === "default" || use.startsWith("default.")) {
+      const importPaths = [];
+      const runtimeImportPaths = [];
+      const importVars = [];
+      if (
+        use === IMPORT_TOKEN || rawUse === undefined || use === "default" ||
+        use.startsWith("default.")
+      ) {
+        console.log("use", use);
         // default
         // use if empty, we will give it a default random name
         if (use.startsWith("default.")) {
-          importVar = DEFAULT_USE_NAME + "_" + task.taskIndex;
-          use = importVar +
+          importVars.push(DEFAULT_USE_NAME + "_" + task.taskId);
+          use = importVars[0] +
             use.slice("default".length);
+          useType = UseType.AsyncThirdPartyFunction;
+          importPaths.push(`{ default as ${importVars[0]} }`);
+          runtimeImportPaths.push(`{ default: ${importVars[0]} }`);
+        } else if (use === IMPORT_TOKEN && args.length === 0) {
+          importVars.push(DEFAULT_USE_NAME + "_" + task.taskId);
+          importPaths.push(`{ default as ${importVars[0]} }`);
+          runtimeImportPaths.push(`{ default: ${importVars[0]} }`);
+          useType = UseType.None;
+        } else if (use === IMPORT_TOKEN && args.length > 0) {
+          // loop
+          useType = UseType.None;
+
+          for (const arg of args) {
+            if (typeof arg !== "string") {
+              throw new Error(
+                `import args must be string, ${arg} is not a string`,
+              );
+            }
+            const argString = templateCompiledString(
+              arg as string,
+              options.public,
+            );
+            importVars.push(argString);
+            importPaths.push(`{ ${argString} }`);
+            runtimeImportPaths.push(`{ ${argString} }`);
+          }
         } else {
-          use = DEFAULT_USE_NAME + "_" + task.taskIndex;
-          importVar = use;
+          useType = UseType.AsyncThirdPartyFunction;
+
+          use = DEFAULT_USE_NAME + "_" + task.taskId;
+          importVars.push(use);
+          importPaths.push(`{ default as ${importVars[0]} }`);
+          runtimeImportPaths.push(`{ default: ${importVars[0]} }`);
         }
-        importPath = `{ default as ${importVar} }`;
-        runtimeImportPath = `{ default: ${importVar} }`;
       } else {
         const importPathValue = getImportPathValue(use);
-        importPath = importPathValue[0];
-        importVar = importPathValue[1];
-        runtimeImportPath = importPath;
+        importPaths.push(importPathValue[0]);
+        importVars.push(importPathValue[1]);
+        runtimeImportPaths.push(importPaths[0]);
+        useType = UseType.AsyncThirdPartyFunction;
       }
       // check if import already
-      if (!varsMap[importVar]) {
-        topLevelCode += `import ${importPath} from "${from}";\n`;
-        runtimetopLevelCode +=
-          `const ${runtimeImportPath} = await import("${from}");\n`;
+      for (let i = 0; i < importVars.length; i++) {
+        const importVar = importVars[i];
+        if (!varsMap[importVar]) {
+          topLevelCode += `import ${
+            importPaths[i] ? importPaths[i] + " from " : ""
+          }"${from}";\n`;
+          runtimetopLevelCode += `${
+            runtimeImportPaths[i]
+              ? "const " + runtimeImportPaths[i] + " = "
+              : ""
+          }await import("${from}");\n`;
 
-        // get import var type
-        // TODO, cause import is an async operation, we should consider if we should check it. now we just treat it as async operation
-
-        setVarsMap(options.varsMap, importVar, UseType.AsyncThirdPartyFunction);
-        // TODO: check function type
-        // async or other
-        debugLog += `use ${green(importPath)} from {${from}}`;
+          // get import var type
+          // TODO, cause import is an async operation, we should consider if we should check it. now we just treat it as async operation
+          if (importVar) {
+            setVarsMap(
+              options.varsMap,
+              importVar,
+              useType,
+            );
+          }
+          // TODO: check function type
+          // async or other
+          debugLog += `use ${green(importPaths.join(","))} from {${from}}`;
+        }
       }
-      useType = UseType.AsyncThirdPartyFunction;
     } else if (use && get(globals, use)) {
       //
       // deno-lint-ignore ban-types
@@ -340,6 +403,7 @@ function transformMeta(
     useType,
     command,
     debugLog,
+    isInstance,
   };
 }
 function transformIf(
@@ -445,14 +509,16 @@ function transformUseCall(
   const varsMap = options.varsMap;
 
   // check if it's def
-  if (
+  if (useType === UseType.None) {
+    // ignore;
+  } else if (
     useType === UseType.DefineVariable
   ) {
     // if it's def
     if (!id) {
       // id is required
       throw new Error(
-        `Task #${task.taskIndex}: id is required for def operation`,
+        `Task #${task.taskId}: id is required for def operation`,
       );
     }
     if (args && args.length === 1) {
@@ -474,7 +540,7 @@ function transformUseCall(
       }
     } else {
       throw new Error(
-        `invalid def args at task ${task.taskIndex}, def args can only take one param`,
+        `invalid def args at task ${task.taskId}, def args can only take one param`,
       );
     }
   } else if (useType === UseType.DefineGlobalVariable) {
@@ -512,15 +578,20 @@ function transformUseCall(
     // check required id
     if (!id) {
       throw new Error(
-        `Task #${task.taskIndex} defn operation must have an id, and id will be the function's name`,
+        `Task #${task.taskId} defn operation must have an id, and id will be the function's name`,
       );
     } else {
       mainFunctionBodyCode += `async function ${id}(...args){\n`;
 
       // insert function body
       // check args
-      options.indent = options.indent + 2;
+      const originalIndent = options.indent;
+      options.indent = originalIndent + 2;
+      const originalTaskId = task.taskId;
+      options.parentId = originalTaskId;
       const functionResult = getCompiledCode(args as Task[], options);
+      options.parentId = originalTaskId;
+      options.indent = originalIndent;
       // merge result
       mainFunctionBodyCode += functionResult.mainFunctionBodyCode;
       topLevelCode += functionResult.topLevelCode;
@@ -547,7 +618,7 @@ function transformUseCall(
       mainFunctionBodyCode += `return;\n`;
     } else {
       throw new Error(
-        `Task #${task.taskIndex} return operator takes at most one argument, but got ${args.length}`,
+        `Task #${task.taskId} return operator takes at most one argument, but got ${args.length}`,
       );
     }
   } else {
@@ -577,8 +648,9 @@ ${LAST_TASK_RESULT_NAME} = await ${task.use}\`${command}\`;\n`;
         arg,
       ) => (convertValueToLiteral(arg, options.public)))
         .join(",");
-      mainFunctionBodyCode +=
-        `${LAST_TASK_RESULT_NAME} = await ${use}(${argsFlatten});\n`;
+      mainFunctionBodyCode += `${LAST_TASK_RESULT_NAME} = await ${
+        task.isInstance ? "new " : ""
+      }${use}(${argsFlatten});\n`;
       mainFunctionBodyCode += assignId(task, options);
     }
   }
@@ -697,14 +769,19 @@ function getDefaultTaskOptions(
   return {
     ...task,
     args: argsArray,
-    taskIndex: options.taskIndex,
+    taskId: options.taskId,
     useType: UseType.Default,
     throw: task.throw ?? true,
     name: task.name ?? "",
+    isInstance: false,
   };
 }
 
 function getImportPathValue(use: string): string[] {
+  if (use === "") {
+    return ["", ""];
+  }
+
   let importPath = `{ ${use} }`;
 
   let importVar = use;

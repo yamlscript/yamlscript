@@ -4,5 +4,5 @@
 - use: defn
   id: handler
   args:
-    - use: return
-      args: $new Response("Hello World")
+    - use: new Response
+      args: Hello World

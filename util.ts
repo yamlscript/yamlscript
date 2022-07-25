@@ -132,3 +132,22 @@ export function withIndent(code: string, indent: number): string {
     "\n",
   );
 }
+
+export async function getPublicContext(): Promise<PublicContext> {
+  // try get env
+  const isHasEnvPermission = await hasPermissionSlient({
+    name: "env",
+  });
+  let env = {};
+  if (isHasEnvPermission) {
+    env = Deno.env.toObject();
+  }
+  const buildContext: BuildContext = {
+    env: env,
+    os: {},
+  };
+  const publicContext: PublicContext = {
+    build: buildContext,
+  };
+  return publicContext;
+}

@@ -34,3 +34,4 @@ export const DEFINE_VARIABLE_TOKEN = "def";
 export const DEFINE_GLOBAL_VARIABLE_TOKEN = "defg";
 export const DEFINE_FUNCTION_TOKEN = "defn";
 export const RETURN_TOKEN = "return";
+export const IMPORT_TOKEN = "import";

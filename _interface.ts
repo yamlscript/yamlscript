@@ -47,6 +47,7 @@ export interface MetaResult extends LiteralCode {
   from?: string;
   useType: UseType;
   command?: string;
+  isInstance: boolean;
 }
 
 export interface StrictLiteralCode extends LiteralCode {
@@ -90,12 +91,13 @@ export interface StrictTask extends Task {
   args: unknown[];
   useType: UseType;
   command?: string;
-  taskIndex: number;
+  taskId: string;
   throw: boolean;
   name: string;
+  isInstance: boolean;
 }
 export interface GetDefaultTaskOptionsOptions {
-  taskIndex: number;
+  taskId: string;
 }
 export interface StrictEntryOptions extends EntryOptions {
   files: string[];

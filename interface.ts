@@ -2,7 +2,7 @@ export interface Task {
   id?: string;
   name?: string;
   from?: string;
-  use?: string;
+  use?: string | boolean;
   args?: unknown | unknown[];
   loop?: string | number | unknown[];
   if?: boolean | string;
@@ -44,6 +44,7 @@ export enum UseType {
   Command,
   Return,
   Default,
+  None,
 }
 export enum ParentType {
   Root,
@@ -57,6 +58,7 @@ export interface TasksContext {
   relativePath?: string;
   dist?: string;
   parentType?: ParentType;
+  parentId?: string;
   isInitIndexVariable?: boolean;
   isInitLastTaskResultVariable?: boolean;
 }

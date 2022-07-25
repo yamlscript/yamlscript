@@ -1,0 +1,18 @@
+- from: https://deno.land/std@0.149.0/http/server.ts
+  use: serve
+  args: $handler
+- use: defn
+  id: handler
+  args:
+    - id: indexContent
+      use: Deno.readFile
+      args: ./public/index.html
+    - use: def
+      id: options
+      args:
+        headers:
+          Content-Type: text/html; charset=UTF-8
+    - use: new Response
+      args:
+        - $indexContent
+        - $options

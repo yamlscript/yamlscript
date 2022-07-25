@@ -1,9 +1,58 @@
+# build readme first
+
+- use: :make readme
+
 - id: siteMeta
   use: fsExtra.readJSONFile
   args: ./pkg.json
+
+- id: readmeContent
+  use: Deno.readTextFile
+  args: ./README.md
+
+- use: import
+  from: https://esm.sh/prismjs@1.27.0
+  args: default as Prism
+# - use: defn
+#   id: highlightHandler
+#   args:
+#     - from: https://jspm.dev/highlight.js@11.0.1
+#       use: default.getLanguage
+#       args: $args[1]
+#     - if: args[1] && result
+#       from: https://jspm.dev/highlight.js@11.0.1
+#       use: default.highlight
+#       args:
+#         - $args[0]
+#         - language: $args[1]
+#       throw: false
+#     - use: return
+#       args: $result.value.value || ""
+
+# - id: MarkdownIt
+#   from: https://jspm.dev/markdown-it@13.0.1
+#   args:
+#     highlight: $highlightHandler
+
+# - id: markdownHTML
+#   use: MarkdownIt.render
+#   args: $readmeContent
+
+- from: https://esm.sh/prismjs@1.27.0/components/prism-typescript?no-check
+  use: false
+- from: https://esm.sh/prismjs@1.27.0/components/prism-yaml?no-check
+  use: false
+
 - id: markdownHTML
-  use: def
-  args: "<p>Hello World</p>"
+  from: "https://deno.land/x/gfm/mod.ts"
+  use: render
+  args:
+    - $readmeContent
+
+- id: CSS2
+  from: "https://deno.land/x/gfm/mod.ts"
+  use: import
+  args: CSS
 
 # get readme.tmpl.html content
 - id: indexTemplate
@@ -17,6 +66,7 @@
   args:
     - $indexTemplate
     - siteMeta: $siteMeta
+      CSS: $CSS
       markdownHTML: $markdownHTML
 
 # write to public/index.html
@@ -25,26 +75,9 @@
     - public/index.html
     - $indexHTML
 
-# get index.js.tmpl content
-- id: indexJsContent
-  use: Deno.readTextFile
-  args: ./docs/site.js.tmpl
+# build den deploy code
 
-- use: def
-  id: headers
-  args:
-    Content-Type: text/html; charset=UTF-8
-# use mustache to render index.js.tmpl
-- id: denoDeployEntry
-  from: https://esm.sh/mustache@4.2.0
-  use: default.render
-  args:
-    - $indexJsContent
-    - headers: ${JSON.stringify(headers)}
-      content: $indexHTML
+- use: :deno run -A ys.ts build ./docs/site.ys.yml
 
-# write it to dist
-- use: fsExtra.ensureAndWriteTextFile
-  args:
-    - dist/site.js
-    - $denoDeployEntry
+- if: build.env.YAMLSCRIPT_DEV == "1"
+  use: :deno run --allow-read --allow-net ./dist/docs/site.js

@@ -1,0 +1,8 @@
+# How to create class instance?
+# just use new functioname
+- use: new Date
+  args: 2022-07-25
+- use: assertEquals
+  args:
+    - "1658707200000"
+    - ${result.getTime()}

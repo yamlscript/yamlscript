@@ -104,3 +104,17 @@ Deno.test("getCompiledCode tasks #6", async () => {
   // );
   // assertEquals(result.moduleFileCode, expected);
 });
+Deno.test("getCompiledCode tasks #7", async () => {
+  const result = await buildTasks([
+    {
+      use: "new Date",
+    },
+  ], {
+    dist: cacheDist,
+    relativePath: "./tast7.yml",
+  });
+  const expected = await Deno.readTextFile(
+    "./examples/__fixtures__/tast7.js",
+  );
+  assertEquals(result.moduleFileCode, expected);
+});

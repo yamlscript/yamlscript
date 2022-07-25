@@ -4,6 +4,7 @@ import log from "./log.ts";
 import { BuildContext, EntryOptions, PublicContext } from "./interface.ts";
 import { LevelName } from "./_interface.ts";
 import pkg from "./pkg.json" assert { type: "json" };
+import { getPublicContext } from "./util.ts";
 const setLogLevel = (options: Record<string, LevelName>) => {
   let logLevel: LevelName = "info";
   if (options.verbose) {
@@ -14,13 +15,6 @@ const setLogLevel = (options: Record<string, LevelName>) => {
   log.setLevel(logLevel);
 };
 if (import.meta.main) {
-  const buildContext: BuildContext = {
-    env: {},
-    os: {},
-  };
-  const publicContext: PublicContext = {
-    build: buildContext,
-  };
   const runCommand = new Command()
     .description("run files")
     .arguments("[file:string]")
@@ -31,7 +25,7 @@ if (import.meta.main) {
       if (args && args.length > 0) {
         const runOptions: EntryOptions = {
           files: args as string[],
-          public: publicContext,
+          public: await getPublicContext(),
           isBuild: false,
         };
         await run(runOptions);
@@ -54,7 +48,7 @@ if (import.meta.main) {
           files: args as string[],
           isBuild: true,
           shouldBuildRuntime: options.runtime,
-          public: publicContext,
+          public: await getPublicContext(),
           dist,
         };
         await run(runOptions);

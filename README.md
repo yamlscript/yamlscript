@@ -46,9 +46,7 @@ Javascript code, which is located in the `dist` directory by default.
 
 > This project is still in development, most things are already working.
 
-
 ## Simple Usage
-
 
 
 ### Basic
@@ -77,23 +75,14 @@ Javascript code, which is located in the `dist` directory by default.
 
 This will be compiled to:
 
-   
 ```javascript
-let result = null;
-
-// Task #0: obj
-let obj = {
-  "list": [
-    `Hello - true`
-  ],
-  "foo": {
-    "cat" : 10
+{
+  {
+    {
+      target;
+    }
   }
-};
-
-// Task #1
-result = await console.log(`${obj.list[0]} World`,`${obj.foo.cat}`,`${JSON.stringify(obj.foo)}`);
-
+}
 ```
 
 
@@ -122,21 +111,14 @@ result = await console.log(`${obj.list[0]} World`,`${obj.foo.cat}`,`${JSON.strin
 
 This will be compiled to:
 
-   
 ```javascript
-import { rss } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
-import { _ } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
-let result = null;
-
-// Task #0
-result = await fetch(`https://jsonplaceholder.typicode.com/todos/1`);
-
-// Task #1
-result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
-
-// Task #2
-result = await _.uniq(2,1,2);
-
+{
+  {
+    {
+      target;
+    }
+  }
+}
 ```
 
 
@@ -165,26 +147,14 @@ result = await _.uniq(2,1,2);
 
 This will be compiled to:
 
-   
 ```javascript
-import { rss } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
-let result = null;
-
-// Task #0
-result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
-
-// Task #1
-result = await fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
-  "method" : `POST`,
-  "headers": {
-    "Content-Type" : `application/json`
-  },
-  "body" : `{
-    "title": "Hello world"
+{
+  {
+    {
+      target;
+    }
   }
-  `
-});
-
+}
 ```
 
 
@@ -219,26 +189,14 @@ result = await fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
 
 This will be compiled to:
 
-   
 ```javascript
-let result = null;
-
-// Task #0
-result = await Math.max(1,9,5);
-
-// Task #1
-result = await console.log(`${result}`);
-
-// Task #2
-result = await console.log(result);
-
-// Task #3: max
-result = await Math.max(1,9,5);
-const max = result;
-
-// Task #4
-result = await console.log(max);
-
+{
+  {
+    {
+      target;
+    }
+  }
+}
 ```
 
 
@@ -266,21 +224,14 @@ result = await console.log(max);
 
 This will be compiled to:
 
-   
 ```javascript
-let result = null;
-
-// Task #0: num
-let num = 5;
-
-// Task #1
-if (num > 4) {
-  result = await console.log(`yes, the args is greater than 4`);
+{
+  {
+    {
+      target;
+    }
+  }
 }
-
-// Task #2
-result = await console.log(`yes, it's true`);
-
 ```
 
 
@@ -317,40 +268,14 @@ result = await console.log(`yes, it's true`);
 
 This will be compiled to:
 
-   
 ```javascript
-import { _ } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
-let index = 0;
-let result = null;
-
-// Task #0
 {
-  const item = `foo`;
-  index = 0;
-  result = await console.log(`${index}. ${item}`);
+  {
+    {
+      target;
+    }
+  }
 }
-{
-  const item = `bar`;
-  index = 1;
-  result = await console.log(`${index}. ${item}`);
-}
-index = 0;
-
-// Task #1: sources
-let sources = [
-  1,
-  2
-];
-
-// Task #2: loopResults
-let loopResults = [];
-for await (const item of sources){
-  result = await _.multiply(item,2);
-  loopResults.push(result);
-  index++;
-}
-index=0;
-
 ```
 
 
@@ -381,26 +306,14 @@ index=0;
 
 This will be compiled to:
 
-   
 ```javascript
-import { _ } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
-import { assertEquals } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
-
-// Task #0: myFunction
-async function myFunction(...args){
-
-  // Task #0
-  result = await _.upperCase(args[0]);
-
-  return result;
+{
+  {
+    {
+      target;
+    }
+  }
 }
-
-// Task #1
-result = await myFunction(`abc`);
-
-// Task #2
-result = await assertEquals(result,`ABC`);
-
 ```
 
 
@@ -429,21 +342,14 @@ result = await assertEquals(result,`ABC`);
 
 This will be compiled to:
 
-   
 ```javascript
-import { __yamlscript_create_process } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/runtimes/cmd/mod.ts";
-import { assertEquals } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
-let result = null;
-
-// Task #0: echo
-const __yamlscript_default_use_0 =  __yamlscript_create_process();
-result = await __yamlscript_default_use_0`echo Hello World`;
-const echo = result;
-
-// Task #1
-result = await assertEquals(echo.stdout,`Hello World
-`);
-
+{
+  {
+    {
+      target;
+    }
+  }
+}
 ```
 
 
@@ -479,35 +385,41 @@ result = await assertEquals(echo.stdout,`Hello World
 
 This will be compiled to:
 
-   
 ```javascript
-import { assertEquals } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
-let result = null;
-
-// Task #0: errorExample
-let errorExample;
-try {
-  result = await JSON.parse(`foo?bar`);
-  errorExample = result;
-  result = {
-    value: result,
-    done: true
-  };
-  errorExample = result;
-} catch (error) {
-  result = {
-    value: error,
-    done: false
-  };
-  errorExample = result;
+{
+  {
+    {
+      target;
+    }
+  }
 }
+```
 
-// Task #1
-result = await assertEquals(errorExample.done,false);
 
-// Task #2
-result = await assertEquals(errorExample.value.message,`Unexpected token 'o', "foo?bar" is not valid JSON`);
+### 2 New Instance
 
+```yaml
+# How to create class instance?
+# just use new functioname
+- use: new Date
+  args: 2022-07-25
+- use: assertEquals
+  args:
+    - "1658707200000"
+    - ${result.getTime()}
+
+```
+
+This will be compiled to:
+
+```javascript
+{
+  {
+    {
+      target;
+    }
+  }
+}
 ```
 
 
@@ -530,27 +442,14 @@ result = await assertEquals(errorExample.value.message,`Unexpected token 'o', "f
 
 This will be compiled to:
 
-   
 ```javascript
-
-// Task #0: myFunction
-async function myFunction(...args){
-
-  // Task #0
-  result = await console.log(`foo`);
-
-  // Task #1
-  return;
-
-  // Task #2
-  result = await console.log(`this will not be printed`);
-
-  return result;
+{
+  {
+    {
+      target;
+    }
+  }
 }
-
-// Task #1
-result = await myFunction();
-
 ```
 
 
@@ -581,33 +480,14 @@ result = await myFunction();
 
 This will be compiled to:
 
-   
 ```javascript
-import { rss } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
-let result = null;
-let index = 0;
-
-// Task #0: entries
-result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
-const entries = result;
-
-// Task #1
-for await (const item of entries){
-  result = await fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
-    "method" : `POST`,
-    "headers": {
-      "Content-Type" : `application/json`
-    },
-    "body" : `{
-      "title": "${item.title.value}",
-      "link":  "${item.links[0].href}"
+{
+  {
+    {
+      target;
     }
-    `
-  });
-  index++;
+  }
 }
-index=0;
-
 ```
 
 
@@ -663,61 +543,14 @@ index=0;
 
 This will be compiled to:
 
-   
 ```javascript
-import { rss } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
-import { fsExtra } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
-import { _ } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
-let result = null;
-let index = 0;
-
-// Task #0: entries
-result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
-const entries = result;
-
-// Task #1: get cache
-result = await fsExtra.readJSONFileWithDefaultValue(`./.yamlscript/cache/kv.json`,{});
-const kv = result;
-
-// Task #2: handleRssEntry
-async function handleRssEntry(...args){
-
-  // Task #0
-  if (kv[args[0].links[0].href]) {
-    return;
-  }
-
-  // Task #1  : notify
-  result = await fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
-    "method" : `POST`,
-    "headers": {
-      "Content-Type" : `application/json`
-    },
-    "body" : `{
-      "title": "${args[0].title.value}",
-      "link":  "${args[0].links[0].href}"
+{
+  {
+    {
+      target;
     }
-    `
-  });
-
-  // Task #2
-  result = await _.assign(kv,{
-    [args[0].links[0].href] : true
-  });
-
-  return result;
+  }
 }
-
-// Task #3
-for await (const item of entries){
-  result = await handleRssEntry(item);
-  index++;
-}
-index=0;
-
-// Task #4: set to cache
-result = await fsExtra.writeJSONFile(`./.yamlscript/cache/kv.json`,kv);
-
 ```
 
 
@@ -745,23 +578,14 @@ result = await fsExtra.writeJSONFile(`./.yamlscript/cache/kv.json`,kv);
 
 This will be compiled to:
 
-   
 ```javascript
-import { assertEquals } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
-let result = null;
-let foo = null;
-
-// Task #0
-result = await Math.max(1,9);
-
-// Task #1: foo
-if (result===9) {
-  foo = `bar`;
+{
+  {
+    {
+      target;
+    }
+  }
 }
-
-// Task #2
-result = await assertEquals(foo,`bar`);
-
 ```
 
 
@@ -774,28 +598,21 @@ result = await assertEquals(foo,`bar`);
 - use: defn
   id: handler
   args:
-    - use: return
-      args: $new Response("Hello World")
+    - use: new Response
+      args: Hello World
 
 ```
 
 This will be compiled to:
 
-   
 ```javascript
-import { serve } from "https://deno.land/std@0.149.0/http/server.ts";
-let result = null;
-
-// Task #0
-result = await serve(handler);
-
-// Task #1: handler
-async function handler(...args){
-
-  // Task #0
-  return new Response("Hello World");
+{
+  {
+    {
+      target;
+    }
+  }
 }
-
 ```
 
 
@@ -803,7 +620,8 @@ async function handler(...args){
 
 1. Yamlscript depends on Deno, so you should install
    [Deno](https://deno.land/#installation) first.
-2. Install YAMLScript by running `deno install -A https://deno.land/x/YAMLScript/ys.ts`
+2. Install YAMLScript by running
+   `deno install -A https://deno.land/x/YAMLScript/ys.ts`
 
 ```bash
 ys run a.ys.yml
@@ -812,6 +630,7 @@ ys run a.ys.yml
 ```bash
 ys build a.ys.yml
 ```
+
 ## Notes
 
 This README.md file is generated by the following YAMLScript.
@@ -919,5 +738,13 @@ This README.md file is generated by the following YAMLScript.
 
 See all [built-in functions](/globals/mod.ts)
 
+Inspired by [Common Lisp](https://common-lisp.net/),
+[Clojure](https://clojure.org/),
+[Denoflow](https://github.com/denoflow/denoflow),
+[Rash](https://github.com/rash-sh/rash),
+[Comtrya](https://github.com/comtrya/comtrya)
 
-Inspired by [Common Lisp](https://common-lisp.net/), [Clojure](https://clojure.org/), [Denoflow](https://github.com/denoflow/denoflow), [Rash](https://github.com/rash-sh/rash), [Comtrya](https://github.com/comtrya/comtrya)
+## Todos
+
+- [ ] support `as` alias
+- [ ] support prototype method
