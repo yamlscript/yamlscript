@@ -586,18 +586,25 @@ ${LAST_TASK_RESULT_NAME} = await ${task.use}\`${command}\`;\n`;
   // check if need to catch error
   if (task.throw === false) {
     // change returned result
-    mainFunctionBodyCode += `result = {
+    mainFunctionBodyCode += `${LAST_TASK_RESULT_NAME} = {
   value: result,
   done: true
 };\n`;
-    mainFunctionBodyCode = `try {\n${
+    let idDefinition = "";
+    if (task.id) {
+      idDefinition = `let ${task.id};\n`;
+    }
+    // assignId;
+    const idAssginment = assignId(task, options);
+    mainFunctionBodyCode += idAssginment;
+
+    mainFunctionBodyCode = `${idDefinition}try {\n${
       withIndent(mainFunctionBodyCode, 2)
     }} catch (error) {
-  result = {
+  ${LAST_TASK_RESULT_NAME} = {
     value: error,
     done: false
-  };
-}\n`;
+  };${idAssginment ? "\n  " + idAssginment : "\n"}}\n`;
   }
   return {
     mainFunctionBodyTopLevelCode,
@@ -606,7 +613,7 @@ ${LAST_TASK_RESULT_NAME} = await ${task.use}\`${command}\`;\n`;
     runtimetopLevelCode,
   };
 }
-function assignId(task: Task, options: StrictTasksContext) {
+function assignId(task: Task, options: StrictTasksContext): string {
   if (task.id) {
     const { id } = task;
     if (id) {
@@ -616,7 +623,12 @@ function assignId(task: Task, options: StrictTasksContext) {
         // the result should be push to the array
         return `${id}.push(${LAST_TASK_RESULT_NAME});\n`;
       } else {
-        return `const ${id} = ${LAST_TASK_RESULT_NAME};\n`;
+        // check if throw===false
+        if (task.throw === false) {
+          return `${id} = ${LAST_TASK_RESULT_NAME};\n`;
+        } else {
+          return `const ${id} = ${LAST_TASK_RESULT_NAME};\n`;
+        }
       }
     }
 

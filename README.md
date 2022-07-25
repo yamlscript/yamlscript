@@ -450,6 +450,67 @@ result = await assertEquals(echo.stdout,`Hello World
 ## Advanced Usage
 
 
+### 1 Prevent Throw Error
+
+```yaml
+# Sometimes we want to ignore error, and let the tasks continue on error
+# we use throw: false to prevent YAMLScript throw an error.
+# when using throw: false, the result will be an object
+# {
+#  value: unknown
+#  done: boolean
+# }
+# when task is failed, the value will be the error
+# when task is success, the value will be the function result.
+- use: JSON.parse
+  args: "foo?bar"
+  throw: false
+  id: errorExample
+- use: assertEquals
+  args:
+    - $errorExample.done
+    - false
+- use: assertEquals
+  args:
+    - $errorExample.value.message
+    - Unexpected token 'o', "foo?bar" is not valid JSON
+
+```
+
+This will be compiled to:
+
+   
+```javascript
+import { assertEquals } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
+let result = null;
+
+// Task #0: errorExample
+let errorExample;
+try {
+  result = await JSON.parse(`foo?bar`);
+  errorExample = result;
+  result = {
+    value: result,
+    done: true
+  };
+  errorExample = result;
+} catch (error) {
+  result = {
+    value: error,
+    done: false
+  };
+  errorExample = result;
+}
+
+// Task #1
+result = await assertEquals(errorExample.done,false);
+
+// Task #2
+result = await assertEquals(errorExample.value.message,`Unexpected token 'o', "foo?bar" is not valid JSON`);
+
+```
+
+
 ### Return
 
 ```yaml
@@ -664,7 +725,7 @@ result = await fsExtra.writeJSONFile(`./.yamlscript/cache/kv.json`,kv);
 
 ```yaml
 # Sometimes we need to define a global var in child block
-# We can use defg to define a global variable.
+# We can use `defg` to define a global variable.
 - use: Math.max
   args:
     - 1
@@ -700,6 +761,40 @@ if (result===9) {
 
 // Task #2
 result = await assertEquals(foo,`bar`);
+
+```
+
+
+### Deno Dep
+
+```yaml
+- from: https://deno.land/std@0.149.0/http/server.ts
+  use: serve
+  args: $handler
+- use: defn
+  id: handler
+  args:
+    - use: return
+      args: $new Response("Hello World")
+
+```
+
+This will be compiled to:
+
+   
+```javascript
+import { serve } from "https://deno.land/std@0.149.0/http/server.ts";
+let result = null;
+
+// Task #0
+result = await serve(handler);
+
+// Task #1: handler
+async function handler(...args){
+
+  // Task #0
+  return new Response("Hello World");
+}
 
 ```
 

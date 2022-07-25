@@ -1,0 +1,8 @@
+- from: https://deno.land/std@0.149.0/http/server.ts
+  use: serve
+  args: $handler
+- use: defn
+  id: handler
+  args:
+    - use: return
+      args: $new Response("Hello World")

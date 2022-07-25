@@ -1,0 +1,21 @@
+# Sometimes we want to ignore error, and let the tasks continue on error
+# we use throw: false to prevent YAMLScript throw an error.
+# when using throw: false, the result will be an object
+# {
+#  value: unknown
+#  done: boolean
+# }
+# when task is failed, the value will be the error
+# when task is success, the value will be the function result.
+- use: JSON.parse
+  args: "foo?bar"
+  throw: false
+  id: errorExample
+- use: assertEquals
+  args:
+    - $errorExample.done
+    - false
+- use: assertEquals
+  args:
+    - $errorExample.value.message
+    - Unexpected token 'o', "foo?bar" is not valid JSON

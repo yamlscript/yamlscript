@@ -2,7 +2,7 @@ name: Deploy to Deno Deploy
 
 on:
   workflow_dispatch:
-  # push:
+  push:
 
 jobs:
   deploy:
@@ -25,4 +25,4 @@ jobs:
         uses: denoland/deployctl@v1
         with:
           project: yamlscript # the name of the project on Deno Deploy
-          entrypoint: main.ts # the entrypoint to deploy
+          entrypoint: dist/docs/advanced/05_deno_deploy.js # the entrypoint to deploy
