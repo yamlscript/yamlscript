@@ -1,13 +1,21 @@
 # YAMLScript
 
-We use [YAML syntax](https://yaml.org/) to define a set of tasks declaratively, YAMLScript will help
-you compile it into Javascript code that runs on Deno. Think about [Lisp](https://en.wikipedia.org/wiki/Lisp_(programming_language)), but in YAML.
+We use [YAML syntax](https://yaml.org/) to define a set of tasks declaratively, YAMLScript will help you compile it into Javascript code that runs on Deno. Think about [Lisp](https://en.wikipedia.org/wiki/Lisp_(programming_language)), but in YAML.
 
 > **Note**
 > You need to know the basic syntax of YAML, javascript, and maybe a little [Deno](https://deno.land/manual), if you havn't, check out[Learn YAML in Y minutes](https://learnxinyminutes.com/docs/yaml/) and [Learn Javascript in Y minutes](https://learnxinyminutes.com/docs/javascript/), it's not hard!
 
 > **Warning**
 > This project is still in a very early stage, the api may consider changes.
+
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Simple Usage](#simple-usage)
+- [Advanced Usage](#advanced-usage)
+- [Installation](#installation)
+
+## Introduction
 
 YAMLScript is designed to solve the most common problems with minimal knowledge.
 It can be considered as an alternative for
@@ -87,12 +95,15 @@ This will be compiled to:
 
 {{/advancedSources}}
 
-## Install
+## Installation
 
 1. Yamlscript depends on Deno, so you should install
    [Deno](https://deno.land/#installation) first.
 2. Install YAMLScript by running
-   `deno install -A https://deno.land/x/YAMLScript/ys.ts`
+
+```bash
+deno install -A https://deno.land/x/yamlscript/ys.ts
+```
 
 
 ## Cli

@@ -1,5 +1,5 @@
 {
-  "globalPackageUrlPrefix": "https://raw.githubusercontent.com/yamlscript/yamlscript/main",
+  "globalPackageUrlPrefix": "https://deno.land/x/yamlscript",
   "context": {
     "rootName": "ctx",
     "envName": "env",

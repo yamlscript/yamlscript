@@ -2,7 +2,7 @@
 .Phony: build
 build:
 	@echo "Building..."
-	deno run --allow-read --allow-write --allow-net ys.ts build examples/rss-notify.yml -v
+	deno run -A ys.ts build -A -v
 	@echo "Done."
 
 .Phony: check-fmt
