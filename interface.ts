@@ -28,6 +28,7 @@ export interface EntryOptions {
   isBuild?: boolean;
   shouldBuildRuntime?: boolean;
   public?: PublicContext;
+  verbose?: boolean;
 }
 export enum UseType {
   RuntimeFunction,
@@ -50,13 +51,6 @@ export enum ParentType {
   Root,
   Loop,
 }
-export interface Use {
-  type: UseType;
-  isInstance: boolean;
-  exportName?: string;
-  useName?: string;
-  command?: string;
-}
 
 export interface TasksContext {
   public?: PublicContext;
@@ -68,6 +62,7 @@ export interface TasksContext {
   parentId?: string;
   isInitIndexVariable?: boolean;
   isInitLastTaskResultVariable?: boolean;
+  verbose?: boolean;
 }
 
 export interface RunTasksContext extends TasksContext {

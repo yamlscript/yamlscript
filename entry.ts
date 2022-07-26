@@ -17,6 +17,7 @@ export async function run(originalOptions: EntryOptions) {
     }
 
     if (options.isBuild) {
+      log.debug("build task file:", file);
       await buildTasks(tasks, {
         relativePath: file,
         dist: options.dist,
@@ -25,6 +26,8 @@ export async function run(originalOptions: EntryOptions) {
         shouldBuildRuntime: options.shouldBuildRuntime,
       });
     } else {
+      log.debug("run task file:", file);
+
       await runTasks(tasks, {
         indent: 0,
         public: options.public,

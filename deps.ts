@@ -9,6 +9,10 @@ export {
   resolve,
 } from "https://deno.land/std@0.149.0/path/mod.ts";
 export {
+  globToRegExp,
+  isGlob,
+} from "https://deno.land/std@0.149.0/path/glob.ts";
+export {
   parse,
   parseAll,
   stringify,
@@ -37,7 +41,12 @@ export {
   yellow,
 } from "https://deno.land/std@0.149.0/fmt/colors.ts";
 
-export { ensureDir, ensureFile } from "https://deno.land/std@0.149.0/fs/mod.ts";
+export {
+  ensureDir,
+  ensureFile,
+  expandGlob,
+  walk,
+} from "https://deno.land/std@0.149.0/fs/mod.ts";
 // third party
 
 export {

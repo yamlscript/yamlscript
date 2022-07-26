@@ -1,6 +1,8 @@
 - from: https://deno.land/std@0.149.0/http/server.ts
   use: serve
   args: $handler
+  if: build.env.YAMLSCRIPT_DEV == "1"
+
 - use: defn
   id: handler
   args:

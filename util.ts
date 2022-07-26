@@ -1,5 +1,14 @@
 import { BuildContext, BuildTasksContext, PublicContext } from "./interface.ts";
-import { dirname, ensureDir, parse, resolve } from "./deps.ts";
+import {
+  dirname,
+  ensureDir,
+  expandGlob,
+  globToRegExp,
+  isGlob,
+  parse,
+  relative,
+  resolve,
+} from "./deps.ts";
 import { BuiltCode, TasksCode } from "./_interface.ts";
 import pkg from "./pkg.json" assert { type: "json" };
 import log from "./log.ts";
@@ -150,4 +159,34 @@ export async function getPublicContext(): Promise<PublicContext> {
     build: buildContext,
   };
   return publicContext;
+}
+
+export async function getFilesFromGlob(args: string[]): Promise<string[]> {
+  const files: string[] = [];
+  for (const str of args) {
+    if (isGlob(str)) {
+      // find all files
+      for await (const file of expandGlob(str)) {
+        files.push(file.path);
+      }
+    } else {
+      // to abosolute path
+      files.push(resolve(str));
+    }
+  }
+  return files;
+}
+
+export function getUniqueStrings(
+  arr: string[],
+): string[] {
+  const set = new Set(arr);
+  return Array.from(set);
+}
+
+export function absolutePathToRelativePath(
+  absolutePath: string,
+): string {
+  const relativePath = relative(Deno.cwd(), absolutePath);
+  return relativePath;
 }

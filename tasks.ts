@@ -4,7 +4,6 @@ import {
   RunTasksContext,
   Task,
   TasksContext,
-  Use,
   UseType,
 } from "./interface.ts";
 import {
@@ -42,7 +41,6 @@ import {
   withIndent,
 } from "./util.ts";
 import {
-  COMPILED_CONTEXT_KEYS,
   DEFAULT_USE_NAME,
   DEFINE_FUNCTION_TOKEN,
   DEFINE_GLOBAL_VARIABLE_TOKEN,
@@ -54,18 +52,16 @@ import {
   LAST_TASK_RESULT_NAME,
   LOOP_ITEM_INDEX_NAME,
   LOOP_ITEM_NAME,
-  LOOP_VARIABLE_NAME,
   RETURN_TOKEN,
   RUNTIME_FUNCTION_OPTIONS_NAME,
 } from "./constant.ts";
 import log from "./log.ts";
 import { dirname, fromFileUrl, green, relative, resolve } from "./deps.ts";
-import isElement from "https://deno.land/x/lodash@4.17.15-es/isElement.js";
 export function getCompiledCode(
   tasks: Task[],
   originalOptions: TasksContext,
 ): TasksResult {
-  log.debug("run single options", JSON.stringify(originalOptions, null, 2));
+  // log.debug("run single options", JSON.stringify(originalOptions, null, 2));
   const options = getDefaultTasksContext(originalOptions);
   // for precompiled code to import modules
   const fileCode = getInitialFileCode();
@@ -146,10 +142,12 @@ export function getCompiledCode(
 
     // add success print
     // TODO: add condition verbose
+    if (options.verbose) {
+      fileCode.mainFunctionBodyCode += `console.log("Task #${taskIndex} done.${
+        task.name ? ' %s", ' : '"'
+      }${task.name});\n`;
+    }
 
-    // fileCode.mainFunctionBodyCode += `console.log("Task #${taskIndex} done.${
-    //   task.name ? ' %s", ' : '"'
-    // }${task.name});\n`;
     if (isNeedCloseBlock) {
       fileCode.mainFunctionBodyCode += withIndent(`}\n`, mainIndent);
     }
@@ -340,7 +338,7 @@ export function transformMeta(
           }
           // TODO: check function type
           // async or other
-          debugLog += `use ${green(importPaths.join(","))} from {${from}}`;
+          debugLog += `use ${green(importPaths.join(","))} from ${from}`;
         }
       }
     } else if (use && get(globals, use)) {
@@ -423,7 +421,7 @@ export function transformMeta(
       }
     }
   }
-
+  log.debug(debugLog);
   return {
     id,
     use,
