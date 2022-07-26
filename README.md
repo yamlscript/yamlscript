@@ -14,7 +14,8 @@ We use [YAML syntax](https://yaml.org/) to define a set of tasks declaratively, 
 - [Simple Usage](#simple-usage)
 - [Advanced Usage](#advanced-usage)
 - [Installation](#installation)
-- [Cli](#cli)
+- [CLI](#cli)
+- [Links](#links)
 
 ## Introduction
 
@@ -875,7 +876,7 @@ deno install -A https://deno.land/x/yamlscript/ys.ts
 ```
 
 
-## Cli
+## CLI
 
 ```bash
 
@@ -1028,3 +1029,9 @@ Inspired by [Common Lisp](https://common-lisp.net/),
 [Rash](https://github.com/rash-sh/rash),
 [Comtrya](https://github.com/comtrya/comtrya)
 
+
+## Links
+
+- [Github Repo](https://github.com/yamlscript/yamlscript)
+- [Deno land Module](deno.land/x/yamlscript)
+- [Official Site](https://yamlscript.deno.dev)
