@@ -15,3 +15,22 @@
 # this will print: [2, 1]
 - use: _.uniq
   args: [2, 1, 2]
+
+# use alias?
+
+- from: https://deno.land/std@0.149.0/path/mod.ts
+  use: extname as getExt
+  args: test.js
+- use: assertEquals
+  args:
+    - .js
+    - $result
+
+# use instance?
+
+- use: new URL
+  args: http://www.example.com/dogs
+- use: assertEquals
+  args:
+    - www.example.com
+    - $result.hostname

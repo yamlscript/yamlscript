@@ -4,7 +4,8 @@
   id: obj
   args:
     list:
-      - Hello - true
+      - Hello
+      - true
     foo:
       cat: 10
 

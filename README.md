@@ -63,7 +63,8 @@ Javascript code, which is located in the `dist` directory by default.
   id: obj
   args:
     list:
-      - Hello - true
+      - Hello
+      - true
     foo:
       cat: 10
 
@@ -86,7 +87,8 @@ let result = null;
 // Task #0: obj
 let obj = {
   "list": [
-    `Hello - true`
+    `Hello`,
+    true
   ],
   "foo": {
     "cat" : 10
@@ -120,6 +122,25 @@ result = await console.log(`${obj.list[0]} World`,`${obj.foo.cat}`,`${JSON.strin
 - use: _.uniq
   args: [2, 1, 2]
 
+# use alias?
+
+- from: https://deno.land/std@0.149.0/path/mod.ts
+  use: extname as getExt
+  args: test.js
+- use: assertEquals
+  args:
+    - .js
+    - $result
+
+# use instance?
+
+- use: new URL
+  args: http://www.example.com/dogs
+- use: assertEquals
+  args:
+    - www.example.com
+    - $result.hostname
+
 ```
 
 This will be compiled to:
@@ -127,6 +148,8 @@ This will be compiled to:
 ```javascript
 import { rss } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
 import { _ } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
+import { extname as getExt } from "https://deno.land/std@0.149.0/path/mod.ts";
+import { assertEquals } from "https://raw.githubusercontent.com/yamlscript/yamlscript/main/globals/mod.ts";
 let result = null;
 
 // Task #0
@@ -137,6 +160,18 @@ result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`)
 
 // Task #2
 result = await _.uniq(2,1,2);
+
+// Task #3
+result = await getExt(`test.js`);
+
+// Task #4
+result = await assertEquals(`.js`,result);
+
+// Task #5
+result = await new URL(`http://www.example.com/dogs`);
+
+// Task #6
+result = await assertEquals(`www.example.com`,result.hostname);
 
 ```
 
@@ -950,7 +985,3 @@ Inspired by [Common Lisp](https://common-lisp.net/),
 [Rash](https://github.com/rash-sh/rash),
 [Comtrya](https://github.com/comtrya/comtrya)
 
-## Todos
-
-- [ ] support `as` alias
-- [ ] support prototype method

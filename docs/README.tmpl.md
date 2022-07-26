@@ -118,7 +118,3 @@ Inspired by [Common Lisp](https://common-lisp.net/),
 [Rash](https://github.com/rash-sh/rash),
 [Comtrya](https://github.com/comtrya/comtrya)
 
-## Todos
-
-- [ ] support `as` alias
-- [ ] support prototype method
