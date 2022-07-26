@@ -14,6 +14,7 @@ We use [YAML syntax](https://yaml.org/) to define a set of tasks declaratively, 
 - [Simple Usage](#simple-usage)
 - [Advanced Usage](#advanced-usage)
 - [Installation](#installation)
+- [Cli](#cli)
 
 ## Introduction
 
