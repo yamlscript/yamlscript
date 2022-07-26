@@ -94,13 +94,44 @@ This will be compiled to:
 2. Install YAMLScript by running
    `deno install -A https://deno.land/x/YAMLScript/ys.ts`
 
+
+## Cli
+
 ```bash
-ys run a.ys.yml
+
+  Usage:   ys
+  Version: 0.0.1
+
+  Description:
+
+    yamlscript is written in yaml format and can be compiled into javscript that runs in deno.
+
+  Options:
+
+    -h, --help     - Show this help.
+    -V, --version  - Show the version number for this program.
+    -v, --verbose  - Enable verbose output.
+
+  Commands:
+
+    run    [file...]  - run files
+    build  [file...]  - build yaml file to js file
 ```
 
 ```bash
+# run some files
+ys run a.ys.yml
+ys run **/*.yml
+ys run a.ys.yml b.ys.yml
+# run all .ys.yml files
+ys run -A
+# run some directories
+ys run -d a/b/c
+
+# build is same as run
 ys build a.ys.yml
 ```
+
 
 ## Notes
 

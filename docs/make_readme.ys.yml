@@ -90,6 +90,8 @@
       advancedSources: $advancedSources
       yamlMakeReadmeScript: $yamlMakeReadmeScript
 
+# readme content to generate toc
+
 # write to readme.md
 - use: Deno.writeTextFile
   args:
