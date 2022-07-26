@@ -81,7 +81,7 @@
 
 # build den deploy code
 
-- use: :deno run -A ys.ts build ./docs/site.ys.yml
+- use: :YAMLSCRIPT_DEV=1 deno run -A ys.ts build ./docs/site.ys.yml
 
 - if: build.env.YAMLSCRIPT_DEV == "1"
   use: :deno run --allow-read --allow-net ./dist/docs/site.js

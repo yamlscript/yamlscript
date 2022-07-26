@@ -15,6 +15,7 @@
         - $indexContent
         - $options
 # entry
-- from: https://deno.land/std@0.149.0/http/server.ts
+- if: build.env.YAMLSCRIPT_DEV == "1"
+  from: https://deno.land/std@0.149.0/http/server.ts
   use: serve
   args: $handler

@@ -1,7 +1,12 @@
 - use: def
+  id: test
   args:
     list:
       - Hello
       - true
     foo:
       cat: 10
+- use: assertEquals
+  args:
+    - $test.list[0]
+    - Hello
