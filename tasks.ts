@@ -4,6 +4,7 @@ import {
   RunTasksContext,
   Task,
   TasksContext,
+  Use,
   UseType,
 } from "./interface.ts";
 import {
@@ -13,6 +14,7 @@ import {
   GetDefaultTaskOptionsOptions,
   LiteralCode,
   MetaResult,
+  ParseUseResult,
   StrictLiteralCode,
   StrictTask,
   StrictTasksContext,
@@ -28,6 +30,7 @@ import {
   isCommand,
   isVariable,
   removeRootQuotes,
+  variableValueToVariable,
 } from "./template.ts";
 import * as globals from "./globals/mod.ts";
 import {
@@ -36,7 +39,6 @@ import {
   getDefaultPublicContext,
   getDistFilePath,
   isAsyncFunction,
-  isObject,
   withIndent,
 } from "./util.ts";
 import {
@@ -160,7 +162,7 @@ export function getCompiledCode(
  * should check import path duplicate
  * @param raw
  */
-function transformMeta(
+export function transformMeta(
   task: StrictTask,
   options: StrictTasksContext,
 ): MetaResult {
@@ -171,7 +173,7 @@ function transformMeta(
   let runtimetopLevelCode = "";
   let use = "";
   let useType = UseType.Default;
-
+  let exportName: string | undefined;
   if (rawUse !== false) {
     use = templateCompiledString(rawUse as string, options.public);
   } else {
@@ -219,6 +221,7 @@ function transformMeta(
     // if it's variable, then it's a runtime function, just use it
     // but we don't know if it's a async or not, we can assume it's async, // TODO  or maybe we can add a sync option to specify it's sync
     // TODO consider better check
+    use = variableValueToVariable(use);
     useType = UseType.AsyncRuntimeFunction;
   } else {
     // check if is a instance
@@ -227,6 +230,13 @@ function transformMeta(
       isInstance = true;
       use = use.substring(4);
     }
+    // parse if there is an as
+    const parseUseNameResult = parseUse(use);
+    if (parseUseNameResult.exportName) {
+      exportName = parseUseNameResult.exportName;
+      use = parseUseNameResult.use;
+    }
+
     // add compile code
     if (rawFrom) {
       const fromString = templateCompiledString(rawFrom, options.public);
@@ -238,7 +248,6 @@ function transformMeta(
         use === IMPORT_TOKEN || rawUse === undefined || use === "default" ||
         use.startsWith("default.")
       ) {
-        console.log("use", use);
         // default
         // use if empty, we will give it a default random name
         if (use.startsWith("default.")) {
@@ -267,24 +276,45 @@ function transformMeta(
               arg as string,
               options.public,
             );
-            importVars.push(argString);
-            importPaths.push(`{ ${argString} }`);
-            runtimeImportPaths.push(`{ ${argString} }`);
+            const argResult = parseUse(argString);
+            if (argResult.exportName) {
+              importVars.push(argResult.use);
+              importPaths.push(`{ ${argString} }`);
+              runtimeImportPaths.push(
+                `{ ${argResult.exportName}:${argResult.use} }`,
+              );
+            } else {
+              importVars.push(argString);
+              importPaths.push(`{ ${argString} }`);
+              runtimeImportPaths.push(`{ ${argString} }`);
+            }
           }
         } else {
           useType = UseType.AsyncThirdPartyFunction;
 
           use = DEFAULT_USE_NAME + "_" + task.taskId;
           importVars.push(use);
-          importPaths.push(`{ default as ${importVars[0]} }`);
-          runtimeImportPaths.push(`{ default: ${importVars[0]} }`);
+          if (exportName) {
+            importPaths.push(`{ ${exportName} as ${importVars[0]} }`);
+            runtimeImportPaths.push(`{ ${exportName}: ${importVars[0]} }`);
+          } else {
+            importPaths.push(`{ default as ${importVars[0]} }`);
+            runtimeImportPaths.push(`{ default: ${importVars[0]} }`);
+          }
         }
       } else {
-        const importPathValue = getImportPathValue(use);
-        importPaths.push(importPathValue[0]);
-        importVars.push(importPathValue[1]);
-        runtimeImportPaths.push(importPaths[0]);
-        useType = UseType.AsyncThirdPartyFunction;
+        if (exportName) {
+          importPaths.push(`{ ${exportName} as ${use} }`);
+          importVars.push(use);
+          runtimeImportPaths.push(`{ ${exportName}: ${use} }`);
+          useType = UseType.AsyncThirdPartyFunction;
+        } else {
+          const importPathValue = getImportPathValue(use);
+          importPaths.push(importPathValue[0]);
+          importVars.push(importPathValue[1]);
+          runtimeImportPaths.push(importPaths[0]);
+          useType = UseType.AsyncThirdPartyFunction;
+        }
       }
       // check if import already
       for (let i = 0; i < importVars.length; i++) {
@@ -581,6 +611,12 @@ function transformUseCall(
         `Task #${task.taskId} defn operation must have an id, and id will be the function's name`,
       );
     } else {
+      // add result init variable
+      if (!options.isInitLastTaskResultVariable) {
+        mainFunctionBodyTopLevelCode +=
+          `let ${LAST_TASK_RESULT_NAME} = null;\n`;
+        options.isInitLastTaskResultVariable = true;
+      }
       mainFunctionBodyCode += `async function ${id}(...args){\n`;
 
       // insert function body
@@ -710,6 +746,19 @@ function assignId(task: Task, options: StrictTasksContext): string {
   }
 }
 
+function parseUse(use: string): ParseUseResult {
+  const useArr = use.split(" as ");
+  let exportName: string | undefined;
+  if (useArr.length === 2) {
+    exportName = useArr[0];
+    use = useArr[1];
+  }
+  return {
+    exportName,
+    use,
+  };
+}
+
 /**
  * !! this function has an affect on the options.varsMap
  * @param varsMap
@@ -741,7 +790,7 @@ function formatLiteralCode(result: LiteralCode): StrictLiteralCode {
   };
 }
 
-function getDefaultTasksContext(
+export function getDefaultTasksContext(
   taskContext?: TasksContext,
 ): StrictTasksContext {
   taskContext = taskContext || {};
@@ -755,7 +804,7 @@ function getDefaultTasksContext(
 
   return taskContext as StrictTasksContext;
 }
-function getDefaultTaskOptions(
+export function getDefaultTaskOptions(
   task: Task,
   options: GetDefaultTaskOptionsOptions,
 ): StrictTask {
@@ -821,7 +870,7 @@ export function runAsyncFunction(runtimeCode: string) {
     });
   } catch (error) {
     error.message =
-      `Run generated tasks code failed, ${error.message}\nFor more details, you can run \`ys build <file>\` command to check out the generated code`;
+      `Run generated tasks code failed, ${error.message}\nFor more details, you can run \`ys build <file> --runtime"\` command to check out the generated runtime code`;
     log.fatal(error.message);
   }
 }

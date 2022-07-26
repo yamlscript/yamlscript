@@ -46,10 +46,14 @@ export interface MetaResult extends LiteralCode {
   use: string;
   from?: string;
   useType: UseType;
+  exportName?: string;
   command?: string;
   isInstance: boolean;
 }
-
+export interface ParseUseResult {
+  use: string;
+  exportName?: string;
+}
 export interface StrictLiteralCode extends LiteralCode {
   topLevelCode: string;
   runtimetopLevelCode: string;

@@ -29,7 +29,7 @@ export function isVariable(str: string) {
     return false;
   }
   if (str.length > 1) {
-    return str[0] === "$" && /[a-zA-Z_$.0-9\\/[{]/.test(str[1]);
+    return str[0] === "$" && /[^\s-]/.test(str[1]);
     // return str[0] === "$" && /[a-zA-Z_$]/.test(str[1]) &&
     //   /[0-9a-zA-Z_$]+/.test(str.slice(1));
   } else {
@@ -461,7 +461,7 @@ export function getConditionResult(
   }
 }
 
-function variableValueToVariable(str: string): string {
+export function variableValueToVariable(str: string): string {
   if (str.startsWith("$")) {
     return str.slice(1);
   } else {

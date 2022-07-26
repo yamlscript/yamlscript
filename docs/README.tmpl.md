@@ -1,20 +1,13 @@
 # YAMLScript
 
-We use YAML syntax to define a set of tasks declaratively, YAMLScript will help
-you compile it into Javascript code that runs on Deno.
+We use [YAML syntax](https://yaml.org/) to define a set of tasks declaratively, YAMLScript will help
+you compile it into Javascript code that runs on Deno. Think about [Lisp](https://en.wikipedia.org/wiki/Lisp_(programming_language)), but in YAML.
 
-We can use YAMLScript to run task files directly:
+> **Note**
+> You need to know the basic syntax of YAML, javascript, and maybe a little [Deno](https://deno.land/manual), if you havn't, check out[Learn YAML in Y minutes](https://learnxinyminutes.com/docs/yaml/) and [Learn Javascript in Y minutes](https://learnxinyminutes.com/docs/javascript/), it's not hard!
 
-```bash
-ys run task.ys.yml
-```
-
-Or we can also deploy the compiled Javascript files to serverless services such
-as [Deno Deploy](https://deno.com/deploy):
-
-```bash
-ys build task.ys.yml && deployctl deploy --project=helloworld ./dist/task.js
-```
+> **Warning**
+> This project is still in a very early stage, the api may consider changes.
 
 YAMLScript is designed to solve the most common problems with minimal knowledge.
 It can be considered as an alternative for
@@ -23,6 +16,19 @@ It can be considered as an alternative for
 such as [Ansible](https://www.ansible.com/), it can also be a low-code
 alternative to [IFTTT](https://ifttt.com/), [Zapier](https://zapier.com/),
 [Pipedream](https://pipedream.com/), etc.
+
+
+Run task file directly:
+
+```bash
+ys run task.ys.yml
+```
+
+Build task file and  deploy the compiled code to serverless services such as [Deno Deploy](https://deno.com/deploy):
+
+```bash
+ys build task.ys.yml && deployctl deploy --project=helloworld ./dist/task.js
+```
 
 In YAMLScript, The following interface is the only property we need to
 understand, they are all optional.
@@ -44,7 +50,6 @@ And the compiled Javascript code is human readable, so if anything goes wrong,
 we can easily locate and fix it. If you run into problems, go to the compiled
 Javascript code, which is located in the `dist` directory by default.
 
-> This project is still in development, most things are already working.
 
 ## Simple Usage
 
@@ -59,13 +64,7 @@ Javascript code, which is located in the `dist` directory by default.
 This will be compiled to:
 
 ```javascript
-{
-  {
-    {
-      target;
-    }
-  }
-}
+{{{target}}}
 ```
 
 {{/simpleUsageSources}}
@@ -83,13 +82,7 @@ This will be compiled to:
 This will be compiled to:
 
 ```javascript
-{
-  {
-    {
-      target;
-    }
-  }
-}
+{{{target}}}
 ```
 
 {{/advancedSources}}

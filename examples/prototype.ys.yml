@@ -1,0 +1,8 @@
+- use: $"hello".slice
+  args:
+    - 1
+    - 3
+- use: assertEquals
+  args:
+    - el
+    - $result

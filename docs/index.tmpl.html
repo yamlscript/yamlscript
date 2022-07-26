@@ -12,12 +12,25 @@
       max-width: 800px;
       margin: 0 auto;
     }
+    blockquote{
+      margin-left: 0;
+    }
     {{{CSS}}}
   </style>
 </head>
 <body>
-
-  {{{markdownHTML}}}
-  
+  <main data-color-mode="light" data-light-theme="light" data-dark-theme="dark" class="markdown-body">
+    {{{markdownHTML}}}
+    <section>
+      <h2>Note2</h2>
+      <p>This site is accually built with the following YAMLScript:</p>
+      <p><code>./docs/site.ys.yml</code>:</p>
+      <div class="highlight highlight-source-yaml"><pre>{{{siteHTML}}}</pre></div>
+      <p><code>./docs/make_site.ys.yml</code>:</p>      
+      <div class="highlight highlight-source-yaml"><pre>{{{makeSiteHTML}}}</pre></div>
+      <p><code>./.github/workflows/deploy-to-deno-deploy.yml</code>:</p>
+      <div class="highlight highlight-source-yaml"><pre>{{{githubActionsSourceHTML}}}</pre></div>
+    </section>
+  </main>
 </body>
 </html>

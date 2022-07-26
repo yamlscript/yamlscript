@@ -12,7 +12,7 @@
         "dist/",
         "examples/__fixtures__/",
         "README.md",
-        "README.template.md"
+        "docs/README.tmpl.md"
       ]
     }
   }

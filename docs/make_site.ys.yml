@@ -10,50 +10,51 @@
   use: Deno.readTextFile
   args: ./README.md
 
-- use: import
-  from: https://esm.sh/prismjs@1.27.0
-  args: default as Prism
-# - use: defn
-#   id: highlightHandler
-#   args:
-#     - from: https://jspm.dev/highlight.js@11.0.1
-#       use: default.getLanguage
-#       args: $args[1]
-#     - if: args[1] && result
-#       from: https://jspm.dev/highlight.js@11.0.1
-#       use: default.highlight
-#       args:
-#         - $args[0]
-#         - language: $args[1]
-#       throw: false
-#     - use: return
-#       args: $result.value.value || ""
+- id: markdownHTML
+  from: "https://deno.land/x/gfm@0.1.22/mod.ts"
+  use: render
+  args:
+    - $readmeContent
 
-# - id: MarkdownIt
-#   from: https://jspm.dev/markdown-it@13.0.1
-#   args:
-#     highlight: $highlightHandler
-
-# - id: markdownHTML
-#   use: MarkdownIt.render
-#   args: $readmeContent
-
+- from: "https://deno.land/x/gfm@0.1.22/mod.ts"
+  use: import
+  args:
+    - CSS
 - from: https://esm.sh/prismjs@1.27.0/components/prism-typescript?no-check
   use: false
 - from: https://esm.sh/prismjs@1.27.0/components/prism-yaml?no-check
   use: false
 
-- id: markdownHTML
-  from: "https://deno.land/x/gfm/mod.ts"
-  use: render
+- id: makeSiteSource
+  use: Deno.readTextFile
+  args: ./docs/make_site.ys.yml
+- id: makeSiteHTML
+  from: https://esm.sh/prismjs@1.27.0
+  use: default.highlight
   args:
-    - $readmeContent
-
-- id: CSS2
-  from: "https://deno.land/x/gfm/mod.ts"
-  use: import
-  args: CSS
-
+    - $makeSiteSource
+    - $Prism.languages.yaml
+    - yaml
+- id: siteSource
+  use: Deno.readTextFile
+  args: ./docs/site.ys.yml
+- id: siteHTML
+  from: https://esm.sh/prismjs@1.27.0
+  use: default.highlight
+  args:
+    - $siteSource
+    - $Prism.languages.yaml
+    - yaml
+- id: githubActionsSource
+  use: Deno.readTextFile
+  args: ./.github/workflows/deploy-to-deno-deploy.yml
+- id: githubActionsSourceHTML
+  from: https://esm.sh/prismjs@1.27.0
+  use: default.highlight
+  args:
+    - $githubActionsSource
+    - $Prism.languages.yaml
+    - yaml
 # get readme.tmpl.html content
 - id: indexTemplate
   use: Deno.readTextFile
@@ -68,6 +69,9 @@
     - siteMeta: $siteMeta
       CSS: $CSS
       markdownHTML: $markdownHTML
+      makeSiteHTML: $makeSiteHTML
+      siteHTML: $siteHTML
+      githubActionsSourceHTML: $githubActionsSourceHTML
 
 # write to public/index.html
 - use: fsExtra.ensureAndWriteTextFile

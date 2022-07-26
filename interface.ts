@@ -50,6 +50,13 @@ export enum ParentType {
   Root,
   Loop,
 }
+export interface Use {
+  type: UseType;
+  isInstance: boolean;
+  exportName?: string;
+  useName?: string;
+  command?: string;
+}
 
 export interface TasksContext {
   public?: PublicContext;

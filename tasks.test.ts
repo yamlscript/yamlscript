@@ -1,4 +1,10 @@
-import { buildTasks, runTasks } from "./tasks.ts";
+import {
+  buildTasks,
+  getDefaultTaskOptions,
+  getDefaultTasksContext,
+  runTasks,
+  transformMeta,
+} from "./tasks.ts";
 import { Task } from "./interface.ts";
 import { assertEquals } from "./deps.ts";
 import { parseYamlFile } from "./util.ts";
@@ -117,4 +123,55 @@ Deno.test("getCompiledCode tasks #7", async () => {
     "./examples/__fixtures__/tast7.js",
   );
   assertEquals(result.moduleFileCode, expected);
+});
+
+Deno.test("transformMeta tasks#8", () => {
+  const taskId = "1";
+  const originalTask: Task = {
+    from: "https://example.com",
+    use: "render as render2",
+  };
+  const task = getDefaultTaskOptions(originalTask, {
+    taskId,
+  });
+  const ctx = getDefaultTasksContext();
+  const meta = transformMeta(task, ctx);
+  assertEquals(
+    meta.topLevelCode,
+    'import { render as render2 } from "https://example.com";\n',
+  );
+});
+Deno.test("transformMeta tasks#9", () => {
+  const taskId = "1";
+  const originalTask: Task = {
+    from: "https://example.com",
+    use: "new Render",
+  };
+  const task = getDefaultTaskOptions(originalTask, {
+    taskId,
+  });
+  const ctx = getDefaultTasksContext();
+  const meta = transformMeta(task, ctx);
+  assertEquals(
+    meta.topLevelCode,
+    'import { Render } from "https://example.com";\n',
+  );
+  assertEquals(meta.isInstance, true);
+});
+Deno.test("transformMeta tasks#10", () => {
+  const taskId = "1";
+  const originalTask: Task = {
+    from: "https://example.com",
+    use: '$"Hello".slice',
+  };
+  const task = getDefaultTaskOptions(originalTask, {
+    taskId,
+  });
+  const ctx = getDefaultTasksContext();
+  const meta = transformMeta(task, ctx);
+  assertEquals(
+    meta.topLevelCode,
+    "",
+  );
+  assertEquals(meta.use, '"Hello".slice');
 });
