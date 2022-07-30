@@ -1,9 +1,14 @@
-import { BuildContext, BuildTasksContext, PublicContext } from "./interface.ts";
+import {
+  BuildContext,
+  BuildTasksContext,
+  PublicContext,
+  TasksContext,
+} from "./interface.ts";
 import {
   dirname,
   ensureDir,
   expandGlob,
-  globToRegExp,
+  fromFileUrl,
   isGlob,
   parse,
   relative,
@@ -12,6 +17,7 @@ import {
 import { BuiltCode, TasksCode } from "./_interface.ts";
 import pkg from "./pkg.json" assert { type: "json" };
 import log from "./log.ts";
+import { DEV_FLAG, GLOBAL_PACKAGE_URL } from "./constant.ts";
 export const get = (obj: unknown, path: string, defaultValue = undefined) => {
   const travel = (regexp: RegExp) =>
     String.prototype.split
@@ -189,4 +195,112 @@ export function absolutePathToRelativePath(
 ): string {
   const relativePath = relative(Deno.cwd(), absolutePath);
   return relativePath;
+}
+export function importCodeToDynamicImport(
+  code: string,
+  options?: TasksContext,
+): string {
+  const finalCode = code.split("import ").filter((_, index) => index >= 1).map(
+    (line) => {
+      const fromToken = " from ";
+      const fromStart = line.indexOf(fromToken);
+
+      if (fromStart !== -1) {
+        let importStr = line.substring(
+          0,
+          fromStart,
+        );
+        importStr = importStr.replace("* as ", "");
+        // importStr.replace("as", ":");
+        const fromStr = line.substring(fromStart + fromToken.length).trim()
+          .replace(/;$/, "").replace('"', "").replace('"', "");
+        const url = getGlobalsFrom(fromStr, options);
+
+        return `const ${importStr} = import("${url}");`;
+      } else {
+        throw new Error(`import code error ${line}`);
+      }
+    },
+  ).join("\n");
+  return finalCode + "\n";
+}
+export function getGlobalsFrom(url: string, options?: TasksContext) {
+  if (
+    options && options.relativePath && options.dist && Deno.env.get(DEV_FLAG) &&
+    Deno.env.get(DEV_FLAG) !== "false"
+  ) {
+    // dev
+    // return dev url
+    // get path
+    // for dev
+    // get relative path
+    if (url.startsWith(".")) {
+      const currentDirname = resolve(
+        dirname(fromFileUrl(import.meta.url)),
+        "./globals",
+      );
+
+      const globalModFilePath = resolve(currentDirname, url);
+      console.log("globalModFilePath", globalModFilePath);
+      const targetPath = getDistFilePath(
+        options.relativePath,
+        ".js",
+        options.dist,
+      );
+      url = relative(
+        dirname(targetPath),
+        globalModFilePath,
+      );
+    }
+  } else {
+    if (url.startsWith(".")) {
+      // add global
+      url = new URL(url, GLOBAL_PACKAGE_URL).href;
+      console.log("url", url);
+    }
+  }
+  return url;
+}
+export function formatImportCode(
+  code: string,
+  options: TasksContext,
+): string {
+  const finalCode = code.split("import ").filter((_, index) => index >= 1).map(
+    (line) => {
+      const fromToken = " from ";
+      const fromStart = line.indexOf(fromToken);
+
+      if (fromStart !== -1) {
+        const importStr = line.substring(
+          0,
+          fromStart,
+        );
+        // importStr.replace("as", ":");
+        const fromStr = line.substring(fromStart + fromToken.length).trim()
+          .replace(/;$/, "").replace('"', "").replace('"', "");
+        const url = getGlobalsFrom(fromStr, options);
+        return `import ${importStr} from "${url}";`;
+      } else {
+        throw new Error(`import code error ${line}`);
+      }
+    },
+  ).join("\n");
+  return finalCode + "\n";
+}
+export async function getGlobalCode() {
+  const globaModCode = await Deno.readTextFile(resolve("./globals/mod.ts"));
+  // get import code start to import code end
+  const startToken = "// import code start";
+  const endToken = "// import code end";
+  const importCodeStart = globaModCode.indexOf(startToken);
+  const importCodeEnd = globaModCode.indexOf(endToken);
+  if (importCodeStart >= 0 && importCodeEnd >= 0) {
+    const importCode = globaModCode.substring(
+      importCodeStart + startToken.length,
+      importCodeEnd,
+    );
+    return importCode.trim();
+  } else {
+    throw new Error("global/mod.ts not found");
+  }
 }

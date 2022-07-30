@@ -63,6 +63,7 @@ export interface TasksContext {
   isInitIndexVariable?: boolean;
   isInitLastTaskResultVariable?: boolean;
   verbose?: boolean;
+  globalCode?: string;
 }
 
 export interface RunTasksContext extends TasksContext {

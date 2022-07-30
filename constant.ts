@@ -16,6 +16,7 @@ export const LOOP_VARIABLE_NAME = `__${pkg.full}_loop_variable`;
 export const LOOP_ITEM_NAME = config.context.loopItemName;
 export const LOOP_ITEM_INDEX_NAME = config.context.loopItemIndex;
 export const LAST_TASK_RESULT_NAME = config.context.lastTaskResultName;
+export const GLOBAL_PACKAGE_PREFIX = config.globalPackageUrlPrefix;
 export const GLOBAL_PACKAGE_URL =
   `${config.globalPackageUrlPrefix}/globals/mod.ts`;
 

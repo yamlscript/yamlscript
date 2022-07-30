@@ -90,6 +90,7 @@ export interface StrictTasksContext extends TasksContext {
   parentType: ParentType;
   isInitIndexVariable: boolean;
   isInitLastTaskResultVariable: boolean;
+  globalCode: string;
 }
 export interface StrictTask extends Task {
   args: unknown[];

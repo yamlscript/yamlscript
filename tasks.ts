@@ -34,9 +34,10 @@ import {
 import * as globals from "./globals/mod.ts";
 import {
   createDistFile,
+  formatImportCode,
   get,
   getDefaultPublicContext,
-  getDistFilePath,
+  importCodeToDynamicImport,
   isAsyncFunction,
   withIndent,
 } from "./util.ts";
@@ -64,7 +65,7 @@ export function getCompiledCode(
   // log.debug("run single options", JSON.stringify(originalOptions, null, 2));
   const options = getDefaultTasksContext(originalOptions);
   // for precompiled code to import modules
-  const fileCode = getInitialFileCode();
+  const fileCode = getInitialFileCode(options);
   const mainIndent = options.indent;
   // one by one
   const tasksMetaResults: MetaResult[] = [];
@@ -342,12 +343,11 @@ export function transformMeta(
         }
       }
     } else if (use && get(globals, use)) {
-      //
       // deno-lint-ignore ban-types
       const fn = get(globals, use) as Function;
-      const importPathValue = getImportPathValue(use);
-      const importPath = importPathValue[0];
-      const importVar = importPathValue[1];
+      // const importPathValue = getImportPathValue(use);
+      // const importPath = importPathValue[0];
+      // const importVar = importPathValue[1];
       // check if it's a async function
       if (isAsyncFunction(fn)) {
         useType = UseType.AsyncGlobalsFunction;
@@ -355,40 +355,40 @@ export function transformMeta(
         useType = UseType.GlobalsFunction;
       }
       // check if import already
-      if (!varsMap[importVar]) {
-        setVarsMap(options.varsMap, importVar, useType);
-        // TODO check useType
+      // if (!varsMap[importVar]) {
+      //   setVarsMap(options.varsMap, importVar, useType);
+      //   // TODO check useType
 
-        if (
-          Deno.env.get(DEV_FLAG) && Deno.env.get(DEV_FLAG) !== "false" &&
-          options.relativePath && options.dist
-        ) {
-          // for dev
-          // get relative path
-          const currentDirname = dirname(fromFileUrl(import.meta.url));
-          const globalModFilePath = resolve(currentDirname, "./globals/mod.ts");
+      //   if (
+      //     Deno.env.get(DEV_FLAG) && Deno.env.get(DEV_FLAG) !== "false" &&
+      //     options.relativePath && options.dist
+      //   ) {
+      //     // for dev
+      //     // get relative path
+      //     const currentDirname = dirname(fromFileUrl(import.meta.url));
+      //     const globalModFilePath = resolve(currentDirname, "./globals/mod.ts");
 
-          const targetPath = getDistFilePath(
-            options.relativePath,
-            ".js",
-            options.dist,
-          );
-          const relativeGlobalModFilePath = relative(
-            dirname(targetPath),
-            globalModFilePath,
-          );
+      //     const targetPath = getDistFilePath(
+      //       options.relativePath,
+      //       ".js",
+      //       options.dist,
+      //     );
+      //     const relativeGlobalModFilePath = relative(
+      //       dirname(targetPath),
+      //       globalModFilePath,
+      //     );
 
-          topLevelCode +=
-            `import ${importPath} from "${relativeGlobalModFilePath}";\n`;
-        } else {
-          topLevelCode +=
-            `import ${importPath} from "${GLOBAL_PACKAGE_URL}";\n`;
-        }
+      //     topLevelCode +=
+      //       `import ${importPath} from "${relativeGlobalModFilePath}";\n`;
+      //   } else {
+      //     topLevelCode +=
+      //       `import ${importPath} from "${GLOBAL_PACKAGE_URL}";\n`;
+      //   }
 
-        runtimetopLevelCode +=
-          `const ${importPath} = ${RUNTIME_FUNCTION_OPTIONS_NAME}.globals;\n`;
-        debugLog += `use { ${green(use)} } from "globals/mod.ts"`;
-      }
+      //   runtimetopLevelCode +=
+      //     `const ${importPath} = ${RUNTIME_FUNCTION_OPTIONS_NAME}.globals;\n`;
+      //   debugLog += `use { ${green(use)} } from "globals/mod.ts"`;
+      // }
     } else if (
       use && get(globalThis, use) &&
       typeof get(globalThis, use) === "function"
@@ -949,10 +949,16 @@ function concatLiteralCode(
     indent,
   );
 }
-function getInitialFileCode(): FileCode {
-  const topLevelCode = "";
+function getInitialFileCode(ctx: StrictTasksContext): FileCode {
+  let topLevelCode = "";
   // for runtime code to import modules
-  const runtimetopLevelCode = "";
+  let runtimetopLevelCode = "";
+  // import runtime global functions
+  if (ctx.globalCode) {
+    topLevelCode += formatImportCode(ctx.globalCode, ctx);
+    runtimetopLevelCode += importCodeToDynamicImport(ctx.globalCode, ctx);
+  }
+
   const mainFunctionBodyCode = ``;
   return {
     topLevelCode,

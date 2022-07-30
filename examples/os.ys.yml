@@ -1,0 +1,5 @@
+- id: deno_build
+  use: def
+  args: $env.HOME
+- use: console.log
+  args: $deno_build

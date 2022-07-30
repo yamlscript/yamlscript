@@ -1,7 +1,11 @@
 import { EntryOptions, Task } from "./interface.ts";
 import { StrictEntryOptions } from "./_interface.ts";
 import { buildTasks, runTasks } from "./tasks.ts";
-import { getDefaultPublicContext, parseYamlFile } from "./util.ts";
+import {
+  getDefaultPublicContext,
+  getGlobalCode,
+  parseYamlFile,
+} from "./util.ts";
 import log from "./log.ts";
 import { green } from "./deps.ts";
 import pkg from "./pkg.json" assert { type: "json" };
@@ -23,7 +27,8 @@ export async function run(originalOptions: EntryOptions) {
     } catch (error) {
       log.fatal(`parse file ${green(file)} error: ${error.message}`);
     }
-
+    // get global code
+    const globalCode = await getGlobalCode();
     if (options.isBuild) {
       log.info("build task file:", file);
       await buildTasks(tasks, {
@@ -32,6 +37,7 @@ export async function run(originalOptions: EntryOptions) {
         public: options.public,
         indent: 0,
         shouldBuildRuntime: options.shouldBuildRuntime,
+        globalCode: globalCode,
       });
     } else {
       log.info("run task file:", file);
@@ -39,6 +45,7 @@ export async function run(originalOptions: EntryOptions) {
       await runTasks(tasks, {
         indent: 0,
         public: options.public,
+        globalCode: globalCode,
       });
     }
   }
