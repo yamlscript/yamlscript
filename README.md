@@ -106,7 +106,7 @@ let obj = {
 };
 
 // Task #1
-result = await console.log(`${obj.list[0]} World`,`${obj.foo.cat}`,`${JSON.stringify(obj.foo)}`);
+result = console.log(`${obj.list[0]} World`,`${obj.foo.cat}`,`${JSON.stringify(obj.foo)}`);
 
 ```
 
@@ -156,32 +156,29 @@ result = await console.log(`${obj.list[0]} World`,`${obj.foo.cat}`,`${JSON.strin
 This will be compiled to:
 
 ```javascript
-import { rss } from "https://deno.land/x/yamlscript/globals/mod.ts";
-import { _ } from "https://deno.land/x/yamlscript/globals/mod.ts";
 import { extname as getExt } from "https://deno.land/std@0.149.0/path/mod.ts";
-import { assertEquals } from "https://deno.land/x/yamlscript/globals/mod.ts";
 let result = null;
 
 // Task #0
-result = await fetch(`https://jsonplaceholder.typicode.com/todos/1`);
+result = fetch(`https://jsonplaceholder.typicode.com/todos/1`);
 
 // Task #1
-result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
+result = rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
 
 // Task #2
-result = await _.uniq(2,1,2);
+result = _.uniq(2,1,2);
 
 // Task #3
 result = await getExt(`test.js`);
 
 // Task #4
-result = await assertEquals(`.js`,result);
+result = assertEquals(`.js`,result);
 
 // Task #5
-result = await new URL(`http://www.example.com/dogs`);
+result = new URL(`http://www.example.com/dogs`);
 
 // Task #6
-result = await assertEquals(`www.example.com`,result.hostname);
+result = assertEquals(`www.example.com`,result.hostname);
 
 ```
 
@@ -212,14 +209,13 @@ result = await assertEquals(`www.example.com`,result.hostname);
 This will be compiled to:
 
 ```javascript
-import { rss } from "https://deno.land/x/yamlscript/globals/mod.ts";
 let result = null;
 
 // Task #0
-result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
+result = rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
 
 // Task #1
-result = await fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
+result = fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
   "method" : `POST`,
   "headers": {
     "Content-Type" : `application/json`
@@ -268,20 +264,20 @@ This will be compiled to:
 let result = null;
 
 // Task #0
-result = await Math.max(1,9,5);
+result = Math.max(1,9,5);
 
 // Task #1
-result = await console.log(`${result}`);
+result = console.log(`${result}`);
 
 // Task #2
-result = await console.log(result);
+result = console.log(result);
 
 // Task #3: max
-result = await Math.max(1,9,5);
+result = Math.max(1,9,5);
 const max = result;
 
 // Task #4
-result = await console.log(max);
+result = console.log(max);
 
 ```
 
@@ -318,11 +314,11 @@ let num = 5;
 
 // Task #1
 if (num > 4) {
-  result = await console.log(`yes, the args is greater than 4`);
+  result = console.log(`yes, the args is greater than 4`);
 }
 
 // Task #2
-result = await console.log(`yes, it's true`);
+result = console.log(`yes, it's true`);
 
 ```
 
@@ -361,7 +357,6 @@ result = await console.log(`yes, it's true`);
 This will be compiled to:
 
 ```javascript
-import { _ } from "https://deno.land/x/yamlscript/globals/mod.ts";
 let index = 0;
 let result = null;
 
@@ -369,12 +364,12 @@ let result = null;
 {
   const item = `foo`;
   index = 0;
-  result = await console.log(`${index}. ${item}`);
+  result = console.log(`${index}. ${item}`);
 }
 {
   const item = `bar`;
   index = 1;
-  result = await console.log(`${index}. ${item}`);
+  result = console.log(`${index}. ${item}`);
 }
 index = 0;
 
@@ -387,7 +382,7 @@ let sources = [
 // Task #2: loopResults
 let loopResults = [];
 for await (const item of sources){
-  result = await _.multiply(item,2);
+  result = _.multiply(item,2);
   loopResults.push(result);
   index++;
 }
@@ -424,15 +419,13 @@ index=0;
 This will be compiled to:
 
 ```javascript
-import { _ } from "https://deno.land/x/yamlscript/globals/mod.ts";
-import { assertEquals } from "https://deno.land/x/yamlscript/globals/mod.ts";
 let result = null;
 
 // Task #0: myFunction
 async function myFunction(...args){
 
   // Task #0_0
-  result = await _.upperCase(args[0]);
+  result = _.upperCase(args[0]);
 
   return result;
 }
@@ -441,7 +434,7 @@ async function myFunction(...args){
 result = await myFunction(`abc`);
 
 // Task #2
-result = await assertEquals(result,`ABC`);
+result = assertEquals(result,`ABC`);
 
 ```
 
@@ -473,7 +466,6 @@ This will be compiled to:
 
 ```javascript
 import { __yamlscript_create_process } from "https://deno.land/x/yamlscript/runtimes/cmd/mod.ts";
-import { assertEquals } from "https://deno.land/x/yamlscript/globals/mod.ts";
 let result = null;
 
 // Task #0: echo
@@ -482,7 +474,7 @@ result = await __yamlscript_default_use_0`echo Hello World`;
 const echo = result;
 
 // Task #1
-result = await assertEquals(echo.stdout,`Hello World
+result = assertEquals(echo.stdout,`Hello World
 `);
 
 ```
@@ -521,13 +513,12 @@ result = await assertEquals(echo.stdout,`Hello World
 This will be compiled to:
 
 ```javascript
-import { assertEquals } from "https://deno.land/x/yamlscript/globals/mod.ts";
 let result = null;
 
 // Task #0: errorExample
 let errorExample;
 try {
-  result = await JSON.parse(`foo?bar`);
+  result = JSON.parse(`foo?bar`);
   errorExample = result;
   result = {
     value: result,
@@ -543,10 +534,10 @@ try {
 }
 
 // Task #1
-result = await assertEquals(errorExample.done,false);
+result = assertEquals(errorExample.done,false);
 
 // Task #2
-result = await assertEquals(errorExample.value.message,`Unexpected token 'o', "foo?bar" is not valid JSON`);
+result = assertEquals(errorExample.value.message,`Unexpected token 'o', "foo?bar" is not valid JSON`);
 
 ```
 
@@ -568,15 +559,14 @@ result = await assertEquals(errorExample.value.message,`Unexpected token 'o', "f
 This will be compiled to:
 
 ```javascript
-import { assertEquals } from "https://deno.land/x/yamlscript/globals/mod.ts";
 let result = null;
 
 // Task #0
-result = await new Date(`2022-07-25T00:00:00.000Z`
+result = new Date(`2022-07-25T00:00:00.000Z`
 );
 
 // Task #1
-result = await assertEquals(`1658707200000`,`${result.getTime()}`);
+result = assertEquals(`1658707200000`,`${result.getTime()}`);
 
 ```
 
@@ -607,13 +597,13 @@ let result = null;
 async function myFunction(...args){
 
   // Task #0_0
-  result = await console.log(`foo`);
+  result = console.log(`foo`);
 
   // Task #0_1
   return;
 
   // Task #0_2
-  result = await console.log(`this will not be printed`);
+  result = console.log(`this will not be printed`);
 
   return result;
 }
@@ -652,17 +642,16 @@ result = await myFunction();
 This will be compiled to:
 
 ```javascript
-import { rss } from "https://deno.land/x/yamlscript/globals/mod.ts";
 let result = null;
 let index = 0;
 
 // Task #0: entries
-result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
+result = rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
 const entries = result;
 
 // Task #1
 for await (const item of entries){
-  result = await fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
+  result = fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
     "method" : `POST`,
     "headers": {
       "Content-Type" : `application/json`
@@ -733,14 +722,11 @@ index=0;
 This will be compiled to:
 
 ```javascript
-import { rss } from "https://deno.land/x/yamlscript/globals/mod.ts";
-import { fsExtra } from "https://deno.land/x/yamlscript/globals/mod.ts";
-import { _ } from "https://deno.land/x/yamlscript/globals/mod.ts";
 let result = null;
 let index = 0;
 
 // Task #0: entries
-result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
+result = rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
 const entries = result;
 
 // Task #1: get cache
@@ -756,7 +742,7 @@ async function handleRssEntry(...args){
   }
 
   // Task #2_1  : notify
-  result = await fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
+  result = fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
     "method" : `POST`,
     "headers": {
       "Content-Type" : `application/json`
@@ -769,7 +755,7 @@ async function handleRssEntry(...args){
   });
 
   // Task #2_2
-  result = await _.assign(kv,{
+  result = _.assign(kv,{
     [args[0].links[0].href] : true
   });
 
@@ -814,12 +800,11 @@ result = await fsExtra.writeJSONFile(`./.yamlscript/cache/kv.json`,kv);
 This will be compiled to:
 
 ```javascript
-import { assertEquals } from "https://deno.land/x/yamlscript/globals/mod.ts";
 let result = null;
 let foo = null;
 
 // Task #0
-result = await Math.max(1,9);
+result = Math.max(1,9);
 
 // Task #1: foo
 if (result===9) {
@@ -827,7 +812,7 @@ if (result===9) {
 }
 
 // Task #2
-result = await assertEquals(foo,`bar`);
+result = assertEquals(foo,`bar`);
 
 ```
 
@@ -857,7 +842,7 @@ let result = null;
 async function handler(...args){
 
   // Task #1_0
-  result = await new Response(`Hello World`);
+  result = new Response(`Hello World`);
 
   return result;
 }

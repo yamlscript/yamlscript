@@ -623,9 +623,12 @@ function transformUseCall(
       options.indent = originalIndent + 2;
       const originalTaskId = task.taskId;
       options.parentId = originalTaskId;
+      const originalGlobalsCode = options.globalsCode;
+      options.globalsCode = "";
       const functionResult = getCompiledCode(args as Task[], options);
       options.parentId = originalTaskId;
       options.indent = originalIndent;
+      options.globalsCode = originalGlobalsCode;
       // merge result
       mainFunctionBodyCode += functionResult.mainFunctionBodyCode;
       topLevelCode += functionResult.topLevelCode;
@@ -682,9 +685,13 @@ ${LAST_TASK_RESULT_NAME} = await ${task.use}\`${command}\`;\n`;
         arg,
       ) => (convertValueToLiteral(arg, options.public)))
         .join(",");
-      mainFunctionBodyCode += `${LAST_TASK_RESULT_NAME} = await ${
-        task.isInstance ? "new " : ""
-      }${use}(${argsFlatten});\n`;
+      const isSyncFunction = useType === UseType.GlobalsFunction ||
+        useType === UseType.RuntimeFunction ||
+        useType === UseType.ThirdPartyFunction ||
+        useType === UseType.UserFunction;
+      mainFunctionBodyCode += `${LAST_TASK_RESULT_NAME} = ${
+        isSyncFunction ? "" : "await "
+      }${task.isInstance ? "new " : ""}${use}(${argsFlatten});\n`;
       mainFunctionBodyCode += assignId(task, options);
     }
   }
@@ -954,9 +961,9 @@ function getInitialFileCode(ctx: StrictTasksContext): FileCode {
   // for runtime code to import modules
   let runtimetopLevelCode = "";
   // import runtime global functions
-  if (ctx.globalCode) {
-    topLevelCode += formatImportCode(ctx.globalCode, ctx);
-    runtimetopLevelCode += importCodeToDynamicImport(ctx.globalCode, ctx);
+  if (ctx.globalsCode) {
+    topLevelCode += formatImportCode(ctx.globalsCode, ctx);
+    runtimetopLevelCode += importCodeToDynamicImport(ctx.globalsCode, ctx);
   }
 
   const mainFunctionBodyCode = ``;

@@ -216,7 +216,7 @@ export function importCodeToDynamicImport(
           .replace(/;$/, "").replace('"', "").replace('"', "");
         const url = getGlobalsFrom(fromStr, options);
 
-        return `const ${importStr} = import("${url}");`;
+        return `const ${importStr} = await import("${url}");`;
       } else {
         throw new Error(`import code error ${line}`);
       }
@@ -241,7 +241,6 @@ export function getGlobalsFrom(url: string, options?: TasksContext) {
       );
 
       const globalModFilePath = resolve(currentDirname, url);
-      console.log("globalModFilePath", globalModFilePath);
       const targetPath = getDistFilePath(
         options.relativePath,
         ".js",
@@ -256,7 +255,6 @@ export function getGlobalsFrom(url: string, options?: TasksContext) {
     if (url.startsWith(".")) {
       // add global
       url = new URL(url, GLOBAL_PACKAGE_URL).href;
-      console.log("url", url);
     }
   }
   return url;
@@ -287,7 +285,7 @@ export function formatImportCode(
   ).join("\n");
   return finalCode + "\n";
 }
-export async function getGlobalCode() {
+export async function getGlobalsCode() {
   const globaModCode = await Deno.readTextFile(resolve("./globals/mod.ts"));
   // get import code start to import code end
   const startToken = "// import code start";

@@ -3,7 +3,7 @@ import { StrictEntryOptions } from "./_interface.ts";
 import { buildTasks, runTasks } from "./tasks.ts";
 import {
   getDefaultPublicContext,
-  getGlobalCode,
+  getGlobalsCode,
   parseYamlFile,
 } from "./util.ts";
 import log from "./log.ts";
@@ -28,7 +28,7 @@ export async function run(originalOptions: EntryOptions) {
       log.fatal(`parse file ${green(file)} error: ${error.message}`);
     }
     // get global code
-    const globalCode = await getGlobalCode();
+    const globalsCode = await getGlobalsCode();
     if (options.isBuild) {
       log.info("build task file:", file);
       await buildTasks(tasks, {
@@ -37,7 +37,7 @@ export async function run(originalOptions: EntryOptions) {
         public: options.public,
         indent: 0,
         shouldBuildRuntime: options.shouldBuildRuntime,
-        globalCode: globalCode,
+        globalsCode: globalsCode,
       });
     } else {
       log.info("run task file:", file);
@@ -45,7 +45,7 @@ export async function run(originalOptions: EntryOptions) {
       await runTasks(tasks, {
         indent: 0,
         public: options.public,
-        globalCode: globalCode,
+        globalsCode: globalsCode,
       });
     }
   }
