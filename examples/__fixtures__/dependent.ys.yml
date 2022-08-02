@@ -1,0 +1,10 @@
+- id: hello
+  use: defn
+  export: true
+  args:
+    - use: return
+      args: world
+- from: ./dependent2.ys.yml
+  use: foo
+- from: ./dependent3.ys.yml
+  use: bar

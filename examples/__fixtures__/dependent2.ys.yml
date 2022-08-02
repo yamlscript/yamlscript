@@ -1,0 +1,8 @@
+- id: foo
+  use: defn
+  export: true
+  args:
+    - use: return
+      args: bar
+- from: ./dependent3.ys.yml
+  use: bar

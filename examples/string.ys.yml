@@ -1,0 +1,5 @@
+- use: console.log
+  args: |
+    Hello World
+    test
+    ``

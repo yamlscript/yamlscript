@@ -1,9 +1,4 @@
-import {
-  BuildContext,
-  BuildTasksContext,
-  PublicContext,
-  TasksContext,
-} from "./interface.ts";
+import { BuildContext, PublicContext, TasksContext } from "./interface.ts";
 import {
   dirname,
   ensureDir,
@@ -14,10 +9,11 @@ import {
   relative,
   resolve,
 } from "./deps.ts";
-import { BuiltCode, TasksCode } from "./_interface.ts";
+import { BuiltCode, StrictTasksContext, TasksCode } from "./_interface.ts";
 import pkg from "./pkg.json" assert { type: "json" };
 import log from "./log.ts";
-import { DEV_FLAG, GLOBAL_PACKAGE_URL } from "./constant.ts";
+import { GLOBAL_PACKAGE_URL, SYNC_FUNCTIONS } from "./constant.ts";
+const _toString = Object.prototype.toString;
 export const get = (obj: unknown, path: string, defaultValue = undefined) => {
   const travel = (regexp: RegExp) =>
     String.prototype.split
@@ -55,7 +51,7 @@ export const getDistFilePath = (
 
 export const createDistFile = async (
   codeResult: TasksCode,
-  options: BuildTasksContext,
+  options: StrictTasksContext,
 ): Promise<BuiltCode> => {
   const moduleFilePath = getDistFilePath(
     options.relativePath,
@@ -63,24 +59,11 @@ export const createDistFile = async (
     options.dist,
   );
   await ensureDir(dirname(moduleFilePath));
-  await Deno.writeTextFile(moduleFilePath, codeResult.moduleFileCode);
+  await Deno.writeTextFile(moduleFilePath, codeResult.code);
 
-  let runtimeFilePath: string | undefined;
-
-  // check if need to create runtime file
-  if (options.shouldBuildRuntime) {
-    runtimeFilePath = getDistFilePath(
-      options.relativePath,
-      ".runtime.js",
-      options.dist,
-    );
-    await ensureDir(dirname(runtimeFilePath));
-    await Deno.writeTextFile(runtimeFilePath, codeResult.runtimeFileCode);
-  }
   return {
     ...codeResult,
-    moduleFilePath: moduleFilePath,
-    runtimeFilePath: runtimeFilePath,
+    path: moduleFilePath,
   };
 };
 export function isObject(obj: unknown): boolean {
@@ -107,17 +90,21 @@ export function getDefaultPublicContext() {
   };
   return defaultPublicContext;
 }
+const _isFunctionLike = (value: unknown): boolean =>
+  value !== null && typeof value === "function";
 
-// deno-lint-ignore ban-types
-export function isAsyncFunction(fn: Function): boolean {
-  if (
-    fn.constructor.name === "AsyncFunction"
-  ) {
-    return true;
-  } else {
+export function isAsyncFunction(use: string, value: unknown): boolean {
+  const definitelySync = SYNC_FUNCTIONS.includes(use);
+  if (definitelySync) {
     return false;
   }
+  const definitelyAsync = _isFunctionLike(value) &&
+    _toString.call(value) === "[object AsyncFunction]";
+  return (
+    definitelyAsync || true
+  );
 }
+
 export async function hasPermissionSlient(
   permission: Deno.PermissionDescriptor,
 ): Promise<boolean> {
@@ -132,17 +119,39 @@ export async function hasPermissionSlient(
     return true;
   }
 }
+/**
+ * consider template string
+ * @param code
+ * @param indent
+ * @returns
+ */
 export function withIndent(code: string, indent: number): string {
   if (!indent) {
     return code;
   }
+  let isStartTemplateString = false;
   return code.split("\n").map((line) => {
+    const matches = line.matchAll(/\\?\`/g);
+
+    let finalLine = "";
     // if line is only \n
     if (line.trim() === "") {
-      return line;
+      finalLine = line;
     } else {
-      return `${" ".repeat(indent)}${line}`;
+      if (isStartTemplateString) {
+        finalLine = line;
+      } else {
+        finalLine = `${" ".repeat(indent)}${line}`;
+      }
     }
+    for (const match of matches) {
+      if (match[0]) {
+        if (match[0][0] === "`") {
+          isStartTemplateString = !isStartTemplateString;
+        }
+      }
+    }
+    return finalLine;
   }).join(
     "\n",
   );
@@ -215,7 +224,6 @@ export function importCodeToDynamicImport(
         const fromStr = line.substring(fromStart + fromToken.length).trim()
           .replace(/;$/, "").replace('"', "").replace('"', "");
         const url = getGlobalsFrom(fromStr, options);
-
         return `const ${importStr} = await import("${url}");`;
       } else {
         throw new Error(`import code error ${line}`);
@@ -226,8 +234,7 @@ export function importCodeToDynamicImport(
 }
 export function getGlobalsFrom(url: string, options?: TasksContext) {
   if (
-    options && options.relativePath && options.dist && Deno.env.get(DEV_FLAG) &&
-    Deno.env.get(DEV_FLAG) !== "false"
+    options && options.relativePath && options.dist && options.dev
   ) {
     // dev
     // return dev url
@@ -302,3 +309,10 @@ export async function getGlobalsCode() {
     throw new Error("global/mod.ts not found");
   }
 }
+export const groupBy = function (xs: Record<string, string>[], key: string) {
+  const initGroups: Record<string, Record<string, string>[]> = {};
+  return xs.reduce(function (rv, x) {
+    (rv[x[key]] = rv[x[key]] || []).push(x);
+    return rv;
+  }, initGroups);
+};

@@ -2,6 +2,6 @@
   "brand": "YAMLScript",
   "full": "yamlscript",
   "bin": "ys",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "We use YAML syntax to define a set of tasks declaratively, YAMLScript will help you compile it into Javascript code that runs on Deno. Think about Lisp, but in YAML."
 }

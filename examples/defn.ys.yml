@@ -1,5 +1,6 @@
 - id: println
   use: defn
+  export: true
   args:
     - use: console.log
       args: $...args

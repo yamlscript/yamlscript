@@ -26,6 +26,7 @@ if (import.meta.main) {
       "-A, --all",
       "run all .ys.yml files in current working directory",
     ).globalOption("-v, --verbose", "Enable verbose output.")
+    .option("--dist <dist>", "dist directory.")
     .option(
       "-d, --dir <folde:string>",
       "run all **/*.ys.yml files in the specified directory, use , to separate multiple directories.",
@@ -49,13 +50,15 @@ if (import.meta.main) {
         files.push(...await getFilesFromGlob(["**/*.ys.yml"]));
       }
       files = getUniqueStrings(files).map(absolutePathToRelativePath);
+      const dist = options.dist || "dist";
 
       log.debug("files:", files);
       const runOptions: EntryOptions = {
         files: files as string[],
         public: await getPublicContext(),
-        isBuild: false,
+        isRun: true,
         verbose: options.verbose,
+        dist,
       };
       await run(runOptions);
     });
@@ -99,14 +102,13 @@ if (import.meta.main) {
       const verbose = options.verbose || false;
       const runOptions: EntryOptions = {
         files: files,
-        isBuild: true,
+        isRun: false,
         shouldBuildRuntime: options.runtime,
         public: await getPublicContext(),
         dist,
         verbose: verbose,
       };
       await run(runOptions);
-      log.info(`build to ${dist} success`);
     });
 
   await new Command()

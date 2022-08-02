@@ -1,0 +1,4 @@
+- from: ./defn.ys.yml
+  use: println
+  args:
+    - test

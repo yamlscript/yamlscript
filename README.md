@@ -92,8 +92,7 @@ Javascript code, which is located in the `dist` directory by default.
 This will be compiled to:
 
 ```javascript
-let result = null;
-
+undefined
 // Task #0: obj
 let obj = {
   "list": [
@@ -117,7 +116,7 @@ result = console.log(`${obj.list[0]} World`,`${obj.foo.cat}`,`${JSON.stringify(o
 # `use` is the operator name of the a task.
 # We can use any Deno runtime function here
 - use: fetch
-  args: https://jsonplaceholder.typicode.com/todos/1
+  args: https://actionsflow.github.io/test-page/reddit-sample.json
 
 # We also have some built-in functions, e.g., fetch rss feed entries
 
@@ -130,7 +129,8 @@ result = console.log(`${obj.list[0]} World`,`${obj.foo.cat}`,`${JSON.stringify(o
 
 # this will print: [2, 1]
 - use: _.uniq
-  args: [2, 1, 2]
+  args:
+    - [2, 1, 2]
 
 # use alias?
 
@@ -157,16 +157,19 @@ This will be compiled to:
 
 ```javascript
 import { extname as getExt } from "https://deno.land/std@0.149.0/path/mod.ts";
-let result = null;
-
+undefined
 // Task #0
-result = fetch(`https://jsonplaceholder.typicode.com/todos/1`);
+result = await fetch(`https://actionsflow.github.io/test-page/reddit-sample.json`);
 
 // Task #1
-result = rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
+result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
 
 // Task #2
-result = _.uniq(2,1,2);
+result = await _.uniq([
+  2,
+  1,
+  2
+]);
 
 // Task #3
 result = await getExt(`test.js`);
@@ -175,7 +178,7 @@ result = await getExt(`test.js`);
 result = assertEquals(`.js`,result);
 
 // Task #5
-result = new URL(`http://www.example.com/dogs`);
+result = await new URL(`http://www.example.com/dogs`);
 
 // Task #6
 result = assertEquals(`www.example.com`,result.hostname);
@@ -209,21 +212,20 @@ result = assertEquals(`www.example.com`,result.hostname);
 This will be compiled to:
 
 ```javascript
-let result = null;
-
+undefined
 // Task #0
-result = rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
+result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
 
 // Task #1
-result = fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
+result = await fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
   "method" : `POST`,
   "headers": {
     "Content-Type" : `application/json`
   },
   "body" : `{
-    "title": "Hello world"
-  }
-  `
+  "title": "Hello world"
+}
+`
 });
 
 ```
@@ -261,10 +263,9 @@ result = fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
 This will be compiled to:
 
 ```javascript
-let result = null;
-
+undefined
 // Task #0
-result = Math.max(1,9,5);
+result = await Math.max(1,9,5);
 
 // Task #1
 result = console.log(`${result}`);
@@ -273,7 +274,7 @@ result = console.log(`${result}`);
 result = console.log(result);
 
 // Task #3: max
-result = Math.max(1,9,5);
+result = await Math.max(1,9,5);
 const max = result;
 
 // Task #4
@@ -307,8 +308,7 @@ result = console.log(max);
 This will be compiled to:
 
 ```javascript
-let result = null;
-
+undefined
 // Task #0: num
 let num = 5;
 
@@ -357,9 +357,7 @@ result = console.log(`yes, it's true`);
 This will be compiled to:
 
 ```javascript
-let index = 0;
-let result = null;
-
+undefined
 // Task #0
 {
   const item = `foo`;
@@ -381,8 +379,8 @@ let sources = [
 
 // Task #2: loopResults
 let loopResults = [];
-for await (const item of sources){
-  result = _.multiply(item,2);
+for await (const item of await sources){
+  result = await _.multiply(item,2);
   loopResults.push(result);
   index++;
 }
@@ -419,13 +417,12 @@ index=0;
 This will be compiled to:
 
 ```javascript
-let result = null;
-
+undefined
 // Task #0: myFunction
 async function myFunction(...args){
 
   // Task #0_0
-  result = _.upperCase(args[0]);
+  result = await _.upperCase(args[0]);
 
   return result;
 }
@@ -465,9 +462,8 @@ result = assertEquals(result,`ABC`);
 This will be compiled to:
 
 ```javascript
-import { __yamlscript_create_process } from "https://deno.land/x/yamlscript/runtimes/cmd/mod.ts";
-let result = null;
-
+import { __yamlscript_create_process } from "https://deno.land/x/yamlscript@0.0.2/globals/cmd/mod.ts";
+undefined
 // Task #0: echo
 const __yamlscript_default_use_0 =  __yamlscript_create_process();
 result = await __yamlscript_default_use_0`echo Hello World`;
@@ -513,12 +509,11 @@ result = assertEquals(echo.stdout,`Hello World
 This will be compiled to:
 
 ```javascript
-let result = null;
-
+undefined
 // Task #0: errorExample
 let errorExample;
 try {
-  result = JSON.parse(`foo?bar`);
+  result = await JSON.parse(`foo?bar`);
   errorExample = result;
   result = {
     value: result,
@@ -559,8 +554,7 @@ result = assertEquals(errorExample.value.message,`Unexpected token 'o', "foo?bar
 This will be compiled to:
 
 ```javascript
-let result = null;
-
+undefined
 // Task #0
 result = new Date(`2022-07-25T00:00:00.000Z`
 );
@@ -591,8 +585,7 @@ result = assertEquals(`1658707200000`,`${result.getTime()}`);
 This will be compiled to:
 
 ```javascript
-let result = null;
-
+undefined
 // Task #0: myFunction
 async function myFunction(...args){
 
@@ -642,25 +635,23 @@ result = await myFunction();
 This will be compiled to:
 
 ```javascript
-let result = null;
-let index = 0;
-
+undefined
 // Task #0: entries
-result = rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
+result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
 const entries = result;
 
 // Task #1
-for await (const item of entries){
-  result = fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
+for await (const item of await entries){
+  result = await fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
     "method" : `POST`,
     "headers": {
       "Content-Type" : `application/json`
     },
     "body" : `{
-      "title": "${item.title.value}",
-      "link":  "${item.links[0].href}"
-    }
-    `
+  "title": "${item.title.value}",
+  "link":  "${item.links[0].href}"
+}
+`
   });
   index++;
 }
@@ -722,11 +713,9 @@ index=0;
 This will be compiled to:
 
 ```javascript
-let result = null;
-let index = 0;
-
+undefined
 // Task #0: entries
-result = rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
+result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
 const entries = result;
 
 // Task #1: get cache
@@ -742,20 +731,20 @@ async function handleRssEntry(...args){
   }
 
   // Task #2_1  : notify
-  result = fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
+  result = await fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
     "method" : `POST`,
     "headers": {
       "Content-Type" : `application/json`
     },
     "body" : `{
-      "title": "${args[0].title.value}",
-      "link":  "${args[0].links[0].href}"
-    }
-    `
+  "title": "${args[0].title.value}",
+  "link":  "${args[0].links[0].href}"
+}
+`
   });
 
   // Task #2_2
-  result = _.assign(kv,{
+  result = await _.assign(kv,{
     [args[0].links[0].href] : true
   });
 
@@ -763,7 +752,7 @@ async function handleRssEntry(...args){
 }
 
 // Task #3
-for await (const item of entries){
+for await (const item of await entries){
   result = await handleRssEntry(item);
   index++;
 }
@@ -800,11 +789,9 @@ result = await fsExtra.writeJSONFile(`./.yamlscript/cache/kv.json`,kv);
 This will be compiled to:
 
 ```javascript
-let result = null;
-let foo = null;
-
+undefined
 // Task #0
-result = Math.max(1,9);
+result = await Math.max(1,9);
 
 // Task #1: foo
 if (result===9) {
@@ -823,7 +810,7 @@ result = assertEquals(foo,`bar`);
 - from: https://deno.land/std@0.149.0/http/server.ts
   use: serve
   args: $handler
-  if: build.env.YAMLSCRIPT_DEV == "1"
+  if: build.env.YAMLSCRIPT_SERVE == "1"
 
 - use: defn
   id: handler
@@ -836,13 +823,12 @@ result = assertEquals(foo,`bar`);
 This will be compiled to:
 
 ```javascript
-let result = null;
-
+undefined
 // Task #1: handler
 async function handler(...args){
 
   // Task #1_0
-  result = new Response(`Hello World`);
+  result = await new Response(`Hello World`);
 
   return result;
 }

@@ -7,6 +7,7 @@ export interface Task {
   loop?: string | number | unknown[];
   if?: boolean | string;
   throw?: boolean;
+  export?: boolean;
 }
 export interface BuildContext {
   env: Record<string, string>;
@@ -25,7 +26,7 @@ export interface Context {
 export interface EntryOptions {
   files?: string[];
   dist?: string;
-  isBuild?: boolean;
+  isRun?: boolean;
   shouldBuildRuntime?: boolean;
   public?: PublicContext;
   verbose?: boolean;
@@ -64,18 +65,17 @@ export interface TasksContext {
   isInitLastTaskResultVariable?: boolean;
   verbose?: boolean;
   globalsCode?: string;
+  isCompileDependencies?: boolean;
+  dev?: boolean;
 }
 
-export interface RunTasksContext extends TasksContext {
-}
-
-export interface BuildTasksContext extends TasksContext {
-  dist?: string;
-  relativePath: string;
-  shouldBuildRuntime?: boolean;
-}
 export interface RunCmdOptions {
   shell?: string;
   prefix?: string;
   args?: string;
+}
+export type DependencyType = "asset" | "source";
+export interface Dependency {
+  path: string;
+  type: DependencyType;
 }

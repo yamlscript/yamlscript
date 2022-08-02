@@ -1,0 +1,6 @@
+- use: console.log
+  args: start delay
+- use: await async.delay
+  args: 1000
+- use: console.log
+  args: delayed

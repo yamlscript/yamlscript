@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "test": "deno test --allow-read --allow-write --allow-run --allow-env --allow-net && deno run -A ys.ts run -A",
+    "test": "deno test -A && YAMLSCRIPT_DEV=1 deno run -A ys.ts run -A",
     "test:compile": "deno test -A tasks.test.ts"
   },
   "fmt": {

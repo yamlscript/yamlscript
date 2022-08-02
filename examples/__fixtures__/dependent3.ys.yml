@@ -1,0 +1,6 @@
+- id: bar
+  use: defn
+  export: true
+  args:
+    - use: return
+      args: fish

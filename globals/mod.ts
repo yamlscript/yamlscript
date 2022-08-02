@@ -25,6 +25,7 @@ import * as path from "https://deno.land/std@0.149.0/path/mod.ts";
 import * as fs from "https://deno.land/std@0.149.0/fs/mod.ts";
 import * as dotenv from "https://deno.land/std@0.149.0/dotenv/mod.ts";
 import * as datetime from "https://deno.land/std@0.149.0/datetime/mod.ts";
+import * as async from "https://deno.land/std@0.150.0/async/mod.ts";
 import env from "./env.ts";
 
 // import code end
@@ -43,6 +44,7 @@ export {
   assertRejects,
   assertStringIncludes,
   assertThrows,
+  async,
   datetime,
   dotenv,
   env,

@@ -24,15 +24,14 @@ export enum Level {
 }
 export interface FileCode {
   topLevelCode: string;
-  runtimetopLevelCode: string;
   mainFunctionBodyCode: string;
-  mainFunctionBodyTopLevelCode: string;
+  postTopLevelCode: string;
+  functions: string[];
 }
 
 export interface LiteralCode {
   topLevelCode?: string;
-  runtimetopLevelCode?: string;
-  mainFunctionBodyTopLevelCode?: string;
+  postTopLevelCode?: string;
   mainFunctionBodyCode?: string;
   functions?: string[];
   subTasks?: LiteralCode[];
@@ -56,31 +55,26 @@ export interface ParseUseResult {
 }
 export interface StrictLiteralCode extends LiteralCode {
   topLevelCode: string;
-  runtimetopLevelCode: string;
   mainFunctionBodyCode: string;
-  mainFunctionBodyTopLevelCode: string;
+  postTopLevelCode: string;
   functions: string[];
   subTasks: LiteralCode[];
   infoLog: string;
   debugLog: string;
 }
 export interface TasksCode {
-  moduleFileCode: string;
-  runtimeFunctionBodyCode: string;
-  runtimeFileCode: string;
+  code: string;
   topLevelCode: string;
-  runtimetopLevelCode: string;
+  postTopLevelCode: string;
+  functions: string[];
   mainFunctionBodyCode: string;
 }
 export interface TasksResult extends TasksCode {
   tasksMetaResults: MetaResult[];
 }
 export interface BuiltCode {
-  moduleFileCode: string;
-  moduleFilePath: string;
-  runtimeFileCode: string;
-  runtimeFilePath?: string;
-  runtimeFunctionBodyCode: string;
+  code: string;
+  path: string;
 }
 
 export interface StrictTasksContext extends TasksContext {
@@ -91,6 +85,9 @@ export interface StrictTasksContext extends TasksContext {
   isInitIndexVariable: boolean;
   isInitLastTaskResultVariable: boolean;
   globalsCode: string;
+  relativePath: string;
+  isCompileDependencies: boolean;
+  dist: string;
 }
 export interface StrictTask extends Task {
   args: unknown[];
@@ -107,7 +104,7 @@ export interface GetDefaultTaskOptionsOptions {
 export interface StrictEntryOptions extends EntryOptions {
   files: string[];
   dist: string;
-  isBuild: boolean;
+  isRun: boolean;
   shouldBuildRuntime: boolean;
   public: PublicContext;
 }

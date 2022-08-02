@@ -2,6 +2,7 @@ import {
   buildTasks,
   getDefaultTaskOptions,
   getDefaultTasksContext,
+  getDependencies,
   runTasks,
   transformMeta,
 } from "./tasks.ts";
@@ -23,11 +24,12 @@ Deno.test("getCompiledCode tasks #1", async () => {
   ], {
     dist: cacheDist,
     relativePath: "./tast1.yml",
+    dev: true,
   });
   const expected = await Deno.readTextFile(
     "./examples/__fixtures__/tast1.js",
   );
-  assertEquals(result.moduleFileCode, expected);
+  assertEquals(result.code, expected);
 });
 Deno.test("getCompiledCode tasks loop #2", async () => {
   const result = await buildTasks([
@@ -47,11 +49,12 @@ Deno.test("getCompiledCode tasks loop #2", async () => {
   ], {
     dist: cacheDist,
     relativePath: "./tast2.yml",
+    dev: true,
   });
   const expected = await Deno.readTextFile(
     "./examples/__fixtures__/tast2.js",
   );
-  assertEquals(result.moduleFileCode, expected);
+  assertEquals(result.code, expected);
 });
 Deno.test("getCompiledCode tasks #3", async () => {
   const result = await buildTasks([
@@ -67,11 +70,12 @@ Deno.test("getCompiledCode tasks #3", async () => {
   ], {
     dist: cacheDist,
     relativePath: "./tast3.yml",
+    dev: true,
   });
   const expected = await Deno.readTextFile(
     "./examples/__fixtures__/tast3.js",
   );
-  assertEquals(result.moduleFileCode, expected);
+  assertEquals(result.code, expected);
 });
 Deno.test("getCompiledCode full tasks #4", async () => {
   const tasks = await parseYamlFile(
@@ -80,15 +84,16 @@ Deno.test("getCompiledCode full tasks #4", async () => {
   const result = await buildTasks(tasks, {
     dist: cacheDist,
     relativePath: "./full.ys.yml",
+    dev: true,
   });
   // const expected = await Deno.readTextFile("./__fixtures__/tast3.js");
-  // assertEquals(result.moduleFileCode, expected);
+  // assertEquals(result.code, expected);
 });
 Deno.test("test if condition #5", async () => {
   const tasks = await parseYamlFile(
     "./examples/if.ys.yml",
   ) as Task[];
-  await runTasks(tasks);
+  await runTasks(tasks, { dev: true });
 });
 
 Deno.test("getCompiledCode tasks #6", async () => {
@@ -103,12 +108,13 @@ Deno.test("getCompiledCode tasks #6", async () => {
   ], {
     dist: cacheDist,
     relativePath: "./tast6.yml",
+    dev: true,
   });
   // TODO
   // const expected = await Deno.readTextFile(
   //   "./examples/__fixtures__/tast6.js",
   // );
-  // assertEquals(result.moduleFileCode, expected);
+  // assertEquals(result.code, expected);
 });
 Deno.test("getCompiledCode tasks #7", async () => {
   const result = await buildTasks([
@@ -118,11 +124,12 @@ Deno.test("getCompiledCode tasks #7", async () => {
   ], {
     dist: cacheDist,
     relativePath: "./tast7.yml",
+    dev: true,
   });
   const expected = await Deno.readTextFile(
     "./examples/__fixtures__/tast7.js",
   );
-  assertEquals(result.moduleFileCode, expected);
+  assertEquals(result.code, expected);
 });
 
 Deno.test("transformMeta tasks#8", () => {
@@ -174,4 +181,14 @@ Deno.test("transformMeta tasks#10", () => {
     "",
   );
   assertEquals(meta.use, '"Hello".slice');
+});
+
+Deno.test("test get dependencies #11", async () => {
+  const result = await getDependencies([
+    {
+      from: "./examples/__fixtures__/dependent.ys.yml",
+      use: "hello",
+    },
+  ]);
+  assertEquals(result.length, 3);
 });

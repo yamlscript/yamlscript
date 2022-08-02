@@ -6,6 +6,6 @@ export async function feed(url: string): Promise<Feed> {
   const feed = await parseFeed(xml);
   return feed;
 }
-export function entries(url: string): Promise<FeedEntry[]> {
-  return feed(url).then((result) => result.entries);
+export async function entries(url: string): Promise<FeedEntry[]> {
+  return await feed(url).then((result) => result.entries);
 }
