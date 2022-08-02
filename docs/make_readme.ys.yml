@@ -30,7 +30,7 @@
       args:
         title: $title
         source: $sourceContent
-        target: ${targetCode.topLevelCode}${targetCode.mainFunctionBodyTopLevelCode}${targetCode.mainFunctionBodyCode}
+        target: ${targetCode.topLevelCode}${targetCode.mainFunctionBodyCode}
 
 # get simple usage sources and targets
 - id: simpleUsageFiles
