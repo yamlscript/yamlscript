@@ -165,7 +165,7 @@ result = await fetch(`https://actionsflow.github.io/test-page/reddit-sample.json
 result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
 
 // Task #2
-result = await _.uniq([
+result = _.uniq([
   2,
   1,
   2
@@ -178,7 +178,7 @@ result = await getExt(`test.js`);
 result = assertEquals(`.js`,result);
 
 // Task #5
-result = await new URL(`http://www.example.com/dogs`);
+result = new URL(`http://www.example.com/dogs`);
 
 // Task #6
 result = assertEquals(`www.example.com`,result.hostname);
@@ -265,7 +265,7 @@ This will be compiled to:
 ```javascript
 
 // Task #0
-result = await Math.max(1,9,5);
+result = Math.max(1,9,5);
 
 // Task #1
 result = console.log(`${result}`);
@@ -274,7 +274,7 @@ result = console.log(`${result}`);
 result = console.log(result);
 
 // Task #3: max
-result = await Math.max(1,9,5);
+result = Math.max(1,9,5);
 const max = result;
 
 // Task #4
@@ -380,7 +380,7 @@ let sources = [
 // Task #2: loopResults
 let loopResults = [];
 for await (const item of await sources){
-  result = await _.multiply(item,2);
+  result = _.multiply(item,2);
   loopResults.push(result);
   index++;
 }
@@ -422,7 +422,7 @@ This will be compiled to:
 async function myFunction(...args){
 
   // Task #0_0
-  result = await _.upperCase(args[0]);
+  result = _.upperCase(args[0]);
 
   return result;
 }
@@ -744,7 +744,7 @@ async function handleRssEntry(...args){
   });
 
   // Task #2_2
-  result = await _.assign(kv,{
+  result = _.assign(kv,{
     [args[0].links[0].href] : true
   });
 
@@ -791,7 +791,7 @@ This will be compiled to:
 ```javascript
 
 // Task #0
-result = await Math.max(1,9);
+result = Math.max(1,9);
 
 // Task #1: foo
 if (result===9) {

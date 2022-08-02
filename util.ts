@@ -95,6 +95,10 @@ const _isFunctionLike = (value: unknown): boolean =>
 
 export function isAsyncFunction(use: string, value: unknown): boolean {
   const definitelySync = SYNC_FUNCTIONS.includes(use);
+  // lodash
+  if (use.startsWith("_.")) {
+    return false;
+  }
   if (definitelySync) {
     return false;
   }

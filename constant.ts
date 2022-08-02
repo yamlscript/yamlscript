@@ -43,4 +43,7 @@ export const SYNC_FUNCTIONS = [
   "assertEquals",
   "assert",
   "Date",
+  "URL",
+  "Math.max",
+  "Math.min",
 ];
