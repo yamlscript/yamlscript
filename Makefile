@@ -81,7 +81,7 @@ site:
 .Phony: devsite
 devsite:
 	@echo "Generating site..."
-	YAMLSCRIPT_DEV=1 deno run -A ys.ts run docs/make_site.ys.yml
+	YAMLSCRIPT_DEV=1 YAMLSCRIPT_SERVE=1 deno run -A ys.ts run docs/make_site.ys.yml
 	@echo "Done."
 	
 .Phony: buildsite
