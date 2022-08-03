@@ -1071,12 +1071,12 @@ function getInitialFileCode(ctx: StrictTasksContext): FileCode {
 
   if (ctx.globalsCode) {
     topLevelCode += formatImportCode(ctx.globalsCode, ctx);
+    topLevelCode +=
+      `const __dirname = path.resolve(path.relative("${ctx.dist}",path.dirname(path.fromFileUrl(import.meta.url))));\n`;
   }
 
   // add constant code
   // __dirname variables
-  topLevelCode +=
-    `const __dirname = path.resolve(path.relative("${ctx.dist}",path.dirname(path.fromFileUrl(import.meta.url))));\n`;
 
   const mainFunctionBodyCode = ``;
   return {
