@@ -28,7 +28,7 @@ export const GLOBAL_RUNTIME_CMD_PACKAGE_URL =
 
 export const TEMPLATE_REGEX = /(\\)?\$\{([^\{\}\\]+)\}/g;
 
-export const DEV_FLAG = pkg.full.toUpperCase() + "_DEV";
+export const DEV_FLAG = pkg.bin.toUpperCase() + "_DEV";
 
 // tokens
 

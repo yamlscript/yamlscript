@@ -58,34 +58,34 @@ d:
 .Phony: readme
 readme:
 	@echo "Generating README.md..."
-	YAMLSCRIPT_DEV=1 deno run -A ys.ts run docs/make_readme.ys.yml
+	YS_DEV=1 deno run -A ys.ts run docs/make_readme.ys.yml
 	@echo "Done."
 
 .Phony: buildreadme
 buildreadme:
 	@echo "Generating README.md..."
-	YAMLSCRIPT_DEV=1 deno run -A ys.ts build docs/make_readme.ys.yml --runtime
+	YS_DEV=1 deno run -A ys.ts build docs/make_readme.ys.yml --runtime
 	@echo "Done."
 
 
 .Phony: deno-deploy-hello-world
 deno-deploy-hello-world:
-	YAMLSCRIPT_DEV=1 deno run -A ys.ts build docs/advanced/05_deno_deploy.ys.yml
+	YS_DEV=1 deno run -A ys.ts build docs/advanced/05_deno_deploy.ys.yml
 
 
 .Phony: site
 site:
 	@echo "Generating site..."
-	YAMLSCRIPT_DEV=1 deno run -A ys.ts run docs/make_site.ys.yml
+	YS_DEV=1 deno run -A ys.ts run docs/make_site.ys.yml
 	@echo "Done."
 .Phony: devsite
 devsite:
 	@echo "Generating site..."
-	YAMLSCRIPT_DEV=1 YAMLSCRIPT_SERVE=1 deno run -A ys.ts run docs/make_site.ys.yml
+	YS_DEV=1 YS_SERVE=1 deno run -A ys.ts run docs/make_site.ys.yml
 	@echo "Done."
 	
 .Phony: buildsite
 buildsite:
 	@echo "Generating site..."
-	YAMLSCRIPT_DEV=1 deno run -A ys.ts build docs/make_site.ys.yml
+	YS_DEV=1 deno run -A ys.ts build docs/make_site.ys.yml
 	@echo "Done."

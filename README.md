@@ -810,7 +810,7 @@ result = assertEquals(foo,`bar`);
 - from: https://deno.land/std@0.149.0/http/server.ts
   use: serve
   args: $handler
-  if: build.env.YAMLSCRIPT_SERVE == "1"
+  if: build.env.YS_SERVE == "1"
 
 - use: defn
   id: handler

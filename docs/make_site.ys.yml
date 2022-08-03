@@ -81,7 +81,7 @@
 
 # build den deploy code
 
-- use: :YAMLSCRIPT_DEV=1 deno run -A ys.ts build ./docs/site.ys.yml
+- use: :YS_DEV=1 deno run -A ys.ts build ./docs/site.ys.yml
 
-- if: build.env.YAMLSCRIPT_SERVE == "1"
+- if: build.env.YS_SERVE == "1"
   use: :deno run -A ./dist/docs/site.js
