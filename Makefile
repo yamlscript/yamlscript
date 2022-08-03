@@ -79,12 +79,12 @@ dev-hello-world:
 .Phony: site
 site:
 	@echo "Generating site..."
-	YS_DEV=1 deno run -A ys.ts run docs/make_site.ys.yml
+	YS_DEV=1 YS_NO_SERVE=1 deno run -A ys.ts run docs/make_site.ys.yml
 	@echo "Done."
 .Phony: devsite
 devsite:
 	@echo "Generating site..."
-	YS_DEV=1 YS_SERVE=1 deno run -A ys.ts run docs/make_site.ys.yml
+	YS_DEV=1 deno run -A ys.ts run docs/make_site.ys.yml
 	@echo "Done."
 	
 .Phony: buildsite
