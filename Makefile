@@ -70,13 +70,13 @@ buildreadme:
 
 .Phony: deno-deploy-hello-world
 deno-deploy-hello-world:
-	deno run -A ys.ts build docs/advanced/05_deno_deploy.ys.yml
+	YAMLSCRIPT_DEV=1 deno run -A ys.ts build docs/advanced/05_deno_deploy.ys.yml
 
 
 .Phony: site
 site:
 	@echo "Generating site..."
-	deno run -A ys.ts run docs/make_site.ys.yml
+	YAMLSCRIPT_DEV=1 deno run -A ys.ts run docs/make_site.ys.yml
 	@echo "Done."
 .Phony: devsite
 devsite:
@@ -87,5 +87,5 @@ devsite:
 .Phony: buildsite
 buildsite:
 	@echo "Generating site..."
-	deno run -A ys.ts build docs/make_site.ys.yml
+	YAMLSCRIPT_DEV=1 deno run -A ys.ts build docs/make_site.ys.yml
 	@echo "Done."

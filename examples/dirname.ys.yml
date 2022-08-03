@@ -1,0 +1,3 @@
+- use: console.log
+  args:
+    - ${__dirname}/test.txt

@@ -279,7 +279,7 @@ export function formatImportCode(
       const fromToken = " from ";
       const fromStart = line.indexOf(fromToken);
 
-      if (fromStart !== -1) {
+      if (fromStart > -1) {
         const importStr = line.substring(
           0,
           fromStart,
@@ -297,7 +297,9 @@ export function formatImportCode(
   return finalCode + "\n";
 }
 export async function getGlobalsCode() {
-  const globaModCode = await Deno.readTextFile(resolve("./globals/mod.ts"));
+  const globaModCode = await Deno.readTextFile(
+    new URL("./globals/mod.ts", import.meta.url),
+  );
   // get import code start to import code end
   const startToken = "// import code start";
   const endToken = "// import code end";
