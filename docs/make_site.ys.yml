@@ -81,7 +81,7 @@
 
 # build den deploy code
 
-- use: :YS_DEV=1 deno run -A ys.ts build ./docs/site.ys.yml
+- use: :YS_DEV=1 YS_NO_SERVE=0 deno run -A ys.ts build ./docs/site.ys.yml
 
 - if: build.env.YS_NO_SERVE !== "1"
   use: :deno run -A ./dist/docs/site.js
