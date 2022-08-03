@@ -810,7 +810,7 @@ result = assertEquals(foo,`bar`);
 - from: https://deno.land/std@0.149.0/http/server.ts
   use: serve
   args: $handler
-  if: build.env.YS_SERVE == "1"
+  if: build.env.YS_NO_SERVE !== "1"
 
 - use: defn
   id: handler
@@ -823,6 +823,10 @@ result = assertEquals(foo,`bar`);
 This will be compiled to:
 
 ```javascript
+import { serve } from "https://deno.land/std@0.149.0/http/server.ts";
+
+// Task #0
+result = await serve(handler);
 
 // Task #1: handler
 async function handler(...args){

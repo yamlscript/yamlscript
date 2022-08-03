@@ -71,6 +71,9 @@ buildreadme:
 .Phony: deno-deploy-hello-world
 deno-deploy-hello-world:
 	YS_DEV=1 deno run -A ys.ts build docs/advanced/05_deno_deploy.ys.yml
+.Phony: dev-hello-world
+dev-hello-world:
+	YS_DEV=1 deno run -A ys.ts run docs/advanced/05_deno_deploy.ys.yml
 
 
 .Phony: site

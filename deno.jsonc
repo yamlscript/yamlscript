@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "test": "deno test -A && YS_DEV=1 deno run -A ys.ts run -A",
+    "test": "deno test -A && YS_NO_SERVE=1 YS_DEV=1 deno run -A ys.ts run -A",
     "test:compile": "deno test -A tasks.test.ts"
   },
   "fmt": {
