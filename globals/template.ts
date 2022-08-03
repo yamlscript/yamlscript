@@ -14,5 +14,7 @@ export async function copy(
   const templateString = await Deno.readTextFile(fromFile);
   const rendered = render(templateString, data);
   // write file
-  await Deno.writeTextFile(toFile, rendered);
+  await Deno.writeTextFile(toFile, rendered, {
+    overwrite: true,
+  });
 }
