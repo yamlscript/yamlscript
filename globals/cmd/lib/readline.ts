@@ -1,4 +1,4 @@
-import { BufReader, concat } from "../deps.ts";
+import { BufReader, concat } from "../../deps.ts";
 
 export async function* readLines(
   reader: Deno.Reader,

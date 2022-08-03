@@ -1,4 +1,4 @@
-import { colors, shq } from "./deps.ts";
+import { colors, shq } from "../deps.ts";
 // global settings
 export type GlobalOptions = typeof colors & {
   get mainModule(): string;

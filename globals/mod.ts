@@ -24,6 +24,7 @@ import {
 import * as fsExtra from "./fs_extra.ts";
 import * as rss from "./rss.ts";
 import * as YAMLScript from "./yamlscript.ts";
+import * as template from "./template.ts";
 import env from "./env.ts";
 // import code end
 
@@ -49,6 +50,7 @@ export {
   fsExtra,
   path,
   rss,
+  template,
   TOML,
   YAML,
   YAMLScript,

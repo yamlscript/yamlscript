@@ -1,4 +1,4 @@
-import { Deferred, deferred, writeAll } from "./deps.ts";
+import { Deferred, deferred, writeAll } from "../deps.ts";
 import { readLines } from "./lib/readline.ts";
 import { ProcessError } from "./process_error.ts";
 import { ProcessOutput } from "./process_output.ts";

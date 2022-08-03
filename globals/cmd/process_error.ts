@@ -1,4 +1,4 @@
-import { colors } from "./deps.ts";
+import { colors } from "../deps.ts";
 import { getExitCodeInfo } from "./lib/exit_code_info.ts";
 import { ProcessOutputOptions } from "./process_output.ts";
 

@@ -1,4 +1,4 @@
-import { shq } from "./deps.ts";
+import { shq } from "../deps.ts";
 
 export function quote(
   pieces: TemplateStringsArray,

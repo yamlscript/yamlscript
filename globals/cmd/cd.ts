@@ -1,4 +1,4 @@
-import { bold, brightYellow, join, sep, white } from "./deps.ts";
+import { bold, brightYellow, join, sep, white } from "../deps.ts";
 import { createError, DzxErrorOptions } from "./lib/error.ts";
 import { __yamlscript_global_options } from "./global_options.ts";
 

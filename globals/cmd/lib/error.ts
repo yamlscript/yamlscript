@@ -1,4 +1,4 @@
-import { red } from "../deps.ts";
+import { red } from "../../deps.ts";
 
 export interface DzxErrorOptions {
   // deno-lint-ignore ban-types

@@ -82,7 +82,7 @@
     - $item
 # use mustache to render readme.template.md
 - id: readmeContent
-  from: https://esm.sh/mustache@4.2.0
+  from: https://jspm.dev/mustache@4.2.0
   use: default.render
   args:
     - $readmeTemplate
