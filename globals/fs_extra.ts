@@ -1,4 +1,11 @@
-import { copy as copyFn, ensureFile, parse, stringify } from "../deps.ts";
+import {
+  copy as copyFn,
+  dirname,
+  ensureDir,
+  ensureFile,
+  parse,
+  stringify,
+} from "../deps.ts";
 
 const readTextFile = Deno.readTextFile;
 const writeTextFile = Deno.writeTextFile;
@@ -49,10 +56,12 @@ export async function ensureAndWriteTextFile(
   await writeTextFile(path, data);
 }
 
-// copy with overwrite true
+// copy with overwrite true, and ensure target dir exists
 export async function copy(
   src: string,
   dest: string,
 ): Promise<void> {
+  // ensure target dir exists
+  await ensureDir(dirname(dest));
   await copyFn(src, dest, { overwrite: true });
 }
