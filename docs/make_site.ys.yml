@@ -20,6 +20,10 @@
   use: import
   args:
     - CSS
+- from: https://jspm.dev/prismjs@1.27.0
+  use: import
+  args:
+    - default as Prism
 - from: https://jspm.dev/prismjs@1.27.0/components/prism-typescript?no-check
   use: false
 - from: https://jspm.dev/prismjs@1.27.0/components/prism-yaml?no-check
