@@ -1,17 +1,14 @@
 import {
-  buildTasks,
   getDefaultTaskOptions,
   getDefaultTasksContext,
   getDependencies,
+  runJs,
   runTasks,
   transformMeta,
 } from "./tasks.ts";
 import { Task } from "./interface.ts";
-import { assertEquals } from "./deps.ts";
+import { assertEquals, assertRejects } from "./deps.ts";
 import { parseYamlFile } from "./util.ts";
-import pkg from "./pkg.json" assert { type: "json" };
-
-const cacheDist = "." + pkg.full + "/__fixtures__";
 
 Deno.test("test if condition #5", async () => {
   const tasks = await parseYamlFile(
@@ -79,4 +76,10 @@ Deno.test("test get dependencies #11", async () => {
     },
   ]);
   assertEquals(result.length, 3);
+});
+
+Deno.test("runjs #12", async () => {
+  await assertRejects(() => {
+    return runJs("./examples/__fixtures__/throw.js");
+  }, "This is an error");
 });

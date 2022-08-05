@@ -983,8 +983,12 @@ export async function runJs(path: string) {
   const p = Deno.run({
     cmd: ["deno", "run", "-A", "--unstable", path],
   });
-  await p.status();
+  const { code } = await p.status();
   p.close();
+
+  if (code !== 0) {
+    Deno.exit(code);
+  }
 }
 export async function runTasks(tasks: Task[], options?: TasksContext) {
   const buildResult = await buildTasks(tasks, options);
