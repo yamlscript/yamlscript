@@ -117,9 +117,12 @@ if (import.meta.main) {
     .description(pkg.description)
     .type("log-level", new EnumType(["debug", "info", "warn", "error"]))
     .globalOption("-v, --verbose", "Enable verbose output.")
-    // .globalOption("-l, --log-level <level:log-level>", "Set log level.", {
-    //   default: "info" as const,
-    // })
+    .action(function () {
+      this.showHelp();
+    }).example(
+      "run file",
+      "ys run file.ys.yml\n\nys run **/*.ys.yml",
+    )
     .command("run", runCommand)
     .command("build", buildCommand)
     .parse(Deno.args);
