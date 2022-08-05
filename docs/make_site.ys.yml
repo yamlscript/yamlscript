@@ -20,21 +20,20 @@
   use: import
   args:
     - CSS
-- from: https://jspm.dev/prismjs@1.27.0
+
+- from: https://esm.sh/prismjs@1.27.0/components/prism-typescript?no-check
+  use: false
+- from: https://esm.sh/prismjs@1.27.0/components/prism-yaml?no-check
+  use: false
+- from: https://deno.land/x/gfm@0.1.22/deps.ts
   use: import
   args:
-    - default as Prism
-- from: https://jspm.dev/prismjs@1.27.0/components/prism-typescript?no-check
-  use: false
-- from: https://jspm.dev/prismjs@1.27.0/components/prism-yaml?no-check
-  use: false
-
+    - Prism
 - id: makeSiteSource
   use: Deno.readTextFile
   args: ./docs/make_site.ys.yml
 - id: makeSiteHTML
-  from: https://jspm.dev/prismjs@1.27.0
-  use: default.highlight
+  use: Prism.highlight
   args:
     - $makeSiteSource
     - $Prism.languages.yaml
@@ -44,7 +43,7 @@
   args: ./docs/site.ys.yml
 - id: siteHTML
   from: https://jspm.dev/prismjs@1.27.0
-  use: default.highlight
+  use: Prism.highlight
   args:
     - $siteSource
     - $Prism.languages.yaml
@@ -53,8 +52,7 @@
   use: Deno.readTextFile
   args: ./.github/workflows/deploy-to-deno-deploy.yml
 - id: githubActionsSourceHTML
-  from: https://jspm.dev/prismjs@1.27.0
-  use: default.highlight
+  use: Prism.highlight
   args:
     - $githubActionsSource
     - $Prism.languages.yaml
@@ -66,8 +64,7 @@
 
 # use mustache to render readme.template.md
 - id: indexHTML
-  from: https://jspm.dev/mustache@4.2.0
-  use: default.render
+  use: template.render
   args:
     - $indexTemplate
     - siteMeta: $siteMeta
