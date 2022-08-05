@@ -27,7 +27,7 @@ export async function run(originalOptions: EntryOptions) {
       log.fatal(`parse file ${green(file)} error: ${error.message}`);
     }
 
-    log.info("build task file:", file);
+    log.info("build task source file:", file);
     const buildResult = await buildTasks(tasks, {
       relativePath: file,
       dist: options.dist,

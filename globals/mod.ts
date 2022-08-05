@@ -26,6 +26,8 @@ import * as rss from "./rss.ts";
 import * as YAMLScript from "./yamlscript.ts";
 import * as template from "./template.ts";
 import env from "./env.ts";
+import * as user from "./user.ts";
+import * as os from "./os.ts";
 // import code end
 
 export {
@@ -48,10 +50,12 @@ export {
   env,
   fs,
   fsExtra,
+  os,
   path,
   rss,
   template,
   TOML,
+  user,
   YAML,
   YAMLScript,
 };

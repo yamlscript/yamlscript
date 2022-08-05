@@ -29,6 +29,7 @@ import {
   isCommand,
   isVariable,
   removeRootQuotes,
+  templateWithKnownKeys,
   variableValueToVariable,
 } from "./template.ts";
 import * as globals from "./globals/mod.ts";
@@ -256,7 +257,13 @@ export function transformMeta(
   let isExplicitAsync = false;
   let exportName: string | undefined;
   if (rawUse !== false) {
-    use = templateCompiledString(rawUse as string, options.public);
+    if (isCommand(rawUse as string)) {
+      use = removeRootQuotes(
+        templateWithKnownKeys(rawUse as string, options.public),
+      );
+    } else {
+      use = templateCompiledString(rawUse as string, options.public);
+    }
   } else {
     useType = UseType.None;
   }
@@ -960,7 +967,7 @@ export async function buildTasks(
       codeResult,
       getDefaultTasksContext(options),
     );
-    log.info("build task file:", result.path, "success");
+    log.info("build task dist file:", result.path, "success");
     return result;
   } else {
     const result = await createDistFile(
@@ -974,7 +981,7 @@ export async function buildTasks(
 
 export async function runJs(path: string) {
   const p = Deno.run({
-    cmd: ["deno", "run", "-A", path],
+    cmd: ["deno", "run", "-A", "--unstable", path],
   });
   await p.status();
   p.close();

@@ -40,9 +40,9 @@ export function isVariable(str: string) {
 export function isCommand(str: string | undefined) {
   if (str && str.length > 1) {
     return str[0] === ":" &&
-      /[^#%0-9\0-\f "$&'();<>\`|\x7f-\xff]/.test(
-        str[1],
-      );
+        /[^#%0-9\0-\f "$&'();<>\`|\x7f-\xff]/.test(
+          str[1],
+        ) || str[1] === "$";
   } else {
     return false;
   }

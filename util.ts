@@ -46,7 +46,9 @@ export const getDistFilePath = (
   const dist = distDir || "dist";
   const moduleFilerelativePath = changeExt(relativePath, ext);
   const moduleFilePath = resolve(dist, moduleFilerelativePath);
-  return moduleFilePath;
+  // to relative path
+  const finalRelativePath = relative(Deno.cwd(), moduleFilePath);
+  return finalRelativePath;
 };
 
 export const createDistFile = async (
