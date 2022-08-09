@@ -3,7 +3,7 @@
 - use: :make readme
 
 - id: siteMeta
-  use: fsExtra.readJSONFile
+  use: fs.readJSONFile
   args: ./pkg.json
 
 - id: readmeContent
@@ -75,7 +75,7 @@
       githubActionsSourceHTML: $githubActionsSourceHTML
 
 # write to public/index.html
-- use: fsExtra.ensureAndWriteTextFile
+- use: fs.writeTextFile
   args:
     - public/index.html
     - $indexHTML

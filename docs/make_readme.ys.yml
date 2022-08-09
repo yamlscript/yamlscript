@@ -16,7 +16,7 @@
       use: Deno.readTextFile
       args: ${args[0]}
     - id: sourceTasks
-      use: fsExtra.readYAMLFile
+      use: fs.readYAMLFile
       args: ${args[0]}
     - id: targetCode
       use: YAMLScript.getCompiledCode

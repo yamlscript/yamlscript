@@ -5,7 +5,7 @@
 
 - name: get cache
   id: kv
-  use: fsExtra.readJSONFileWithDefaultValue
+  use: fs.readJSONFileWithDefaultValue
   args:
     - ./.yamlscript/cache/kv.json
     - ${}
@@ -38,7 +38,7 @@
   args: $item
 
 - name: set to cache
-  use: fsExtra.writeJSONFile
+  use: fs.writeJSONFile
   args:
     - ./.yamlscript/cache/kv.json
     - $kv

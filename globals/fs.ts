@@ -8,7 +8,9 @@ import {
 } from "../deps.ts";
 
 const readTextFile = Deno.readTextFile;
-const writeTextFile = Deno.writeTextFile;
+const writeTextFileFn = Deno.writeTextFile;
+// re export fs functions
+export { ensureDir, ensureFile };
 
 export const readJSONFile = async (path: string): Promise<unknown> => {
   const content = await readTextFile(path);
@@ -25,12 +27,18 @@ export const readJSONFileWithDefaultValue = async (
     return defaultValue;
   }
 };
+export const writeTextFile = async (
+  path: string,
+  content: string,
+): Promise<void> => {
+  await ensureFile(path);
+  await writeTextFileFn(path, content);
+};
 export const writeJSONFile = async (
   path: string,
   data: unknown,
 ): Promise<void> => {
   const content = JSON.stringify(data);
-  await ensureFile(path);
   await writeTextFile(path, content);
 };
 
@@ -43,17 +51,7 @@ export async function writeYAMLFile(
   data: Record<string, unknown>,
 ): Promise<void> {
   const content = stringify(data);
-  await ensureFile(path);
   await writeTextFile(path, content);
-}
-
-// write text file ensure path
-export async function ensureAndWriteTextFile(
-  path: string,
-  data: string,
-): Promise<void> {
-  await ensureFile(path);
-  await writeTextFile(path, data);
 }
 
 // copy with overwrite true, and ensure target dir exists
