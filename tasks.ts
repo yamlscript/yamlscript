@@ -197,6 +197,9 @@ export async function getDependencies(
     const { from: rawFrom, use: rawUse } = tasks[taskIndex];
     let use = "";
     if (typeof rawUse === "string") {
+      if (isCommand(rawUse)) {
+        continue;
+      }
       use = templateCompiledString(rawUse, options.public);
     }
     if (use === "defn") {

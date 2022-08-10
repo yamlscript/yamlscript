@@ -182,7 +182,6 @@ function variableToEs6TemplateStringOnlyForKnownKeys(
     // temply treat it as runtime
     return result;
   }
-
   try {
     result = getExpressResult(exp, locals);
   } catch (e) {
