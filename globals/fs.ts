@@ -1,16 +1,14 @@
-import {
-  copy as copyFn,
-  dirname,
+import { fs, path, YAML } from "./deps.ts";
+const {
+  copy: copyFn,
   ensureDir,
   ensureFile,
-  parse,
-  stringify,
-} from "../deps.ts";
-
+  ensureSymlink,
+} = fs;
 const readTextFile = Deno.readTextFile;
 const writeTextFileFn = Deno.writeTextFile;
 // re export fs functions
-export { ensureDir, ensureFile };
+export { ensureDir, ensureFile, ensureSymlink };
 
 export const readJSONFile = async (path: string): Promise<unknown> => {
   const content = await readTextFile(path);
@@ -44,13 +42,13 @@ export const writeJSONFile = async (
 
 export async function readYAMLFile(path: string): Promise<unknown> {
   const content = await readTextFile(path);
-  return parse(content);
+  return YAML.parse(content);
 }
 export async function writeYAMLFile(
   path: string,
   data: Record<string, unknown>,
 ): Promise<void> {
-  const content = stringify(data);
+  const content = YAML.stringify(data);
   await writeTextFile(path, content);
 }
 
@@ -60,6 +58,6 @@ export async function copy(
   dest: string,
 ): Promise<void> {
   // ensure target dir exists
-  await ensureDir(dirname(dest));
+  await ensureDir(path.dirname(dest));
   await copyFn(src, dest, { overwrite: true });
 }
