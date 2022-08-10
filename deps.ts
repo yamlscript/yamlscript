@@ -4,6 +4,7 @@ export {
   basename,
   dirname,
   fromFileUrl,
+  join,
   normalize,
   relative,
   resolve,

@@ -52,7 +52,6 @@ import {
   DEFINE_FUNCTION_TOKEN,
   DEFINE_GLOBAL_VARIABLE_TOKEN,
   DEFINE_VARIABLE_TOKEN,
-  GLOBAL_RUNTIME_CMD_PACKAGE_URL,
   IMPORT_TOKEN,
   LAST_TASK_RESULT_NAME,
   LOOP_ITEM_INDEX_NAME,
@@ -61,7 +60,15 @@ import {
   RUNTIME_FUNCTION_OPTIONS_NAME,
 } from "./constant.ts";
 import log from "./log.ts";
-import { dirname, green, relative, resolve } from "./deps.ts";
+import {
+  copy,
+  dirname,
+  ensureDir,
+  green,
+  join,
+  relative,
+  resolve,
+} from "./deps.ts";
 export function getCompiledCode(
   tasks: Task[],
   originalOptions: TasksContext,
@@ -160,7 +167,10 @@ export function getCompiledCode(
   return { ...getTasksCode(fileCode), tasksMetaResults };
 }
 
-function transformfromUrl(fromUrl: string): string {
+function transformfromUrl(
+  fromUrl: string,
+  options: StrictTasksContext,
+): string {
   if (fromUrl.startsWith(".")) {
     if (fromUrl.endsWith(".ys.yml")) {
       // from replace ext to js
@@ -168,6 +178,10 @@ function transformfromUrl(fromUrl: string): string {
       // add compile code
       // build fromPath
       // build dependences
+    } else {
+      // transform to dist relative path
+      const distRelativeWorkDir = relative(options.dist, Deno.cwd());
+      fromUrl = join(distRelativeWorkDir, fromUrl);
     }
   }
   return fromUrl;
@@ -180,45 +194,66 @@ export async function getDependencies(
   const options = getDefaultTasksContext(originalOptions);
   let depencencies: Dependency[] = [];
   for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
-    const { from: rawFrom } = tasks[taskIndex];
-    if (rawFrom) {
-      const fromString = templateCompiledString(rawFrom, options.public);
-
-      if (fromString.startsWith(".")) {
-        if (fromString.endsWith(".ys.yml")) {
-          // from replace ext to js
-          // add compile code
+    const { from: rawFrom, use: rawUse } = tasks[taskIndex];
+    let use = "";
+    if (typeof rawUse === "string") {
+      use = templateCompiledString(rawUse, options.public);
+    }
+    if (use === "defn") {
+      // parse subtasks
+      const subtasks = tasks[taskIndex].args as Task[];
+      depencencies = [
+        ...depencencies,
+        ...await getDependencies(subtasks, options),
+      ];
+    } else {
+      if (rawFrom) {
+        const fromString = templateCompiledString(rawFrom, options.public);
+        if (fromString.startsWith(".")) {
           const fromPath = resolve(dirname(options.relativePath), fromString);
-          // console.log("fromPath", fromPath);
-          // get depencencies recursively
-          //TODO
-          // continue
-          let tasks: Task[] = [];
-          try {
-            tasks = await parseYamlFile(fromPath) as Task[];
-            if (tasks === undefined) {
-              tasks = [];
-            } else if (!Array.isArray(tasks)) {
-              throw new Error(
-                `${fromPath} is not a valid ${pkg.brand} file, you should use an array to define tasks.`,
+
+          if (fromString.endsWith(".ys.yml")) {
+            // from replace ext to js
+            // add compile code
+            // console.log("fromPath", fromPath);
+            // get depencencies recursively
+            //TODO
+            // continue
+            let tasks: Task[] = [];
+            try {
+              tasks = await parseYamlFile(fromPath) as Task[];
+              if (tasks === undefined) {
+                tasks = [];
+              } else if (!Array.isArray(tasks)) {
+                throw new Error(
+                  `${fromPath} is not a valid ${pkg.brand} file, you should use an array to define tasks.`,
+                );
+              }
+            } catch (error) {
+              log.fatal(
+                `parse file ${green(fromPath)} error: ${error.message}`,
               );
             }
-          } catch (error) {
-            log.fatal(`parse file ${green(fromPath)} error: ${error.message}`);
-          }
-          if (tasks.length > 0) {
-            options.relativePath = fromPath;
-            depencencies = depencencies.concat(
-              await getDependencies(tasks, options),
-            );
-          }
+            if (tasks.length > 0) {
+              options.relativePath = fromPath;
+              depencencies = depencencies.concat(
+                await getDependencies(tasks, options),
+              );
+            }
 
-          // build fromPath
-          // build dependences
-          depencencies.push({
-            path: fromPath,
-            type: "source",
-          });
+            // build fromPath
+            // build dependences
+            depencencies.push({
+              path: fromPath,
+              type: "source",
+            });
+          } else {
+            // asset
+            // depencencies.push({
+            //   path: fromPath,
+            //   type: "asset",
+            // });
+          }
         }
       }
     }
@@ -341,7 +376,7 @@ export function transformMeta(
     if (rawFrom) {
       const fromString = templateCompiledString(rawFrom, options.public);
 
-      from = transformfromUrl(fromString);
+      from = transformfromUrl(fromString, options);
 
       const importPaths = [];
       const runtimeImportPaths = [];
@@ -961,6 +996,12 @@ export async function buildTasks(
           verbose: options.verbose,
         };
         const _ = await buildTasks(subTasks, newOptions);
+      } else if (type === "asset") {
+        // just copy
+        // const distPath = resolve(options.dist || "dist", relativePath);
+        // await ensureDir(dirname(distPath));
+        // // copy it
+        // await copy(file, distPath);
       }
     }
     const result = await createDistFile(

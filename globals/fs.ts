@@ -38,7 +38,7 @@ export const writeJSONFile = async (
   path: string,
   data: unknown,
 ): Promise<void> => {
-  const content = JSON.stringify(data);
+  const content = JSON.stringify(data, null, 2);
   await writeTextFile(path, content);
 };
 
