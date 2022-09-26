@@ -301,6 +301,7 @@ export function formatImportCode(
 export async function getGlobalsCode() {
   console.log("import.meta.url", import.meta.url);
   console.log("deno.main module", Deno.mainModule);
+  console.log("url", new URL("./globals/mod.ts", import.meta.url));
   const globaModCode = await Deno.readTextFile(
     new URL("./globals/mod.ts", import.meta.url),
   );
