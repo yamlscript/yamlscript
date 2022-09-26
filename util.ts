@@ -27,7 +27,7 @@ export async function writeJSONFile(
   // ensure the directory exists
   const dir = dirname(filePath);
   await ensureDir(dir);
-  return Deno.writeTextFile(filePath, JSON.stringify(data, null, 2));
+  return Deno.writeTextFile(filePath, JSON.stringify(data, null, 2) + "\n");
 }
 export const get = (obj: unknown, path: string, defaultValue = undefined) => {
   const travel = (regexp: RegExp) =>

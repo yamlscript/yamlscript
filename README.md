@@ -462,7 +462,7 @@ result = assertEquals(result,`ABC`);
 This will be compiled to:
 
 ```javascript
-import { __yamlscript_create_process } from "https://deno.land/x/yamlscript@0.0.7/globals/cmd/mod.ts";
+import { __yamlscript_create_process } from "https://deno.land/x/yamlscript@0.0.9/globals/cmd/mod.ts";
 
 // Task #0: echo
 const __yamlscript_default_use_0 =  __yamlscript_create_process();
