@@ -1,0 +1,3 @@
+{
+  "globalsCode": "import {\n  _,\n  assert,\n  assertAlmostEquals,\n  assertArrayIncludes,\n  assertEquals,\n  assertExists,\n  assertMatch,\n  assertNotEquals,\n  assertNotMatch,\n  assertObjectMatch,\n  assertRejects,\n  assertStringIncludes,\n  assertThrows,\n  async,\n  datetime,\n  dotenv,\n  TOML,\n  YAML,\n} from \"./deps.ts\";\nimport * as fs from \"./fs.ts\";\nimport * as rss from \"./rss.ts\";\nimport * as std from \"./std.ts\";\nimport * as YAMLScript from \"./yamlscript.ts\";\nimport * as template from \"./template.ts\";\nimport env from \"./env.ts\";\nimport * as user from \"./user.ts\";\nimport * as os from \"./os.ts\";\nimport * as path from \"./path.ts\";"
+}

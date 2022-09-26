@@ -11,9 +11,24 @@ import {
 } from "./deps.ts";
 import { BuiltCode, StrictTasksContext, TasksCode } from "./_interface.ts";
 import pkg from "./pkg.json" assert { type: "json" };
+import resource from "./resource.gen.json" assert { type: "json" };
 import log from "./log.ts";
 import { GLOBAL_PACKAGE_URL, SYNC_FUNCTIONS } from "./constant.ts";
 const _toString = Object.prototype.toString;
+export async function readJSONFile<T = unknown>(path: string): Promise<T> {
+  const decoder = new TextDecoder("utf-8");
+  const data = await Deno.readFile(path);
+  return JSON.parse(decoder.decode(data));
+}
+export async function writeJSONFile(
+  filePath: string,
+  data: Record<string, unknown>,
+): Promise<void> {
+  // ensure the directory exists
+  const dir = dirname(filePath);
+  await ensureDir(dir);
+  return Deno.writeTextFile(filePath, JSON.stringify(data, null, 2));
+}
 export const get = (obj: unknown, path: string, defaultValue = undefined) => {
   const travel = (regexp: RegExp) =>
     String.prototype.split
@@ -298,10 +313,17 @@ export function formatImportCode(
   ).join("\n");
   return finalCode + "\n";
 }
-export async function getGlobalsCode() {
-  console.log("import.meta.url", import.meta.url);
-  console.log("deno.main module", Deno.mainModule);
-  console.log("url", new URL("./globals/mod.ts", import.meta.url));
+export function getGlobalsCode(): Promise<string> {
+  // check is local or remote
+  const urlObj = new URL(import.meta.url);
+  if (urlObj.protocol === "file:") {
+    // local
+    return getLocalGlobalsCode();
+  } else {
+    return Promise.resolve(resource.globalsCode);
+  }
+}
+export async function getLocalGlobalsCode() {
   const globaModCode = await Deno.readTextFile(
     new URL("./globals/mod.ts", import.meta.url),
   );

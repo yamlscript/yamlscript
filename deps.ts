@@ -18,6 +18,7 @@ export {
   parseAll,
   stringify,
 } from "https://deno.land/std@0.149.0/encoding/yaml.ts";
+export { parse as parseArgs } from "https://deno.land/std@0.157.0/flags/mod.ts";
 export {
   assert,
   assertAlmostEquals,

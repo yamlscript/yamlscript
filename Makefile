@@ -13,6 +13,10 @@ check-fmt:
 fmt:
 	deno fmt
 
+.Phony: pre-publish
+pre-publish: 
+	deno run -A generate-resource.ts --version ${version} && make buildreadme
+
 .Phony: test
 test:
 	@echo "Testing..."
