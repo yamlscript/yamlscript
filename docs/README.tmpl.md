@@ -18,9 +18,9 @@ but in YAML.
 ## Table of Contents
 
 - [Introduction](#introduction)
+- [Installation](#installation)
 - [Simple Usage](#simple-usage)
 - [Advanced Usage](#advanced-usage)
-- [Installation](#installation)
 - [CLI](#cli)
 - [Links](#links)
 
@@ -34,16 +34,30 @@ such as [Ansible](https://www.ansible.com/), it can also be a low-code
 alternative to [IFTTT](https://ifttt.com/), [Zapier](https://zapier.com/),
 [Pipedream](https://pipedream.com/), etc.
 
-Install `ys` cli:
+## Installation
+
+1. Yamlscript depends on Deno, so you should install
+   [Deno](https://deno.land/#installation) first.
+2. Install YAMLScript by running
 
 ```bash
 deno install -A https://deno.land/x/yamlscript/ys.ts
 ```
 
-Run task file directly:
+run task files:
 
 ```bash
-ys run task.ys.yml
+# run some files
+ys run a.ys.yml
+ys run **/*.yml
+ys run a.ys.yml b.ys.yml
+# run all .ys.yml files
+ys run -A
+# run some directories
+ys run -d a/b/c
+
+# build is same as run
+ys build a.ys.yml
 ```
 
 Build task file and deploy the compiled code to serverless services such as
@@ -52,6 +66,9 @@ Build task file and deploy the compiled code to serverless services such as
 ```bash
 ys build task.ys.yml && deployctl deploy --project=helloworld ./dist/task.js
 ```
+
+
+## Task Config
 
 In YAMLScript, The following interface is the only property we need to
 understand, they are all optional.
@@ -109,16 +126,6 @@ This will be compiled to:
 
 {{/advancedSources}}
 
-## Installation
-
-1. Yamlscript depends on Deno, so you should install
-   [Deno](https://deno.land/#installation) first.
-2. Install YAMLScript by running
-
-```bash
-deno install -A https://deno.land/x/yamlscript/ys.ts
-```
-
 ## CLI
 
 ```bash
@@ -141,19 +148,6 @@ deno install -A https://deno.land/x/yamlscript/ys.ts
     build  [file...]  - build yaml file to js file
 ```
 
-```bash
-# run some files
-ys run a.ys.yml
-ys run **/*.yml
-ys run a.ys.yml b.ys.yml
-# run all .ys.yml files
-ys run -A
-# run some directories
-ys run -d a/b/c
-
-# build is same as run
-ys build a.ys.yml
-```
 
 ## Notes
 
