@@ -1,8 +1,12 @@
 # `use` is the operator name of the a task.
 # We can use any Deno runtime function here
-- use: fetch
+- id: response
+  use: fetch
   args: https://actionsflow.github.io/test-page/reddit-sample.json
-
+- id: json
+  use: response.json
+- use: console.log
+  args: $json
 # We also have some built-in functions, e.g., fetch rss feed entries
 
 - use: rss.entries

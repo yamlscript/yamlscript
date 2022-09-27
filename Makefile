@@ -15,8 +15,7 @@ fmt:
 
 .Phony: pre-publish
 pre-publish: 
-	deno run -A generate-resource.ts --version ${version} && make buildreadme
-
+	deno run -A generate-resource.ts --version ${version} && make readme
 .Phony: test
 test:
 	@echo "Testing..."

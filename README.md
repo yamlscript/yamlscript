@@ -115,9 +115,13 @@ result = console.log(`${obj.list[0]} World`,`${obj.foo.cat}`,`${JSON.stringify(o
 ```yaml
 # `use` is the operator name of the a task.
 # We can use any Deno runtime function here
-- use: fetch
+- id: response
+  use: fetch
   args: https://actionsflow.github.io/test-page/reddit-sample.json
-
+- id: json
+  use: response.json
+- use: console.log
+  args: $json
 # We also have some built-in functions, e.g., fetch rss feed entries
 
 - use: rss.entries
@@ -158,29 +162,37 @@ This will be compiled to:
 ```javascript
 import { extname as getExt } from "https://deno.land/std@0.149.0/path/mod.ts";
 
-// Task #0
+// Task #0: response
 result = await fetch(`https://actionsflow.github.io/test-page/reddit-sample.json`);
+const response = result;
 
-// Task #1
-result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
+// Task #1: json
+result = await response.json();
+const json = result;
 
 // Task #2
+result = console.log(json);
+
+// Task #3
+result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
+
+// Task #4
 result = _.uniq([
   2,
   1,
   2
 ]);
 
-// Task #3
+// Task #5
 result = await getExt(`test.js`);
 
-// Task #4
+// Task #6
 result = assertEquals(`.js`,result);
 
-// Task #5
+// Task #7
 result = new URL(`http://www.example.com/dogs`);
 
-// Task #6
+// Task #8
 result = assertEquals(`www.example.com`,result.hostname);
 
 ```
