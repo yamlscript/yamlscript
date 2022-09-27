@@ -1,3 +1,4 @@
+<!-- deno-fmt-ignore-file -->
 # YAMLScript
 
 We use [YAML syntax](https://yaml.org/) to define a set of tasks declaratively,
@@ -85,13 +86,7 @@ Javascript code, which is located in the `dist` directory by default.
 This will be compiled to:
 
 ```javascript
-{
-  {
-    {
-      target;
-    }
-  }
-}
+{{{target}}}
 ```
 
 {{/simpleUsageSources}}
@@ -109,13 +104,7 @@ This will be compiled to:
 This will be compiled to:
 
 ```javascript
-{
-  {
-    {
-      target;
-    }
-  }
-}
+{{{target}}}
 ```
 
 {{/advancedSources}}

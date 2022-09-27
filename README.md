@@ -1,3 +1,4 @@
+<!-- deno-fmt-ignore-file -->
 # YAMLScript
 
 We use [YAML syntax](https://yaml.org/) to define a set of tasks declaratively,
@@ -103,13 +104,21 @@ Javascript code, which is located in the `dist` directory by default.
 This will be compiled to:
 
 ```javascript
-{
-  {
-    {
-      target;
-    }
+
+// Task #0: obj
+let obj = {
+  "list": [
+    `Hello`,
+    true
+  ],
+  "foo": {
+    "cat" : 10
   }
-}
+};
+
+// Task #1
+result = console.log(`${obj.list[0]} World`,`${obj.foo.cat}`,`${JSON.stringify(obj.foo)}`);
+
 ```
 
 
@@ -163,13 +172,41 @@ This will be compiled to:
 This will be compiled to:
 
 ```javascript
-{
-  {
-    {
-      target;
-    }
-  }
-}
+import { extname as getExt } from "https://deno.land/std@0.149.0/path/mod.ts";
+
+// Task #0: response
+result = await fetch(`https://actionsflow.github.io/test-page/reddit-sample.json`);
+const response = result;
+
+// Task #1: json
+result = await response.json();
+const json = result;
+
+// Task #2
+result = console.log(json);
+
+// Task #3
+result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
+
+// Task #4
+result = _.uniq([
+  2,
+  1,
+  2
+]);
+
+// Task #5
+result = await getExt(`test.js`);
+
+// Task #6
+result = assertEquals(`.js`,result);
+
+// Task #7
+result = new URL(`http://www.example.com/dogs`);
+
+// Task #8
+result = assertEquals(`www.example.com`,result.hostname);
+
 ```
 
 
@@ -199,13 +236,22 @@ This will be compiled to:
 This will be compiled to:
 
 ```javascript
-{
-  {
-    {
-      target;
-    }
-  }
+
+// Task #0
+result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
+
+// Task #1
+result = await fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
+  "method" : `POST`,
+  "headers": {
+    "Content-Type" : `application/json`
+  },
+  "body" : `{
+  "title": "Hello world"
 }
+`
+});
+
 ```
 
 
@@ -241,13 +287,23 @@ This will be compiled to:
 This will be compiled to:
 
 ```javascript
-{
-  {
-    {
-      target;
-    }
-  }
-}
+
+// Task #0
+result = Math.max(1,9,5);
+
+// Task #1
+result = console.log(`${result}`);
+
+// Task #2
+result = console.log(result);
+
+// Task #3: max
+result = Math.max(1,9,5);
+const max = result;
+
+// Task #4
+result = console.log(max);
+
 ```
 
 
@@ -276,13 +332,18 @@ This will be compiled to:
 This will be compiled to:
 
 ```javascript
-{
-  {
-    {
-      target;
-    }
-  }
+
+// Task #0: num
+let num = 5;
+
+// Task #1
+if (num > 4) {
+  result = console.log(`yes, the args is greater than 4`);
 }
+
+// Task #2
+result = console.log(`yes, it's true`);
+
 ```
 
 
@@ -320,13 +381,35 @@ This will be compiled to:
 This will be compiled to:
 
 ```javascript
+
+// Task #0
 {
-  {
-    {
-      target;
-    }
-  }
+  const item = `foo`;
+  index = 0;
+  result = console.log(`${index}. ${item}`);
 }
+{
+  const item = `bar`;
+  index = 1;
+  result = console.log(`${index}. ${item}`);
+}
+index = 0;
+
+// Task #1: sources
+let sources = [
+  1,
+  2
+];
+
+// Task #2: loopResults
+let loopResults = [];
+for await (const item of await sources){
+  result = _.multiply(item,2);
+  loopResults.push(result);
+  index++;
+}
+index=0;
+
 ```
 
 
@@ -358,13 +441,22 @@ This will be compiled to:
 This will be compiled to:
 
 ```javascript
-{
-  {
-    {
-      target;
-    }
-  }
+
+// Task #0: myFunction
+async function myFunction(...args){
+
+  // Task #0_0
+  result = _.upperCase(args[0]);
+
+  return result;
 }
+
+// Task #1
+result = await myFunction(`abc`);
+
+// Task #2
+result = assertEquals(result,`ABC`);
+
 ```
 
 
@@ -394,13 +486,17 @@ This will be compiled to:
 This will be compiled to:
 
 ```javascript
-{
-  {
-    {
-      target;
-    }
-  }
-}
+import { __yamlscript_create_process } from "https://deno.land/x/yamlscript@0.0.9/globals/cmd/mod.ts";
+
+// Task #0: echo
+const __yamlscript_default_use_0 =  __yamlscript_create_process();
+result = await __yamlscript_default_use_0`echo Hello World`;
+const echo = result;
+
+// Task #1
+result = assertEquals(echo.stdout,`Hello World
+`);
+
 ```
 
 
@@ -437,13 +533,31 @@ This will be compiled to:
 This will be compiled to:
 
 ```javascript
-{
-  {
-    {
-      target;
-    }
-  }
+
+// Task #0: errorExample
+let errorExample;
+try {
+  result = await JSON.parse(`foo?bar`);
+  errorExample = result;
+  result = {
+    value: result,
+    done: true
+  };
+  errorExample = result;
+} catch (error) {
+  result = {
+    value: error,
+    done: false
+  };
+  errorExample = result;
 }
+
+// Task #1
+result = assertEquals(errorExample.done,false);
+
+// Task #2
+result = assertEquals(errorExample.value.message,`Unexpected token 'o', "foo?bar" is not valid JSON`);
+
 ```
 
 
@@ -464,13 +578,14 @@ This will be compiled to:
 This will be compiled to:
 
 ```javascript
-{
-  {
-    {
-      target;
-    }
-  }
-}
+
+// Task #0
+result = new Date(`2022-07-25T00:00:00.000Z`
+);
+
+// Task #1
+result = assertEquals(`1658707200000`,`${result.getTime()}`);
+
 ```
 
 
@@ -494,13 +609,25 @@ This will be compiled to:
 This will be compiled to:
 
 ```javascript
-{
-  {
-    {
-      target;
-    }
-  }
+
+// Task #0: myFunction
+async function myFunction(...args){
+
+  // Task #0_0
+  result = console.log(`foo`);
+
+  // Task #0_1
+  return;
+
+  // Task #0_2
+  result = console.log(`this will not be printed`);
+
+  return result;
 }
+
+// Task #1
+result = await myFunction();
+
 ```
 
 
@@ -532,13 +659,28 @@ This will be compiled to:
 This will be compiled to:
 
 ```javascript
-{
-  {
-    {
-      target;
-    }
-  }
+
+// Task #0: entries
+result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
+const entries = result;
+
+// Task #1
+for await (const item of await entries){
+  result = await fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
+    "method" : `POST`,
+    "headers": {
+      "Content-Type" : `application/json`
+    },
+    "body" : `{
+  "title": "${item.title.value}",
+  "link":  "${item.links[0].href}"
 }
+`
+  });
+  index++;
+}
+index=0;
+
 ```
 
 
@@ -595,13 +737,54 @@ This will be compiled to:
 This will be compiled to:
 
 ```javascript
-{
-  {
-    {
-      target;
-    }
+
+// Task #0: entries
+result = await rss.entries(`https://actionsflow.github.io/test-page/hn-rss.xml`);
+const entries = result;
+
+// Task #1: get cache
+result = await fs.readJSONFileWithDefaultValue(`./.yamlscript/cache/kv.json`,{});
+const kv = result;
+
+// Task #2: handleRssEntry
+async function handleRssEntry(...args){
+
+  // Task #2_0
+  if (kv[args[0].links[0].href]) {
+    return;
   }
+
+  // Task #2_1  : notify
+  result = await fetch(`https://enyvb91j5zjv9.x.pipedream.net/`,{
+    "method" : `POST`,
+    "headers": {
+      "Content-Type" : `application/json`
+    },
+    "body" : `{
+  "title": "${args[0].title.value}",
+  "link":  "${args[0].links[0].href}"
 }
+`
+  });
+
+  // Task #2_2
+  result = _.assign(kv,{
+    [args[0].links[0].href] : true
+  });
+
+  return result;
+}
+
+// Task #3
+for await (const item of await entries){
+  result = await handleRssEntry(item);
+  index++;
+}
+index=0;
+
+// Task #4: set to cache
+result = await fs.writeJSONFile(`./.yamlscript/cache/kv.json`,kv);
+
 ```
 
 
@@ -630,13 +813,18 @@ This will be compiled to:
 This will be compiled to:
 
 ```javascript
-{
-  {
-    {
-      target;
-    }
-  }
+
+// Task #0
+result = Math.max(1,9);
+
+// Task #1: foo
+if (result===9) {
+  foo = `bar`;
 }
+
+// Task #2
+result = assertEquals(foo,`bar`);
+
 ```
 
 
@@ -659,13 +847,20 @@ This will be compiled to:
 This will be compiled to:
 
 ```javascript
-{
-  {
-    {
-      target;
-    }
-  }
+import { serve } from "https://deno.land/std@0.149.0/http/server.ts";
+
+// Task #0
+result = await serve(handler);
+
+// Task #1: handler
+async function handler(...args){
+
+  // Task #1_0
+  result = await new Response(`Hello World`);
+
+  return result;
 }
+
 ```
 
 
